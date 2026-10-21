@@ -17,7 +17,7 @@ COUNTUP = '''  [["688", 688], ["8", 8], ["34", 34]].forEach(([txt, v], i) => {
 '''
 FADEOUT = '''  tl.to("#f{n:02d}-stage", {{ opacity: 0, duration: 0.6, ease: "power1.inOut" }}, {d:.3f} - 0.6);
 '''
-CLIP = 646.336        # EP1-CCA.mp4 length in seconds (ffprobe)
+CLIP = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0','assets/video/EP1-CCA-edit.mp4']))  # edited clip length (scripts/edit_clip.py)
 T_PLAY = 5.0            # frame 7: clip starts after click + expand
 LEAD, TAIL, XFADE = 0.4, 0.6, 0.6
 
@@ -91,6 +91,11 @@ for n, slide, a in FRAMES:
     starts[n] = round(t, 3); durs[n] = round(d, 3)
     t = t + d - (0.8 if a is None else XFADE)
     if n != 7: convert(n, slide, fade_in=(n != 1), A=(d - LEAD - TAIL), last=(n == 16))
+import re as _re
+_p = 'compositions/frames/07.html'; _s = open(_p, encoding='utf8').read()
+_s = _re.sub(r'const CLIP = [0-9.]+;', f'const CLIP = {CLIP:.3f};', _s)
+_s = _re.sub(r'(id="f07-video"[^>]*data-duration=")[0-9.]+"', lambda m: m.group(1) + f'{CLIP:.3f}"', _s)
+open(_p, 'w', encoding='utf8').write(_s)
 total = round(starts[16] + durs[16], 3)
 hosts = []
 for n, slide, a in FRAMES:

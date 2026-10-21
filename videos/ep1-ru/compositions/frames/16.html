@@ -45,7 +45,7 @@
   const tl = gsap.timeline({ paused: true });
   tl.fromTo("#f16-stage", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 0);
   const stage = document.getElementById("f16-stage");
-  const A = 39.984;
+  const A = 39.993;
   const pos = el => getComputedStyle(el).position;
   const items = [];
   [...stage.children].forEach(c => {
@@ -57,7 +57,7 @@
   items.forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.6 + i * step));
   stage.querySelectorAll("[data-deco]").forEach((d, i) => tl.fromTo(d, { opacity: 0.0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1));
   stage.querySelectorAll("svg line").forEach((ln, i) => { if (ln.closest("[data-deco]")) return; const L = ln.getTotalLength(); tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.9 + win * 0.6 + i * 0.25); });
-  tl.to("#f16-stage", { opacity: 0, duration: 0.6, ease: "power1.inOut" }, 40.984 - 0.6);
+  tl.to("#f16-stage", { opacity: 0, duration: 0.6, ease: "power1.inOut" }, 40.993 - 0.6);
 
   window.__timelines["f16"] = tl;
 </script>
