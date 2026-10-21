@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head>
+<body>
+<template>
+<style>
+@font-face{font-family:'Prompt';font-weight:600;font-style:normal;src:url('assets/fonts/Prompt-600-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Prompt';font-weight:600;font-style:normal;src:url('assets/fonts/Prompt-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Anuphan';font-weight:400;font-style:normal;src:url('assets/fonts/Anuphan-400-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Anuphan';font-weight:400;font-style:normal;src:url('assets/fonts/Anuphan-400-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Anuphan';font-weight:600;font-style:normal;src:url('assets/fonts/Anuphan-600-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Anuphan';font-weight:600;font-style:normal;src:url('assets/fonts/Anuphan-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+#f09-root{position:absolute;inset:0;overflow:hidden}
+#f09-stage{position:absolute;inset:0;background:#EAF0FA;color:#1A1F36;font-family:'Anuphan', Tahoma, sans-serif;padding:96px 112px 140px;display:flex;flex-direction:column;gap:32px}
+</style>
+<div id="f09-root" data-composition-id="f09" data-width="1920" data-height="1080">
+<div id="f09-stage">
+
+<div style="position:absolute;left:0px;top:0px;width:1100px;height:800px;background:radial-gradient(circle at 15% 20%, #B9D3FF 0%, rgba(185,211,255,0) 62%)"></div>
+<div style="position:absolute;left:820px;top:380px;width:1100px;height:700px;background:radial-gradient(circle at 85% 85%, #BFEAF7 0%, rgba(191,234,247,0) 62%)"></div>
+<div style="position:absolute;left:900px;top:0px;width:1020px;height:520px;background:radial-gradient(circle at 88% 10%, #D8D3FF 0%, rgba(216,211,255,0) 58%)"></div>
+<svg data-deco="1" data-layout-allow-overflow style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;pointer-events:none" viewBox="0 0 1920 1080"><circle cx="1920" cy="0" r="270" fill="#1666E8" opacity="0.20"/><circle cx="1920" cy="0" r="190" fill="#9CC4FF" opacity="0.55"/><circle cx="1640" cy="215" r="58" fill="#22B8CF" opacity="0.45"/><path d="M1500 60 l36 62 h-72z" fill="none" stroke="#1666E8" stroke-width="3" opacity="0.5" stroke-linejoin="round"/><path d="M1420 230 a50 50 0 0 1 100 0" fill="none" stroke="#22B8CF" stroke-width="4" stroke-linecap="round" opacity="0.6"/><path d="M0 900 a180 180 0 0 1 180 180 h-180z" fill="#22B8CF" opacity="0.30"/><circle cx="0" cy="1080" r="110" fill="#1666E8" opacity="0.16"/><path d="M1440 140h20M1450 130v20" stroke="#1666E8" stroke-width="3" stroke-linecap="round" opacity="0.5"/><path d="M52 820h16M60 812v16" stroke="#1666E8" stroke-width="3" stroke-linecap="round" opacity="0.45"/></svg>
+<div data-deco="1" data-layout-allow-overflow style="position:absolute;left:1650px;top:60px;width:200px;height:200px;border-radius:50%;transform:rotate(0deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
+<div data-deco="1" data-layout-allow-overflow style="position:absolute;left:40px;top:930px;width:130px;height:130px;border-radius:32px;transform:rotate(18deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
+<div style="position:relative;display:flex;flex-direction:column;justify-content:center;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><p style="font-size:24px;font-weight:700;color:#FCFCFD;background:linear-gradient(140deg, #4C8DF8, #1666E8);padding:6px 20px;border-radius:999px;box-shadow:0px 8px 18px rgba(22,102,232,0.28), inset 0px 1px 0px rgba(255,255,255,0.5)">EP 1 · CCA</p><p style="font-size:24px;font-weight:600;color:#FCFCFD;background:#1A1F36;padding:6px 18px;border-radius:999px;box-shadow:0px 6px 14px rgba(26,31,54,0.2)">งานของภูชิชย์ · ข้อ 1 Model fit</p></div>
+<h2 style="font-family:'Prompt', Tahoma, sans-serif;font-size:48px;font-weight:600;line-height:1.2">SRMR สูงกว่า HI99 เล็กน้อย แต่ยังห่างจาก .08 มาก</h2>
+</div>
+<div style="position:relative;flex:1;min-height:0;display:grid;grid-template-columns:repeat(12, 1fr);grid-template-rows:auto 1fr;gap:24px">
+<div style="grid-column:span 12;position:relative;height:200px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:32px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px)">
+<div style="position:absolute;left:60px;top:98px;width:1540px;height:8px;background:rgba(26,31,54,0.1);border-radius:4px"></div>
+<div style="position:absolute;left:60px;top:98px;width:356px;height:8px;background:linear-gradient(90deg, #4C8DF8, #1666E8);border-radius:4px"></div>
+<div style="position:absolute;left:318px;top:76px;width:3px;height:52px;background:#7A8094"></div>
+<div style="position:absolute;left:350px;top:76px;width:3px;height:52px;background:#1A1F36"></div>
+<div style="position:absolute;left:398px;top:84px;width:36px;height:36px;background:linear-gradient(140deg, #4C8DF8, #1666E8);border:4px solid #FCFCFD;border-radius:18px;box-shadow:0px 8px 18px rgba(22,102,232,0.4)"></div>
+<div style="position:absolute;left:1470px;top:70px;width:4px;height:64px;background:#C8236F;border-radius:2px"></div>
+<p style="position:absolute;left:214px;top:24px;width:200px;font-size:24px;color:#7A8094;text-align:center">HI95 .0147</p>
+<p style="position:absolute;left:252px;top:138px;width:200px;font-size:24px;color:#1A1F36;text-align:center">HI99 .0165</p>
+<p style="position:absolute;left:446px;top:30px;width:300px;font-family:'Prompt', Tahoma, sans-serif;font-size:32px;font-weight:600;color:#1666E8">SRMR .0202</p>
+<p style="position:absolute;left:1372px;top:138px;width:200px;font-size:24px;font-weight:700;color:#C8236F;text-align:center">เกณฑ์ .08</p>
+<p style="position:absolute;left:40px;top:138px;width:60px;font-size:24px;color:#7A8094">0</p>
+</div>
+<div style="grid-column:span 7;display:flex;flex-direction:column;justify-content:center;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:32px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px">
+<table style="font-size:25px;color:#1A1F36;background:transparent;border:none">
+<tr><th style="border-radius:18px 0px 0px 18px;width:25%;color:#FCFCFD;background:linear-gradient(135deg, #5B9BFF, #1666E8);padding:12px 14px">ดัชนี</th><th style="width:25%;color:#FCFCFD;background:linear-gradient(135deg, #5B9BFF, #1666E8);padding:12px 14px;text-align:right">ค่าที่ได้</th><th style="width:25%;color:#FCFCFD;background:linear-gradient(135deg, #5B9BFF, #1666E8);padding:12px 14px;text-align:right">HI95</th><th style="border-radius:0px 18px 18px 0px;width:25%;color:#FCFCFD;background:linear-gradient(135deg, #5B9BFF, #1666E8);padding:12px 14px;text-align:right">HI99</th></tr>
+<tr><td>SRMR</td><td style="text-align:right"><b>.0202</b></td><td style="text-align:right">.0147</td><td style="text-align:right">.0165</td></tr>
+<tr><td>dULS</td><td style="text-align:right"><b>.0184</b></td><td style="text-align:right">.0097</td><td style="text-align:right">.0122</td></tr>
+<tr><td>dG</td><td style="text-align:right"><b>.0198</b></td><td style="text-align:right">.0133</td><td style="text-align:right">.0164</td></tr>
+</table>
+</div>
+<div style="grid-column:span 5;display:flex;flex-direction:column;justify-content:center;gap:12px;background:linear-gradient(140deg, #4C8DF8 0%, #1666E8 55%, #0E7FB0 100%);border:2px solid rgba(255,255,255,0.5);border-radius:32px;box-shadow:0px 20px 44px rgba(22,102,232,0.28), inset 0px 2px 0px rgba(255,255,255,0.5), inset 0px -6px 14px rgba(10,30,80,0.18);padding:30px 36px">
+<p style="font-size:24px;font-weight:700;color:#BFD7FF">แปลผล</p>
+<p style="font-size:34px;line-height:1.55;color:#FCFCFD">ทั้งสามค่าเกิน HI99 การทดสอบแบบเข้ม<b>ไม่ผ่าน</b> แต่ SRMR ต่ำกว่า .08 มาก จึง<b>ยอมรับได้โดยประมาณ</b></p>
+<p style="font-size:32px;line-height:1.5;color:#DDEBFF">ตรงกับค่าที่เล่มรายงาน</p>
+</div>
+</div>
+<p style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">9</p>
+
+
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#f09-stage", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 0);
+  window.__timelines["f09"] = tl;
+</script>
+</div>
+</template>
+</body></html>

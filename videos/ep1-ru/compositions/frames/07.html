@@ -61,6 +61,7 @@
     const CLIP = 180;      // seconds — duration of EP1-CCA.mp4
     const T_PLAY = 5;      // clip starts when the frame has finished expanding
     const END = T_PLAY + CLIP;
+    tl.fromTo("#f07-stage", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 0);
     tl.fromTo("#f07-head", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.15);
     tl.fromTo(["#f07-box", "#f07-under"], { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0.3);
     tl.fromTo("#f07-steps", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }, 0.45);
@@ -77,8 +78,7 @@
     tl.to("#f07-cursor", { opacity: 0, duration: 0.3 }, 3.9);
     tl.to(["#f07-head", "#f07-steps", "#f07-page", "#f07-deco", "#f07-cover", "#f07-under"], { opacity: 0, duration: 0.5, ease: "power2.in" }, 3.9);
     tl.to("#f07-box", { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 1.1, ease: "power3.inOut" }, 3.9);
-    // fade out into page 8
-    tl.to("#f07-stage", { opacity: 0, duration: 0.8, ease: "power1.inOut" }, END - 0.8);
+    // page 8 fades in over the last 0.8s of the clip
     window.__timelines["f07"] = tl;
   </script>
 </div>
