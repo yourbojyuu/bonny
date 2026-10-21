@@ -2500,5 +2500,16 @@
       ]
     },
     "unversioned": []
-  }
+  },
+  "renders": {
+    "latest": {
+      "id": "719e77f3-1026-422d-83ac-53a5de75cabb",
+      "completedAt": 1792610415110,
+      "output": "/home/user/bonny/videos/ep1-ru/renders/EP1-RU.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
 }
