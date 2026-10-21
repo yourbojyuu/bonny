@@ -25,6 +25,10 @@ EP 1 ของซีรีส์ "ศึกษาและวิเคราะ�
 - EP1-CCA.mp4 (175 MB, ADANCO demo, Drive) — NOT reachable from sandbox; page 7 uses a placeholder until the user supplies it
 - assets/img/*.png — 8 ADANCO screenshots exported from the deck
 
+## Customizations
+
+- Page 7: EP1-CCA.mp4 sits in the clip frame; an animated mouse cursor clicks the play button, the frame expands to full screen, the clip plays with its own sound, then the scene fades into page 8. (Built in compositions/frames/07.html; CLIP constant + data-duration must match the real clip length.)
+
 ## Notes
 
 - Narration text is locked in SCRIPT.md. No on-screen text edits beyond what the slides already carry.
