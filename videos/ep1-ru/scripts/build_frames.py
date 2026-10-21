@@ -17,7 +17,7 @@ COUNTUP = '''  [["688", 688], ["8", 8], ["34", 34]].forEach(([txt, v], i) => {
 '''
 FADEOUT = '''  tl.to("#f{n:02d}-stage", {{ opacity: 0, duration: 0.6, ease: "power1.inOut" }}, {d:.3f} - 0.6);
 '''
-CLIP = 180.0            # EP1-CCA.mp4 length in seconds — update when the real clip is in place
+CLIP = 646.336        # EP1-CCA.mp4 length in seconds (ffprobe)
 T_PLAY = 5.0            # frame 7: clip starts after click + expand
 LEAD, TAIL, XFADE = 0.4, 0.6, 0.6
 
