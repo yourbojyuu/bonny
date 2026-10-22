@@ -2165,7 +2165,6 @@
         {
           "id": "a69601fc-be56-4287-bc71-a12619b82ea0",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep1-ru/.hyperframes/artifacts/checks/a69601fc-be56-4287-bc71-a12619b82ea0.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -2187,7 +2186,9 @@
           "revision": "5b9edafc-ec47-46a1-a96a-306454d94544",
           "inputFingerprint": "a59a02bb019b3d5786c5cc5038727c3f88cc06068d722a4796e01e014ef64f71",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "90a8fdbf-40d4-4382-87d7-16fa77f435d0"
         }
       ],
       "5a7c7586-0c04-4933-8573-170c2ea5eb08": [
@@ -3924,13 +3925,14 @@
   },
   "renders": {
     "latest": {
-      "id": "a0f38ebb-2ca9-4260-aaef-f60c8d1340df",
-      "completedAt": 1792639248337,
-      "output": "/home/user/bonny/videos/ep1-ru/renders/EP1-RU-v2.mp4",
+      "id": "90a8fdbf-40d4-4382-87d7-16fa77f435d0",
+      "completedAt": 1792646446743,
+      "output": "/home/user/bonny/videos/ep1-ru/renders/EP1-RU-v3.mp4",
       "status": "completed",
-      "revision": "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2"
+      "revision": "5a7c7586-0c04-4933-8573-170c2ea5eb08"
     },
     "retainedRevisions": [
+      "5a7c7586-0c04-4933-8573-170c2ea5eb08",
       "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2"
     ]
   },
