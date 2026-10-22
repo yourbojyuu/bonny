@@ -50,13 +50,13 @@
 
 </div>
 </div>
-<div id="f40-vlayer" data-layout-allow-overflow data-layout-allow-overlap style="position:absolute;left:0;top:0;width:1920px;height:1080px;background:#0d1020;overflow:hidden;opacity:0"><div style="position:absolute;left:0;top:0;width:1920px;height:1080px;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center"><p style="font-family:'Prompt',sans-serif;font-size:56px;font-weight:600;color:#FCFCFD">คลิปสาธิต ADANCO</p><p style="font-family:'Anuphan',sans-serif;font-size:30px;color:#C9B5FF">รอไฟล์ assets/video/EP3-MOD.mp4</p></div><div style="position:absolute;left:0;bottom:0;width:1920px;height:6px;background:rgba(255,255,255,0.12)"><div id="f40-prog" style="width:100%;height:100%;background:linear-gradient(90deg,#4C8DF8,#6A2EE8,#F0508F);transform-origin:left center"></div></div></div>
+<div id="f40-vlayer" data-layout-allow-overflow data-layout-allow-overlap style="position:absolute;left:0;top:0;width:1920px;height:1080px;background:#0d1020;overflow:hidden;opacity:0"><video id="f40-video" class="clip" src="assets/video/EP3-MOD-edit.mp4" data-start="12.404" data-duration="569.542" data-hf-media-start-basis="local" data-track-index="1" muted playsinline style="position:absolute;left:0;top:0;width:1920px;height:1080px;object-fit:contain;background:#0d1020"></video><div style="position:absolute;left:0;bottom:0;width:1920px;height:6px;background:rgba(255,255,255,0.12)"><div id="f40-prog" style="width:100%;height:100%;background:linear-gradient(90deg,#4C8DF8,#6A2EE8,#F0508F);transform-origin:left center"></div></div></div>
 </div>
 <script>
   const tl = gsap.timeline({ paused: true });
 
   const stage = document.getElementById("f40-stage"), shell = document.getElementById("f40-shell"), cam = document.getElementById("f40-cam");
-  const D = 18.404, V = 1, N = 40;
+  const D = 581.946, V = 1, N = 40;
   const ZOOMS = [], RINGS = [], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
@@ -189,7 +189,7 @@
                 { opacity: 1, clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 1.1, ease: "power3.inOut", immediateRender: false }, TC + 0.35);
   tl.to(cam, { opacity: 0, duration: 0.3, ease: "none" }, TC + 1.5);          // slide steps away once the clip fills the frame
   tl.to([...shell.children].filter(c => c !== cam && c !== vl), { opacity: 0, duration: 0.3, ease: "none" }, TC + 0.35);   // stickers leave the clip uncovered
-  tl.fromTo("#f40-prog", { scaleX: 0 }, { scaleX: 1, duration: 6.000, ease: "none" }, 12.404);
+  tl.fromTo("#f40-prog", { scaleX: 0 }, { scaleX: 1, duration: 569.542, ease: "none" }, 12.404);
   
   window.__timelines["f40"] = tl;
 </script>

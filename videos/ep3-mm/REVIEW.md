@@ -11,6 +11,9 @@
 - p44: the three simple-slope lines draw on with "ลบหนึ่ง SD", "ระดับเฉลี่ย", "บวกหนึ่ง SD"; slopes .293 / .355 / .416 ringed.
 - p45–48 cards drop on their words; p46 count card zoom; p49 thanks.
 
+- p40 demo: cursor clicks play, the box opens to full screen, slide and stickers clear, clip plays (13:49 → 9:30 after
+  `edit_clip.py`: 57 silent stretches sped up), then fades into p41. The clip ends "…ไปดูผลในไฟล์กันว่าทำไมเราถึงเลือก", which leads into p41.
+
 ## Fixed during review
 
 - Rings on bold words that wrap over two lines drew beside the text (p39, p48) → ring the whole sentence / card text.
@@ -24,5 +27,4 @@
   Add `source/audio-raw/EP3-MOD-12.mp3` (p45), `-13` (p46), `-14` (p47) — or change `VOICE` in `scripts/process_voice.py` — and rebuild.
 - `EP3-MOD-09.mp3` (7 s: "ระหว่างทาง เราก็พบจุดที่ควรชี้แจงเพิ่มเติม ตอนที่ 1 ช่วง weight…", then silence) matches no EP3 page; not used.
 - `EP3-MOD-05` is page 41 and `EP3-MOD-06` is page 40 (demo intro, "…ในที่นี้เราจะกดสามโมเดล"), by content.
-- **Demo clip** is a placeholder (6 s card) until `assets/video/EP3-MOD.mp4` is pushed; then run the pipeline from step 1 and render.
 - Text under 28 px and the demo slide's text leaving when the clip opens are the accepted warnings from EP2.
