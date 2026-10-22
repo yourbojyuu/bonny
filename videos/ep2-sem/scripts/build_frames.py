@@ -414,6 +414,8 @@ DEMO_JS = '''
   const vl = document.getElementById("{id}-vlayer");
   tl.fromTo(vl, {{ opacity: 1, clipPath: "inset(" + sy(b.y) + "px " + (1920 - sx(b.x + b.w)) + "px " + (1080 - sy(b.y + b.h)) + "px " + sx(b.x) + "px round 32px)" }},
                 {{ opacity: 1, clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 1.1, ease: "power3.inOut", immediateRender: false }}, TC + 0.35);
+  tl.to(cam, {{ opacity: 0, duration: 0.3, ease: "none" }}, TC + 1.5);          // slide steps away once the clip fills the frame
+  tl.to([...shell.children].filter(c => c !== cam && c !== vl), {{ opacity: 0, duration: 0.3, ease: "none" }}, TC + 0.35);   // stickers leave the clip uncovered
   tl.fromTo("#{id}-prog", {{ scaleX: 0 }}, {{ scaleX: 1, duration: {clip:.3f}, ease: "none" }}, {t_play});'''
 
 def demo_layer(fid, t_play):
