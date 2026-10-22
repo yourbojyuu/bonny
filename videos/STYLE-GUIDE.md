@@ -1,4 +1,4 @@
-# สไตล์วิดีโอซีรีส์ "Phuchit × ADANCO" (สรุปจาก EP1 + EP2)
+# สไตล์วิดีโอซีรีส์ "Phuchit × ADANCO" (สรุปจาก EP1 + EP2 + EP3)
 
 โปรเจกต์ต้นแบบล่าสุด: `videos/ep2-sem/` (branch `claude/relaxed-wozniak-st8v81`) — คัดลอกทั้งโฟลเดอร์ `scripts/`, `assets/fonts`, `assets/vendor`, `assets/sfx` มาใช้ได้เลย
 EP1 อยู่ที่ branch `claude/friendly-brahmagupta-l7eh5g` (`videos/ep1-ru/`)
@@ -36,6 +36,8 @@ EP1 อยู่ที่ branch `claude/friendly-brahmagupta-l7eh5g` (`videos/e
 - คลิปสาธิต (>10 MB): **Drive ดึงไม่ได้ และเว็บ GitHub อัปได้แค่ 25 MB** → ผู้ใช้วางไฟล์ใน `videos/<ep>/assets/video/<ชื่อ>.mp4` แล้ว commit + push ด้วย **GitHub Desktop** (ติ๊กเฉพาะไฟล์คลิป ไม่เอา `.DS_Store` หรือไฟล์ลงท้าย ` 2` ที่ iCloud สร้าง) — ต้องสร้างโฟลเดอร์ `assets/video/` (มี README.txt) ไว้ก่อน
 - ภาพหน้าจอในสไลด์ (`/_blob/<id>`): อ่านทีละไฟล์ด้วย Artifact `read` + `path=<id>` → `assets/img/<id>.png`
 - ไฟล์เสียงหน้าที่สั้นผิดปกติ: ถามผู้ใช้ก่อน (EP2 หน้า 19 สั้นโดยตั้งใจ)
+- **ไฟล์เสียงไม่จำเป็นต้องตรงหน้าตามเลข** (EP3: 05/06 สลับ, ไฟล์เดียวครอบสองหน้า, บางหน้าไม่มีเสียง) → ฟังก่อนด้วย whisper-small จาก npm (`videos/ep3-mm/scripts/transcribe.mjs`; Hugging Face ถูกบล็อก แต่แพ็กเกจ npm `sts-whisper-small` มีโมเดลมาในตัว) แล้วแก้ข้อความใน `SCRIPT.md` ให้ตรงกับที่พูดจริง
+- จับคู่หน้า↔ไฟล์ และจุดตัดไฟล์ที่ครอบหลายหน้า อยู่ในตาราง `VOICE` ของ `scripts/process_voice.py` (EP3); หน้าที่ยังไม่มีเสียงจะค้างเงียบตามความยาวข้อความโดยประมาณ
 
 ## ขั้นตอน
 1. ดึงสไลด์ของตอน → `source/slides/`, เสียง → `source/audio-raw/`, เขียน `SCRIPT.md` (`## pNN …` บรรทัดถัดไปคือคำพากย์)
@@ -49,3 +51,5 @@ EP1 อยู่ที่ branch `claude/friendly-brahmagupta-l7eh5g` (`videos/e
 - SVG ไม่มี offsetLeft → เล็งเมาส์ที่กล่อง HTML ที่ห่อ SVG
 - ตารางในสไลด์ส่วนใหญ่เป็น CSS grid ไม่ใช่ `<tr>` → แถวไฮไลต์รวมเซลล์ที่อยู่บรรทัดเดียวกัน
 - element เดียวถูกหลาย cue → ใช้ data-z id เดียว
+- วงไฮไลต์บนคำตัวหนา (`<b>`) ที่ขึ้นบรรทัดใหม่ → กรอบเพี้ยน ให้วงทั้งประโยค/ย่อหน้าแทน
+- คำใน cue ต้องไม่ซ้ำกับคำที่พูดก่อนหน้า (EP3: "และสาม" ไปเจอ "และสามรูปแบบ" ก่อน) ใช้วลีให้ยาวพอ
