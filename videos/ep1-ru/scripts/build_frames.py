@@ -18,6 +18,7 @@ CLIP = probe('assets/video/EP1-CCA-edit.mp4')   # edited demo clip (scripts/edit
 T_PLAY = 5.0                                     # frame 7: clip starts after click + expand
 LEAD, TAIL, XFADE = 0.4, 0.6, 0.6                # voice lead-in / tail inside a scene; scene overlap
 REVEAL_AT, MAX_SFX_PER_SCENE = 0.7, 6
+MAX_DRAGS, DRAG_GAP, DRAG_DUR = 3, 1.8, 0.9      # cursor drag-and-drop: cards per scene, spacing, travel time
 SFX_DUR = {'whoosh-short': 0.57, 'whoosh': 0.57, 'whoosh-cinematic': 5.54, 'pop': 0.72, 'click': 0.37,
            'click-soft': 0.37, 'ping': 1.32, 'chime': 2.5, 'sparkle': 1.8, 'impact-bass-1': 2.12, 'impact-bass-2': 2.59}
 
@@ -43,7 +44,7 @@ def style_of(attrs):
     m = re.search(r'style="([^"]*)"', attrs); return (m.group(1) if m else '').replace(' ', '').lower()
 def text_of(fragment): return re.sub(r'<[^>]+>', '', fragment).strip()
 
-def tag_reveals(body, A):
+def tag_reveals(body, A, A_SCENE=0):
     """Pick the elements that reveal one by one, decide each one's treatment and time, and tag them."""
     items = []
     for c in children(body):
@@ -54,6 +55,8 @@ def tag_reveals(body, A):
         else: items.append(c)
     n = len(items); win = min(0.2 * A, 5.0); step = win / n if n > 1 else 0
     plan, edits = [], []
+    ndrag, ncard, last_drag = 0, 0, -DRAG_GAP + REVEAL_AT
+    first_card_pops = A_SCENE == 1
     for i, (s0, oe, e, tag, attrs) in enumerate(items):
         frag, st = body[s0:e], style_of(attrs)
         if tag == 'p' and 'position:absolute' in st and text_of(frag).isdigit(): kind = 'badge'
@@ -62,16 +65,27 @@ def tag_reveals(body, A):
         elif 'background' in st: kind = 'card'
         else: kind = 'text'
         t = round(REVEAL_AT + i * step, 3)
-        plan.append({'kind': kind, 't': t, 'html': frag})
-        edits.append((s0 + 1 + len(tag), f' data-reveal="{kind}" data-t="{t}"'))
+        drag = kind in ('card', 'img') and ndrag < MAX_DRAGS and not (len(items) == 1) and not (first_card_pops and kind == 'card' and ncard == 0)
+        if kind == 'card': ncard += 1
+        if drag:
+            t = round(max(t, last_drag + DRAG_GAP), 3); last_drag = t; ndrag += 1
+        plan.append({'kind': kind, 't': t, 'html': frag, 'drag': drag})
+        edits.append((s0 + 1 + len(tag), f' data-reveal="{kind}" data-t="{t}"' + (' data-drag="1"' if drag else '')))
     for pos, ins in sorted(edits, reverse=True): body = body[:pos] + ins + body[pos:]
     return body, plan
 
 MOTION = '''
   const stage = document.getElementById("{id}-stage"), shell = document.getElementById("{id}-shell");
-  const D = {D:.3f}, V = {variant};
+  const D = {D:.3f}, V = {variant}, N = {n};
+  const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
+  // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
+  const place = el => {{ let x = 0, y = 0, e = el; while (e && e !== stage) {{ x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; }} return {{ x, y, w: el.offsetWidth, h: el.offsetHeight }}; }};
+  const drags = [...stage.querySelectorAll("[data-drag]")], rect = new Map();
+  drags.forEach(el => rect.set(el, place(el)));
+  const mk = (css, html) => {{ const d = document.createElement("div"); d.setAttribute("data-layout-allow-overflow", ""); d.setAttribute("data-layout-allow-overlap", ""); d.setAttribute("data-layout-allow-occlusion", ""); d.style.cssText = "position:absolute;left:0;top:0;pointer-events:none;opacity:0;" + css; if (html) d.innerHTML = html; shell.appendChild(d); return d; }};
+  const STAR = c => '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 0 C13 8 16 11 24 12 C16 13 13 16 12 24 C11 16 8 13 0 12 C8 11 11 8 12 0 Z" fill="' + c + '"/></svg>';
   // scene entrance: zoom / slide / rise, then a slow camera push for the rest of the scene
-  const enter = [{{ scale: 1.07 }}, {{ x: 160 }}, {{ y: 110 }}][V];
+  const enter = [{{ scale: 1.07 }}, {{ x: 160 }}, {{ y: 110 }}][V % 3];
   if ({fade_in}) tl.fromTo(shell, {{ opacity: 0, ...enter }}, {{ opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }}, 0);
   tl.fromTo(stage, {{ scale: 1 }}, {{ scale: 1.03, duration: D, ease: "none" }}, 0);
   // decorations drift in and float
@@ -79,28 +93,59 @@ MOTION = '''
     tl.fromTo(d, {{ opacity: 0 }}, {{ opacity: 1, duration: 1.2, ease: "power1.out" }}, 0.1);
     const per = 2.6 + (i % 3) * 0.5; tl.to(d, {{ y: i % 2 ? 12 : -12, duration: per, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / per) - 1) }}, 0.3);
   }});
-  // element reveals
-  const FX = {{
-    head:  [{{ opacity: 0, x: -60, clipPath: "inset(0% 100% 0% 0%)" }}, {{ opacity: 1, x: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.85, ease: "power3.out" }}],
-    card:  [{{ opacity: 0, y: 56, scale: 0.9 }}, {{ opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.6)" }}],
-    img:   [{{ opacity: 0, y: 30, scale: 1.12 }}, {{ opacity: 1, y: 0, scale: 1, duration: 1.0, ease: "expo.out" }}],
-    text:  [{{ opacity: 0, y: 26 }}, {{ opacity: 1, y: 0, duration: 0.65, ease: "power2.out" }}],
-    badge: [{{ opacity: 0, scale: 0.4 }}, {{ opacity: 1, scale: 1, duration: 0.6, ease: "back.out(3)" }}],
+  // sticker stars pop in and bob
+  [[1560, 70, 54], [1790, 210, 38], [60, 880, 46], [1740, 930, 34]].forEach(([x, y, s], i) => {{
+    const st = mk("width:" + s + "px;height:" + s + "px;left:" + x + "px;top:" + y + "px;", STAR(COL[(N + i * 2) % 5]));
+    const t = 0.45 + i * 0.3 + (N % 3) * 0.05;
+    tl.fromTo(st, {{ opacity: 0, scale: 0, rotation: -120 }}, {{ opacity: 0.9, scale: 1, rotation: 0, duration: 0.7, ease: "back.out(3)" }}, t);
+    tl.to(st, {{ rotation: 25, y: i % 2 ? 10 : -10, duration: 2.4 + i * 0.4, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / (2.4 + i * 0.4)) - 1) }}, t + 0.7);
+  }});
+  // confetti burst from (cx, cy) at time t
+  const burst = (cx, cy, t, n = 9) => {{
+    for (let i = 0; i < n; i++) {{
+      const a = (i / n) * Math.PI * 2 + N, r = 90 + (i % 3) * 34, sz = 14 + (i % 4) * 5;
+      const p = mk("width:" + sz + "px;height:" + sz + "px;left:" + cx + "px;top:" + cy + "px;" + (i % 3 === 0 ? "border-radius:50%;background:" + COL[i % 5] : i % 3 === 1 ? "border-radius:3px;background:" + COL[(i + 2) % 5] : ""), i % 3 === 2 ? STAR(COL[(i + 1) % 5]) : "");
+      tl.fromTo(p, {{ opacity: 1, scale: 0.3, x: 0, y: 0, rotation: 0 }}, {{ opacity: 0, scale: 1, x: Math.cos(a) * r, y: Math.sin(a) * r + 26, rotation: (i % 2 ? 1 : -1) * 220, duration: 0.85, ease: "power2.out" }}, t);
+    }}
   }};
+  // element reveals — bouncy, a little wobbly ("duk-dik")
+  const FX = {{
+    head:  [{{ opacity: 0, x: -70, rotation: -2, clipPath: "inset(0% 100% 0% 0%)" }}, {{ opacity: 1, x: 0, rotation: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "back.out(1.4)" }}],
+    card:  [{{ opacity: 0, y: 40, scale: 0.55, rotation: -5 }}, {{ opacity: 1, y: 0, scale: 1, rotation: 0, duration: 1.0, ease: "elastic.out(1, 0.55)" }}],
+    img:   [{{ opacity: 0, y: 30, scale: 0.7, rotation: 3 }}, {{ opacity: 1, y: 0, scale: 1, rotation: 0, duration: 0.9, ease: "back.out(2)" }}],
+    text:  [{{ opacity: 0, y: 30, scale: 0.94 }}, {{ opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "back.out(2)" }}],
+    badge: [{{ opacity: 0, scale: 0.3, rotation: -40 }}, {{ opacity: 1, scale: 1, rotation: 0, duration: 0.65, ease: "back.out(3.5)" }}],
+  }};
+  const cur = drags.length ? mk("width:62px;height:62px;filter:drop-shadow(0 8px 10px rgba(240,80,143,0.45));", '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M4 2 L4 19 L8.6 14.9 L11.6 21.6 L14.4 20.4 L11.4 13.8 L17.6 13.5 Z" fill="#ffffff" stroke="#1A1F36" stroke-width="1.6" stroke-linejoin="round"/></svg>') : null;
   stage.querySelectorAll("[data-reveal]").forEach(el => {{
     const t = +el.dataset.t, [from, to] = FX[el.dataset.reveal];
-    tl.fromTo(el, from, to, t);
+    if (el.hasAttribute("data-drag")) {{
+      const r = rect.get(el), k = drags.indexOf(el), right = r.x + r.w / 2 > 960;
+      const dx = (right ? 1 : -1) * 640, dy = k % 2 ? 260 : -210;
+      const gx = r.x + Math.min(70, r.w * 0.3), gy = r.y + Math.min(60, r.h * 0.3);
+      tl.fromTo(el, {{ opacity: 0 }}, {{ opacity: 1, duration: 0.18, ease: "none" }}, t);
+      tl.fromTo(el, {{ x: dx, y: dy, rotation: right ? 9 : -9, scale: 1.05 }}, {{ x: 0, y: 0, rotation: 0, scale: 1, duration: {drag_dur}, ease: "power3.out" }}, t);
+      tl.set(cur, {{ x: gx + dx, y: gy + dy, scale: 1, opacity: 0 }}, t - 0.15);
+      tl.to(cur, {{ opacity: 1, duration: 0.12 }}, t - 0.15);
+      tl.to(cur, {{ scale: 0.84, duration: 0.08, ease: "power2.in" }}, t - 0.03);
+      tl.to(cur, {{ x: gx, y: gy, duration: {drag_dur}, ease: "power3.out" }}, t);
+      tl.to(cur, {{ scale: 1, duration: 0.15, ease: "back.out(3)" }}, t + {drag_dur});
+      tl.to(cur, {{ x: gx + 110, y: gy + 90, opacity: 0, duration: 0.4, ease: "power2.in" }}, t + {drag_dur} + 0.18);
+      tl.to(el, {{ scaleX: 1.05, scaleY: 0.93, duration: 0.07, ease: "power2.out" }}, t + {drag_dur});
+      tl.to(el, {{ scaleX: 1, scaleY: 1, duration: 0.6, ease: "elastic.out(1, 0.35)" }}, t + {drag_dur} + 0.07);
+      burst(r.x + r.w / 2, r.y + r.h / 2, t + {drag_dur});
+    }} else tl.fromTo(el, from, to, t);
     const rows = el.querySelectorAll("tr");
-    if (rows.length > 2) tl.fromTo(rows, {{ opacity: 0, x: -24 }}, {{ opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }}, t + 0.3);
+    if (rows.length > 2) tl.fromTo(rows, {{ opacity: 0, x: -24 }}, {{ opacity: 1, x: 0, duration: 0.45, ease: "back.out(1.7)", stagger: 0.07 }}, t + 0.3 + (el.hasAttribute("data-drag") ? {drag_dur} : 0));
     el.querySelectorAll("p").forEach(p => {{                     // big integers count up
       const txt = p.textContent.trim(), fs = parseFloat(getComputedStyle(p).fontSize);
       if (!/^[0-9]{{1,4}}$/.test(txt) || fs < 52 || el.dataset.reveal === "badge") return;
       const o = {{ v: 0 }}, v = +txt;
-      tl.to(o, {{ v, duration: 1.2, ease: "power2.out", onUpdate: () => {{ p.textContent = Math.round(o.v); }} }}, t + 0.15);
+      tl.to(o, {{ v, duration: 1.2, ease: "power2.out", onUpdate: () => {{ p.textContent = Math.round(o.v); }} }}, t + 0.15 + (el.hasAttribute("data-drag") ? {drag_dur} : 0));
     }});
     el.querySelectorAll("svg line").forEach((ln, i) => {{        // diagram arrows draw on
       const L = ln.getTotalLength();
-      tl.fromTo(ln, {{ strokeDasharray: L, strokeDashoffset: L }}, {{ strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }}, t + 0.45 + i * 0.18);
+      tl.fromTo(ln, {{ strokeDasharray: L, strokeDashoffset: L }}, {{ strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }}, t + 0.45 + i * 0.18 + (el.hasAttribute("data-drag") ? {drag_dur} : 0));
     }});
   }});
   {fadeout}'''
@@ -119,10 +164,10 @@ def convert(n, slide, A, D, last):
     for old in set(re.findall(r'\sid="([^"]+)"', body)):
         body = body.replace(f'url(#{old})', f'url(#f{n:02d}-{old})')
     body = re.sub(r'\sid="([^"]+)"', lambda mm: f' id="f{n:02d}-{mm.group(1)}"', body)
-    body, plan = tag_reveals(body, A)
+    body, plan = tag_reveals(body, A, n)
     fid = f'f{n:02d}'
     fadeout = f'tl.to(shell, {{ opacity: 0, duration: 0.8, ease: "power1.inOut" }}, D - 0.8);' if last else ''
-    js = MOTION.format(id=fid, D=D, variant=n % 3, fade_in='true' if n != 1 else 'false', fadeout=fadeout)
+    js = MOTION.format(id=fid, D=D, n=n, drag_dur=DRAG_DUR, variant=n % 3, fade_in='true' if n != 1 else 'false', fadeout=fadeout)
     html = f'''<!doctype html>
 <html><head><meta charset="UTF-8" /></head>
 <body>
@@ -152,21 +197,26 @@ def convert(n, slide, A, D, last):
     return plan
 
 def scene_sfx(n, start, plan):
-    """Sound design for one scene: a transition swish, then accents on the reveals that matter."""
+    """Sound design for one scene: a transition swish, grab/drop sounds for dragged cards, pops for the rest."""
     ev = []
-    if n == 1: ev.append((start + 0.55, 'impact-bass-1', 0.45))
-    elif n == 8: ev.append((start, 'whoosh', 0.55))
-    else: ev.append((start, 'whoosh-short' if n % 2 else 'whoosh', 0.42))
+    if n == 1: ev.append((start + 0.55, 'impact-bass-1', 0.4))
+    elif n == 8: ev.append((start, 'whoosh', 0.5))
+    else: ev.append((start, 'whoosh-short' if n % 2 else 'whoosh', 0.4))
+    ev.append((start + 0.5, 'sparkle', 0.16))                      # stickers pop in
     count = 0
-    for i, it in enumerate(plan):
+    for it in plan:
         t = start + it['t']
+        if it['drag']:
+            ev += [(t - 0.05, 'click-soft', 0.4), (t, 'whoosh-short', 0.3), (t + DRAG_DUR, 'pop', 0.6), (t + DRAG_DUR + 0.04, 'click', 0.28)]
+            if n in (1, 3, 9, 16): ev.append((t + DRAG_DUR + 0.05, 'sparkle', 0.22))
+            continue
         if n == 2 and it['kind'] == 'card' and count == 0: ev.append((t + 0.1, 'impact-bass-2', 0.4)); count += 1; continue
         if it['kind'] in ('card', 'img') and count < MAX_SFX_PER_SCENE:
-            ev.append((t + 0.05, 'pop' if it['kind'] == 'card' else 'click-soft', 0.26 if it['kind'] == 'card' else 0.35)); count += 1
+            ev.append((t + 0.05, 'pop' if it['kind'] == 'card' else 'click-soft', 0.3 if it['kind'] == 'card' else 0.35)); count += 1
         if re.search(r'font-size:\s*(5[2-9]|[6-9]\d|1\d\d)px[^>]*>\s*\d{1,4}\s*<', it['html']):
-            ev.append((t + 1.35, 'ping', 0.22))
+            ev.append((t + (DRAG_DUR if it['drag'] else 0) + 1.35, 'ping', 0.22))
     if n == 15: ev.append((start + plan[-2]['t'] + 0.2, 'chime', 0.32))
-    if n == 16: ev.append((start + plan[2]['t'] + 0.1, 'sparkle', 0.3))
+    if n == 16: ev.append((start + plan[2]['t'] + 0.1, 'chime', 0.28))
     return ev
 
 def patch_frame7():

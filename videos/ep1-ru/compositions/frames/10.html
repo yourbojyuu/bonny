@@ -29,7 +29,7 @@
 <div style="display:flex;align-items:center;gap:12px"><p style="font-size:24px;font-weight:700;color:#FCFCFD;background:linear-gradient(140deg, #4C8DF8, #1666E8);padding:6px 20px;border-radius:999px;box-shadow:0px 8px 18px rgba(22,102,232,0.28), inset 0px 1px 0px rgba(255,255,255,0.5)">EP 1 · CCA</p><p style="font-size:24px;font-weight:600;color:#FCFCFD;background:#1A1F36;padding:6px 18px;border-radius:999px;box-shadow:0px 6px 14px rgba(26,31,54,0.2)">ไฟล์ต้นฉบับ · Phuchit CCA result.html</p></div>
 <h2 style="font-family:'Prompt', Tahoma, sans-serif;font-size:48px;font-weight:600;line-height:1.2">เปิดไฟล์ผลก่อน: สี่ตารางของ Indicator</h2>
 </div>
-<div data-reveal="img" data-t="2.367" style="position:relative;flex:1">
+<div data-reveal="img" data-t="2.367" data-drag="1" style="position:relative;flex:1">
 <div style="position:absolute;left:0px;top:0px;width:404px;height:580px;transform:rotate(-0.8deg);background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid rgba(26,31,54,0.10);box-shadow:0px 18px 40px rgba(26,31,54,0.12)"><div style="display:flex;align-items:center;gap:10px;height:52px;padding:0px 18px;background:#F1F2F6;border-bottom:1px solid #E1E3EA"><span style="width:12px;height:12px;border-radius:6px;background:#FF6159"></span><span style="width:12px;height:12px;border-radius:6px;background:#FFBD2E"></span><span style="width:12px;height:12px;border-radius:6px;background:#28C941"></span><p style="font-size:24px;color:#1A1F36;font-weight:600;white-space:nowrap;overflow:hidden;margin-left:8px">Weights</p></div><div style="display:flex;align-items:center;justify-content:center;height:528px"><img src="assets/img/e165aa3bb35e96052c0e93d7d980fecb.png" alt="ADANCO Weights" style="width:375px;height:426px;object-fit:contain"></div></div>
 <div style="position:absolute;left:424px;top:10px;width:404px;height:580px;transform:rotate(0.6deg);background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid rgba(26,31,54,0.10);box-shadow:0px 18px 40px rgba(26,31,54,0.12)"><div style="display:flex;align-items:center;gap:10px;height:52px;padding:0px 18px;background:#F1F2F6;border-bottom:1px solid #E1E3EA"><span style="width:12px;height:12px;border-radius:6px;background:#FF6159"></span><span style="width:12px;height:12px;border-radius:6px;background:#FFBD2E"></span><span style="width:12px;height:12px;border-radius:6px;background:#28C941"></span><p style="font-size:24px;color:#1A1F36;font-weight:600;white-space:nowrap;overflow:hidden;margin-left:8px">Weights T-Values</p></div><div style="display:flex;align-items:center;justify-content:center;height:528px"><img src="assets/img/75cdf41a696da07f5ffafbdacbf4eac1.png" alt="ADANCO Weights T-Values" style="width:376px;height:416px;object-fit:contain"></div></div>
 <div style="position:absolute;left:848px;top:0px;width:404px;height:580px;transform:rotate(-0.5deg);background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid rgba(26,31,54,0.10);box-shadow:0px 18px 40px rgba(26,31,54,0.12)"><div style="display:flex;align-items:center;gap:10px;height:52px;padding:0px 18px;background:#F1F2F6;border-bottom:1px solid #E1E3EA"><span style="width:12px;height:12px;border-radius:6px;background:#FF6159"></span><span style="width:12px;height:12px;border-radius:6px;background:#FFBD2E"></span><span style="width:12px;height:12px;border-radius:6px;background:#28C941"></span><p style="font-size:24px;color:#1A1F36;font-weight:600;white-space:nowrap;overflow:hidden;margin-left:8px">Loadings</p></div><div style="display:flex;align-items:center;justify-content:center;height:528px"><img src="assets/img/cbec944cd1cf22309eb51700aa03c5a6.png" alt="ADANCO Loadings" style="width:376px;height:425px;object-fit:contain"></div></div>
@@ -45,9 +45,16 @@
   const tl = gsap.timeline({ paused: true });
 
   const stage = document.getElementById("f10-stage"), shell = document.getElementById("f10-shell");
-  const D = 27.004, V = 1;
+  const D = 27.004, V = 1, N = 10;
+  const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
+  // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
+  const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
+  const drags = [...stage.querySelectorAll("[data-drag]")], rect = new Map();
+  drags.forEach(el => rect.set(el, place(el)));
+  const mk = (css, html) => { const d = document.createElement("div"); d.setAttribute("data-layout-allow-overflow", ""); d.setAttribute("data-layout-allow-overlap", ""); d.setAttribute("data-layout-allow-occlusion", ""); d.style.cssText = "position:absolute;left:0;top:0;pointer-events:none;opacity:0;" + css; if (html) d.innerHTML = html; shell.appendChild(d); return d; };
+  const STAR = c => '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 0 C13 8 16 11 24 12 C16 13 13 16 12 24 C11 16 8 13 0 12 C8 11 11 8 12 0 Z" fill="' + c + '"/></svg>';
   // scene entrance: zoom / slide / rise, then a slow camera push for the rest of the scene
-  const enter = [{ scale: 1.07 }, { x: 160 }, { y: 110 }][V];
+  const enter = [{ scale: 1.07 }, { x: 160 }, { y: 110 }][V % 3];
   if (true) tl.fromTo(shell, { opacity: 0, ...enter }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }, 0);
   tl.fromTo(stage, { scale: 1 }, { scale: 1.03, duration: D, ease: "none" }, 0);
   // decorations drift in and float
@@ -55,28 +62,59 @@
     tl.fromTo(d, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1);
     const per = 2.6 + (i % 3) * 0.5; tl.to(d, { y: i % 2 ? 12 : -12, duration: per, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / per) - 1) }, 0.3);
   });
-  // element reveals
-  const FX = {
-    head:  [{ opacity: 0, x: -60, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, x: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.85, ease: "power3.out" }],
-    card:  [{ opacity: 0, y: 56, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.6)" }],
-    img:   [{ opacity: 0, y: 30, scale: 1.12 }, { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: "expo.out" }],
-    text:  [{ opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.65, ease: "power2.out" }],
-    badge: [{ opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(3)" }],
+  // sticker stars pop in and bob
+  [[1560, 70, 54], [1790, 210, 38], [60, 880, 46], [1740, 930, 34]].forEach(([x, y, s], i) => {
+    const st = mk("width:" + s + "px;height:" + s + "px;left:" + x + "px;top:" + y + "px;", STAR(COL[(N + i * 2) % 5]));
+    const t = 0.45 + i * 0.3 + (N % 3) * 0.05;
+    tl.fromTo(st, { opacity: 0, scale: 0, rotation: -120 }, { opacity: 0.9, scale: 1, rotation: 0, duration: 0.7, ease: "back.out(3)" }, t);
+    tl.to(st, { rotation: 25, y: i % 2 ? 10 : -10, duration: 2.4 + i * 0.4, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / (2.4 + i * 0.4)) - 1) }, t + 0.7);
+  });
+  // confetti burst from (cx, cy) at time t
+  const burst = (cx, cy, t, n = 9) => {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + N, r = 90 + (i % 3) * 34, sz = 14 + (i % 4) * 5;
+      const p = mk("width:" + sz + "px;height:" + sz + "px;left:" + cx + "px;top:" + cy + "px;" + (i % 3 === 0 ? "border-radius:50%;background:" + COL[i % 5] : i % 3 === 1 ? "border-radius:3px;background:" + COL[(i + 2) % 5] : ""), i % 3 === 2 ? STAR(COL[(i + 1) % 5]) : "");
+      tl.fromTo(p, { opacity: 1, scale: 0.3, x: 0, y: 0, rotation: 0 }, { opacity: 0, scale: 1, x: Math.cos(a) * r, y: Math.sin(a) * r + 26, rotation: (i % 2 ? 1 : -1) * 220, duration: 0.85, ease: "power2.out" }, t);
+    }
   };
+  // element reveals — bouncy, a little wobbly ("duk-dik")
+  const FX = {
+    head:  [{ opacity: 0, x: -70, rotation: -2, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, x: 0, rotation: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "back.out(1.4)" }],
+    card:  [{ opacity: 0, y: 40, scale: 0.55, rotation: -5 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 1.0, ease: "elastic.out(1, 0.55)" }],
+    img:   [{ opacity: 0, y: 30, scale: 0.7, rotation: 3 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 0.9, ease: "back.out(2)" }],
+    text:  [{ opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "back.out(2)" }],
+    badge: [{ opacity: 0, scale: 0.3, rotation: -40 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.65, ease: "back.out(3.5)" }],
+  };
+  const cur = drags.length ? mk("width:62px;height:62px;filter:drop-shadow(0 8px 10px rgba(240,80,143,0.45));", '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M4 2 L4 19 L8.6 14.9 L11.6 21.6 L14.4 20.4 L11.4 13.8 L17.6 13.5 Z" fill="#ffffff" stroke="#1A1F36" stroke-width="1.6" stroke-linejoin="round"/></svg>') : null;
   stage.querySelectorAll("[data-reveal]").forEach(el => {
     const t = +el.dataset.t, [from, to] = FX[el.dataset.reveal];
-    tl.fromTo(el, from, to, t);
+    if (el.hasAttribute("data-drag")) {
+      const r = rect.get(el), k = drags.indexOf(el), right = r.x + r.w / 2 > 960;
+      const dx = (right ? 1 : -1) * 640, dy = k % 2 ? 260 : -210;
+      const gx = r.x + Math.min(70, r.w * 0.3), gy = r.y + Math.min(60, r.h * 0.3);
+      tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "none" }, t);
+      tl.fromTo(el, { x: dx, y: dy, rotation: right ? 9 : -9, scale: 1.05 }, { x: 0, y: 0, rotation: 0, scale: 1, duration: 0.9, ease: "power3.out" }, t);
+      tl.set(cur, { x: gx + dx, y: gy + dy, scale: 1, opacity: 0 }, t - 0.15);
+      tl.to(cur, { opacity: 1, duration: 0.12 }, t - 0.15);
+      tl.to(cur, { scale: 0.84, duration: 0.08, ease: "power2.in" }, t - 0.03);
+      tl.to(cur, { x: gx, y: gy, duration: 0.9, ease: "power3.out" }, t);
+      tl.to(cur, { scale: 1, duration: 0.15, ease: "back.out(3)" }, t + 0.9);
+      tl.to(cur, { x: gx + 110, y: gy + 90, opacity: 0, duration: 0.4, ease: "power2.in" }, t + 0.9 + 0.18);
+      tl.to(el, { scaleX: 1.05, scaleY: 0.93, duration: 0.07, ease: "power2.out" }, t + 0.9);
+      tl.to(el, { scaleX: 1, scaleY: 1, duration: 0.6, ease: "elastic.out(1, 0.35)" }, t + 0.9 + 0.07);
+      burst(r.x + r.w / 2, r.y + r.h / 2, t + 0.9);
+    } else tl.fromTo(el, from, to, t);
     const rows = el.querySelectorAll("tr");
-    if (rows.length > 2) tl.fromTo(rows, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, t + 0.3);
+    if (rows.length > 2) tl.fromTo(rows, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "back.out(1.7)", stagger: 0.07 }, t + 0.3 + (el.hasAttribute("data-drag") ? 0.9 : 0));
     el.querySelectorAll("p").forEach(p => {                     // big integers count up
       const txt = p.textContent.trim(), fs = parseFloat(getComputedStyle(p).fontSize);
       if (!/^[0-9]{1,4}$/.test(txt) || fs < 52 || el.dataset.reveal === "badge") return;
       const o = { v: 0 }, v = +txt;
-      tl.to(o, { v, duration: 1.2, ease: "power2.out", onUpdate: () => { p.textContent = Math.round(o.v); } }, t + 0.15);
+      tl.to(o, { v, duration: 1.2, ease: "power2.out", onUpdate: () => { p.textContent = Math.round(o.v); } }, t + 0.15 + (el.hasAttribute("data-drag") ? 0.9 : 0));
     });
     el.querySelectorAll("svg line").forEach((ln, i) => {        // diagram arrows draw on
       const L = ln.getTotalLength();
-      tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t + 0.45 + i * 0.18);
+      tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t + 0.45 + i * 0.18 + (el.hasAttribute("data-drag") ? 0.9 : 0));
     });
   });
   
