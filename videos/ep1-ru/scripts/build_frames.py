@@ -5,7 +5,7 @@ sound effects. Frame 7 (demo clip) is hand-built in compositions/frames/07.html.
 
 Pipeline: scripts/edit_clip.py -> scripts/process_voice.py -> scripts/build_frames.py
 Background music is left to the editor: add it as its own <audio> track (see the BGM note in index.html)."""
-import re, subprocess, json, os
+import re, subprocess, json, os, random
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))
 FONTS = open('assets/fonts/fonts.css', encoding='utf8').read()
 # (frame, slide id, narration number or None)
@@ -19,8 +19,16 @@ T_PLAY = 5.0                                     # frame 7: clip starts after cl
 LEAD, TAIL, XFADE = 0.4, 0.6, 0.6                # voice lead-in / tail inside a scene; scene overlap
 REVEAL_AT, MAX_SFX_PER_SCENE = 0.7, 6
 MAX_DRAGS, DRAG_GAP, DRAG_DUR = 3, 1.8, 0.9      # cursor drag-and-drop: cards per scene, spacing, travel time
-SFX_DUR = {'whoosh-short': 0.57, 'whoosh': 0.57, 'whoosh-cinematic': 5.54, 'pop': 0.72, 'click': 0.37,
-           'click-soft': 0.37, 'ping': 1.32, 'chime': 2.5, 'sparkle': 1.8, 'impact-bass-1': 2.12, 'impact-bass-2': 2.59}
+PALETTE = json.load(open('assets/sfx/v/palette.json'))   # scripts/make_sfx.py
+rnd = random.Random(20261022)
+_bags, _last = {}, {}
+def choose(cat):
+    """Shuffle-bag pick: every variant plays once before any repeats, never the same one twice in a row."""
+    if not _bags.get(cat):
+        bag = PALETTE[cat][:]; rnd.shuffle(bag)
+        if len(bag) > 1 and bag[-1]['file'] == _last.get(cat): bag[0], bag[-1] = bag[-1], bag[0]
+        _bags[cat] = bag
+    pick = _bags[cat].pop(); _last[cat] = pick['file']; return pick
 
 # ---------- minimal tag scanner: find element spans without reserialising the markup (keeps SVG casing) ----------
 TAG = re.compile(r'<(/?)([a-zA-Z][\w-]*)((?:"[^"]*"|\'[^\']*\'|[^>"\'])*?)(/?)>')
@@ -199,24 +207,23 @@ def convert(n, slide, A, D, last):
 def scene_sfx(n, start, plan):
     """Sound design for one scene: a transition swish, grab/drop sounds for dragged cards, pops for the rest."""
     ev = []
-    if n == 1: ev.append((start + 0.55, 'impact-bass-1', 0.4))
-    elif n == 8: ev.append((start, 'whoosh', 0.5))
-    else: ev.append((start, 'whoosh-short' if n % 2 else 'whoosh', 0.4))
-    ev.append((start + 0.5, 'sparkle', 0.16))                      # stickers pop in
+    if n == 1: ev.append((start + 0.55, 'impact', 0.32))
+    else: ev.append((start, 'swish', 0.34))
+    ev.append((start + 0.5, 'sparkle', 0.12))                      # stickers pop in
     count = 0
     for it in plan:
         t = start + it['t']
         if it['drag']:
-            ev += [(t - 0.05, 'click-soft', 0.4), (t, 'whoosh-short', 0.3), (t + DRAG_DUR, 'pop', 0.6), (t + DRAG_DUR + 0.04, 'click', 0.28)]
-            if n in (1, 3, 9, 16): ev.append((t + DRAG_DUR + 0.05, 'sparkle', 0.22))
+            ev += [(t - 0.05, 'grab', 0.3), (t + 0.05, 'swish', 0.2), (t + DRAG_DUR, 'drop', 0.5)]
+            if n in (1, 3, 9, 16): ev.append((t + DRAG_DUR + 0.05, 'sparkle', 0.16))
             continue
-        if n == 2 and it['kind'] == 'card' and count == 0: ev.append((t + 0.1, 'impact-bass-2', 0.4)); count += 1; continue
+        if n == 2 and it['kind'] == 'card' and count == 0: ev.append((t + 0.1, 'impact', 0.3)); count += 1; continue
         if it['kind'] in ('card', 'img') and count < MAX_SFX_PER_SCENE:
-            ev.append((t + 0.05, 'pop' if it['kind'] == 'card' else 'click-soft', 0.3 if it['kind'] == 'card' else 0.35)); count += 1
+            ev.append((t + 0.05, 'pop', 0.34)); count += 1
         if re.search(r'font-size:\s*(5[2-9]|[6-9]\d|1\d\d)px[^>]*>\s*\d{1,4}\s*<', it['html']):
-            ev.append((t + (DRAG_DUR if it['drag'] else 0) + 1.35, 'ping', 0.22))
-    if n == 15: ev.append((start + plan[-2]['t'] + 0.2, 'chime', 0.32))
-    if n == 16: ev.append((start + plan[2]['t'] + 0.1, 'chime', 0.28))
+            ev.append((t + (DRAG_DUR if it['drag'] else 0) + 1.35, 'ping', 0.3))
+    if n == 15: ev.append((start + plan[-2]['t'] + 0.2, 'chime', 0.26))
+    if n == 16: ev.append((start + plan[2]['t'] + 0.1, 'chime', 0.24))
     return ev
 
 def patch_frame7():
@@ -232,7 +239,7 @@ for n, slide, a in FRAMES:
     if a is None:
         d = T_PLAY + CLIP; overlap = 0.8
         voices.append(('clip', round(t + T_PLAY, 3), round(min(probe('assets/audio/voice/clip.m4a'), CLIP - 0.5), 3)))  # stop before page 8's narration
-        sfx += [(t, 'whoosh-short', 0.42), (t + 3.55, 'click', 0.6), (t + 3.9, 'whoosh-cinematic', 0.4), (t + T_PLAY + 0.4, 'pop', 0.22)]
+        sfx += [(t, 'swish', 0.34), (t + 3.55, 'click', 0.5), (t + 3.9, 'expand', 0.32), (t + T_PLAY + 0.4, 'pop', 0.22)]
     else:
         A = probe(f'assets/audio/voice/{a}.m4a'); d = LEAD + A + TAIL; overlap = XFADE
         voices.append((a, round(t + LEAD, 3), round(A, 3)))
@@ -248,8 +255,9 @@ sfx.sort()
 fx, lane_free = [], [0.0] * 8                    # spread effects over tracks 6-13 so none overlap on a track
 for i, (st, name, vol) in enumerate(sfx):
     if st + 0.05 >= total: continue
-    d = min(SFX_DUR[name], round(total - st, 3)); lane = next((k for k in range(8) if lane_free[k] <= st), 0); lane_free[lane] = st + d
-    fx.append(f'      <audio id="sfx-{i:03d}" src="assets/sfx/{name}.mp3" data-start="{round(st, 3)}" data-duration="{d}" data-volume="{vol}" data-track-index="{6 + lane}"></audio>')
+    pick = choose(name); vol = round(vol * (0.85 + 0.3 * rnd.random()), 3)     # varied sound, varied level
+    d = min(pick['dur'], round(total - st, 3)); lane = next((k for k in range(8) if lane_free[k] <= st), 0); lane_free[lane] = st + d
+    fx.append(f'      <audio id="sfx-{i:03d}" src="{pick["file"]}" data-start="{round(st, 3)}" data-duration="{d}" data-volume="{vol}" data-track-index="{6 + lane}"></audio>')
 idx = f'''<!doctype html>
 <html lang="th">
   <head>

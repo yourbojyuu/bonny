@@ -1,0 +1,182 @@
+{
+ "swish": [
+  {
+   "file": "assets/sfx/v/swish-0.mp3",
+   "dur": 0.6
+  },
+  {
+   "file": "assets/sfx/v/swish-1.mp3",
+   "dur": 0.696
+  },
+  {
+   "file": "assets/sfx/v/swish-2.mp3",
+   "dur": 0.552
+  },
+  {
+   "file": "assets/sfx/v/swish-3.mp3",
+   "dur": 0.6
+  },
+  {
+   "file": "assets/sfx/v/swish-4.mp3",
+   "dur": 0.72
+  },
+  {
+   "file": "assets/sfx/v/swish-5.mp3",
+   "dur": 0.528
+  }
+ ],
+ "grab": [
+  {
+   "file": "assets/sfx/v/grab-tick-0.mp3",
+   "dur": 0.096
+  },
+  {
+   "file": "assets/sfx/v/grab-tick-1.mp3",
+   "dur": 0.096
+  },
+  {
+   "file": "assets/sfx/v/grab-tick-2.mp3",
+   "dur": 0.096
+  },
+  {
+   "file": "assets/sfx/v/grab-click-0.mp3",
+   "dur": 0.384
+  },
+  {
+   "file": "assets/sfx/v/grab-click-1.mp3",
+   "dur": 0.384
+  }
+ ],
+ "drop": [
+  {
+   "file": "assets/sfx/v/drop-pop-0.mp3",
+   "dur": 0.768
+  },
+  {
+   "file": "assets/sfx/v/drop-pop-1.mp3",
+   "dur": 0.744
+  },
+  {
+   "file": "assets/sfx/v/drop-pop-2.mp3",
+   "dur": 0.744
+  },
+  {
+   "file": "assets/sfx/v/drop-pop-3.mp3",
+   "dur": 0.744
+  },
+  {
+   "file": "assets/sfx/v/drop-marimba-0.mp3",
+   "dur": 0.48
+  },
+  {
+   "file": "assets/sfx/v/drop-marimba-1.mp3",
+   "dur": 0.48
+  },
+  {
+   "file": "assets/sfx/v/drop-marimba-2.mp3",
+   "dur": 0.48
+  },
+  {
+   "file": "assets/sfx/v/drop-marimba-3.mp3",
+   "dur": 0.48
+  }
+ ],
+ "pop": [
+  {
+   "file": "assets/sfx/v/pop-bubble-0.mp3",
+   "dur": 0.192
+  },
+  {
+   "file": "assets/sfx/v/pop-bubble-1.mp3",
+   "dur": 0.192
+  },
+  {
+   "file": "assets/sfx/v/pop-bubble-2.mp3",
+   "dur": 0.192
+  },
+  {
+   "file": "assets/sfx/v/pop-bubble-3.mp3",
+   "dur": 0.192
+  },
+  {
+   "file": "assets/sfx/v/pop-marimba-0.mp3",
+   "dur": 0.384
+  },
+  {
+   "file": "assets/sfx/v/pop-marimba-1.mp3",
+   "dur": 0.384
+  },
+  {
+   "file": "assets/sfx/v/pop-marimba-2.mp3",
+   "dur": 0.384
+  }
+ ],
+ "ping": [
+  {
+   "file": "assets/sfx/v/ping-kalimba-0.mp3",
+   "dur": 0.936
+  },
+  {
+   "file": "assets/sfx/v/ping-kalimba-1.mp3",
+   "dur": 0.936
+  },
+  {
+   "file": "assets/sfx/v/ping-kalimba-2.mp3",
+   "dur": 0.936
+  },
+  {
+   "file": "assets/sfx/v/ping-kalimba-3.mp3",
+   "dur": 0.936
+  }
+ ],
+ "sparkle": [
+  {
+   "file": "assets/sfx/v/sparkle-0.mp3",
+   "dur": 1.824
+  },
+  {
+   "file": "assets/sfx/v/sparkle-1.mp3",
+   "dur": 1.656
+  },
+  {
+   "file": "assets/sfx/v/sparkle-2.mp3",
+   "dur": 2.04
+  }
+ ],
+ "chime": [
+  {
+   "file": "assets/sfx/v/chime-0.mp3",
+   "dur": 2.52
+  },
+  {
+   "file": "assets/sfx/v/chime-1.mp3",
+   "dur": 2.52
+  },
+  {
+   "file": "assets/sfx/v/chime-2.mp3",
+   "dur": 2.544
+  }
+ ],
+ "impact": [
+  {
+   "file": "assets/sfx/v/impact-0.mp3",
+   "dur": 2.136
+  },
+  {
+   "file": "assets/sfx/v/impact-1.mp3",
+   "dur": 2.616
+  }
+ ],
+ "click": [
+  {
+   "file": "assets/sfx/v/click-0.mp3",
+   "dur": 0.384
+  }
+ ],
+ "expand": [
+  {
+   "file": "assets/sfx/v/expand-0.mp3",
+   "dur": 5.592
+  }
+ ]
+}
