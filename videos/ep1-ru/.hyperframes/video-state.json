@@ -4363,11 +4363,11 @@
   },
   "renders": {
     "latest": {
-      "id": "90a8fdbf-40d4-4382-87d7-16fa77f435d0",
-      "completedAt": 1792646446743,
-      "output": "/home/user/bonny/videos/ep1-ru/renders/EP1-RU-v3.mp4",
+      "id": "4456a533-3205-4c38-88b1-22f30e755d0b",
+      "completedAt": 1792660626875,
+      "output": "/home/user/bonny/videos/ep1-ru/renders/EP1-RU-v4.mp4",
       "status": "completed",
-      "revision": "5a7c7586-0c04-4933-8573-170c2ea5eb08"
+      "revision": null
     },
     "retainedRevisions": [
       "5a7c7586-0c04-4933-8573-170c2ea5eb08",
