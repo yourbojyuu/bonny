@@ -1,0 +1,176 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head>
+<body>
+<template>
+<style>
+@font-face{font-family:'Prompt';font-weight:600;font-style:normal;src:url('assets/fonts/Prompt-600-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Prompt';font-weight:600;font-style:normal;src:url('assets/fonts/Prompt-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Anuphan';font-weight:400;font-style:normal;src:url('assets/fonts/Anuphan-400-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Anuphan';font-weight:400;font-style:normal;src:url('assets/fonts/Anuphan-400-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Anuphan';font-weight:600;font-style:normal;src:url('assets/fonts/Anuphan-600-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Anuphan';font-weight:600;font-style:normal;src:url('assets/fonts/Anuphan-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
+@font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+#f20-root{position:absolute;inset:0;overflow:hidden}
+#f20-shell{position:absolute;inset:0}
+#f20-cam{position:absolute;inset:0}
+#f20-stage{position:absolute;inset:0;background:#F0ECFB;color:#1A1F36;font-family:'Anuphan', Tahoma, sans-serif;padding:96px 112px 140px;display:flex;flex-direction:column;gap:32px}
+</style>
+<div id="f20-root" data-composition-id="f20" data-width="1920" data-height="1080">
+<div id="f20-shell">
+<div id="f20-cam">
+<div id="f20-stage">
+
+<div style="position:absolute;left:0px;top:0px;width:1100px;height:800px;background:radial-gradient(circle at 15% 20%, #D2C2FF 0%, rgba(210,194,255,0) 62%)"></div>
+<div style="position:absolute;left:820px;top:380px;width:1100px;height:700px;background:radial-gradient(circle at 85% 85%, #F2CCFF 0%, rgba(242,204,255,0) 62%)"></div>
+<div style="position:absolute;left:900px;top:0px;width:1020px;height:520px;background:radial-gradient(circle at 88% 10%, #C8D6FF 0%, rgba(200,214,255,0) 58%)"></div>
+<svg data-deco="1" data-layout-allow-overflow style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;pointer-events:none" viewBox="0 0 1920 1080"><path d="M1920 0 v290 a290 290 0 0 1 -290 -290z" fill="#C4AEFF" opacity="0.6"/><path d="M1920 0 v160 a160 160 0 0 1 -160 -160z" fill="#6A2EE8" opacity="0.22"/><path d="M1560 220 l30 -52 l30 52z" fill="#F06BC8" opacity="0.55"/><circle cx="1470" cy="70" r="14" fill="none" stroke="#6A2EE8" stroke-width="3" opacity="0.5"/><path d="M0 800 a140 140 0 0 1 0 280z" fill="#6A2EE8" opacity="0.16"/><rect x="60" y="760" width="70" height="70" rx="16" fill="#F06BC8" opacity="0.35" transform="rotate(20 95 795)"/><circle cx="1530" cy="36" r="4.5" fill="#6A2EE8" opacity="0.4"/><circle cx="1554" cy="36" r="4.5" fill="#6A2EE8" opacity="0.4"/><circle cx="1578" cy="36" r="4.5" fill="#6A2EE8" opacity="0.4"/><circle cx="1602" cy="36" r="4.5" fill="#6A2EE8" opacity="0.4"/></svg>
+<div data-deco="1" data-layout-allow-overflow style="position:absolute;left:1700px;top:40px;width:160px;height:160px;border-radius:38px;transform:rotate(12deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
+<div data-deco="1" data-layout-allow-overflow style="position:absolute;left:-50px;top:890px;width:150px;height:150px;border-radius:50%;transform:rotate(0deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
+<div data-reveal="head" data-t="0.35" data-i="0" style="position:relative;display:flex;flex-direction:column;justify-content:center;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><p style="font-size:24px;font-weight:700;color:#FCFCFD;background:linear-gradient(140deg, #9A6BFA, #6A2EE8);padding:6px 20px;border-radius:999px;box-shadow:0px 8px 18px rgba(106,46,232,0.28), inset 0px 1px 0px rgba(255,255,255,0.5)">EP 2 · PLS-SEM</p><p style="font-size:24px;font-weight:600;color:#6A2EE8;background:rgba(255,255,255,0.65);border:2px solid rgba(255,255,255,0.95);padding:4px 18px;border-radius:999px">หลักการ</p></div>
+<h2 style="font-family:'Prompt', Tahoma, sans-serif;font-size:48px;font-weight:600;line-height:1.2">โมเดลเดียว สองชั้น และเหตุผลที่งานนี้เลือก PLS</h2>
+</div>
+<div style="position:relative;flex:1;min-height:0;display:grid;grid-template-columns:repeat(12, 1fr);grid-template-rows:1fr 1fr 1fr;gap:24px">
+<div data-reveal="card" data-t="1.568" data-i="1" data-drag="1" style="grid-column:span 5;display:flex;align-items:center;gap:22px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:26px;font-weight:600;color:#FCFCFD;background:linear-gradient(140deg, #B79CFF, #9B7BEA);padding:8px 16px;border-radius:14px">Outer</p><div style="display:flex;flex-direction:column;justify-content:center;gap:4px"><h3 style="font-size:36px;font-weight:700">Measurement model</h3><p style="font-size:32px;line-height:1.45;color:#3D4459">Indicator กับ Latent variable ตรวจแบบ EP 1</p></div></div>
+<div data-reveal="card" data-t="14.633" data-i="2" data-drag="1" style="grid-column:span 7;grid-row:span 3;display:flex;flex-direction:column;justify-content:center;gap:0px;background:linear-gradient(140deg, #9A6BFA 0%, #6A2EE8 55%, #4B1FB8 100%);border:2px solid rgba(255,255,255,0.5);border-radius:32px;box-shadow:0px 20px 44px rgba(106,46,232,0.28), inset 0px 2px 0px rgba(255,255,255,0.5), inset 0px -6px 14px rgba(30,10,80,0.18);padding:30px 36px">
+<div style="display:flex;padding:14px 0px;border-bottom:1px solid rgba(255,255,255,0.25)"><p data-z="1" style="width:180px;font-size:24px;font-weight:700;color:#D9C7FF">ทำไมเลือก</p><p style="flex:1;font-size:24px;font-weight:700;color:#D9C7FF">CB-SEM</p><p style="flex:1;font-size:24px;font-weight:700;color:#FCFCFD">PLS-SEM</p></div>
+<div data-z="2" style="display:flex;padding:16px 0px;border-bottom:1px solid rgba(255,255,255,0.25)"><p style="width:180px;font-size:24px;font-weight:700;color:#FCFCFD">ตัวแปร</p><p style="flex:1;font-size:24px;color:#E6DBFF">ปัจจัยร่วม</p><p style="flex:1;font-size:24px;color:#FCFCFD"><b>composite</b> ได้โดยตรง</p></div>
+<div style="display:flex;padding:16px 0px;border-bottom:1px solid rgba(255,255,255,0.25)"><p style="width:180px;font-size:24px;font-weight:700;color:#FCFCFD">เป้าหมาย</p><p style="flex:1;font-size:24px;color:#E6DBFF">ทำซ้ำเมทริกซ์ข้อมูล</p><p style="flex:1;font-size:24px;color:#FCFCFD"><b>อธิบายความแปรปรวน</b></p></div>
+<div data-z="3" style="display:flex;padding:16px 0px;border-bottom:1px solid rgba(255,255,255,0.25)"><p style="width:180px;font-size:24px;font-weight:700;color:#FCFCFD">อันดับสูง</p><p style="flex:1;font-size:24px;color:#E6DBFF">ทำได้ แต่ซับซ้อน</p><p style="flex:1;font-size:24px;color:#FCFCFD"><b>ทำได้ในโมเดล</b></p></div>
+<div style="display:flex;padding:16px 0px"><p style="width:180px;font-size:24px;font-weight:700;color:#FCFCFD">fit</p><p style="flex:1;font-size:24px;color:#E6DBFF">χ², CFI, RMSEA</p><p style="flex:1;font-size:24px;color:#FCFCFD">SRMR, dULS, dG</p></div>
+</div>
+<div data-reveal="card" data-t="6.482" data-i="3" data-drag="1" style="grid-column:span 5;display:flex;align-items:center;gap:22px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:26px;font-weight:600;color:#FCFCFD;background:linear-gradient(140deg, #9A6BFA, #6A2EE8);padding:8px 16px;border-radius:14px">Inner</p><div style="display:flex;flex-direction:column;justify-content:center;gap:4px"><h3 style="font-size:36px;font-weight:700">Structural model</h3><p style="font-size:32px;line-height:1.45;color:#3D4459">อิทธิพลระหว่าง Latent variable ตอบคำถามวิจัย</p></div></div>
+<div data-reveal="card" data-t="29.871" data-i="4" style="grid-column:span 5;display:flex;align-items:center;gap:22px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p data-z="4" style="font-family:'Prompt', Tahoma, sans-serif;font-size:26px;font-weight:600;color:#6A2EE8;background:#EDE3FF;padding:8px 16px;border-radius:14px">5,000</p><div style="display:flex;flex-direction:column;justify-content:center;gap:4px"><h3 style="font-size:36px;font-weight:700">ทดสอบด้วย bootstrap</h3><p style="font-size:32px;line-height:1.45;color:#3D4459">ไม่ต้องพึ่งการแจกแจงปกติ</p></div></div>
+</div>
+<p data-reveal="badge" data-t="4.033" data-i="5" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">20</p>
+
+
+</div>
+</div>
+
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+
+  const stage = document.getElementById("f20-stage"), shell = document.getElementById("f20-shell"), cam = document.getElementById("f20-cam");
+  const D = 37.478, V = 2, N = 20;
+  const ZOOMS = [{"z": 1, "t": 17.372, "hold": 7.0, "back": true}], RINGS = [{"z": [2], "t": 20.051, "c": "#FFC53D"}, {"z": [3], "t": 28.285, "c": "#F0508F"}, {"z": [4], "t": 32.357, "c": "#22B8CF"}], DRAWS = [];
+  const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
+  // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
+  const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
+  const Z = id => stage.querySelector('[data-z="' + id + '"]');
+  const drags = [...stage.querySelectorAll("[data-drag]")], rect = new Map();
+  drags.forEach(el => rect.set(el, place(el)));
+  const zr = new Map(); stage.querySelectorAll("[data-z]").forEach(el => {
+    let r = place(el);
+    if (el.hasAttribute("data-zrow")) {             // grid table: join every cell on this cell's line
+      const cells = [...el.parentElement.children].filter(c => Math.abs(c.offsetTop - el.offsetTop) < 4).map(place);
+      const x0 = Math.min(...cells.map(c => c.x)), x1 = Math.max(...cells.map(c => c.x + c.w));
+      r = { x: x0, y: r.y, w: x1 - x0, h: r.h };
+    }
+    zr.set(el, r);
+  });
+  const mk = (host, css, html) => { const d = document.createElement("div"); d.setAttribute("data-layout-allow-overflow", ""); d.setAttribute("data-layout-allow-overlap", ""); d.setAttribute("data-layout-allow-occlusion", ""); d.style.cssText = "position:absolute;left:0;top:0;pointer-events:none;opacity:0;" + css; if (html) d.innerHTML = html; host.appendChild(d); return d; };
+  const STAR = c => '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 0 C13 8 16 11 24 12 C16 13 13 16 12 24 C11 16 8 13 0 12 C8 11 11 8 12 0 Z" fill="' + c + '"/></svg>';
+  tl.set(cam, { transformOrigin: "0px 0px" }, 0);
+  // scene entrance: zoom / slide / rise, then a slow camera push for the rest of the scene
+  const enter = [{ scale: 1.07 }, { x: 160 }, { y: 110 }][V % 3];
+  if (true) tl.fromTo(shell, { opacity: 0, ...enter }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }, 0);
+  tl.fromTo(stage, { scale: 1 }, { scale: 1.03, duration: D, ease: "none" }, 0);
+  // decorations drift in and float
+  stage.querySelectorAll("[data-deco]").forEach((d, i) => {
+    tl.fromTo(d, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1);
+    const per = 2.6 + (i % 3) * 0.5; tl.to(d, { y: i % 2 ? 12 : -12, duration: per, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / per) - 1) }, 0.3);
+  });
+  // sticker stars pop in and bob (screen-fixed: they stay put while the camera punches in)
+  [[1560, 70, 54], [1790, 210, 38], [60, 880, 46], [1740, 930, 34]].forEach(([x, y, s], i) => {
+    const st = mk(shell, "width:" + s + "px;height:" + s + "px;left:" + x + "px;top:" + y + "px;", STAR(COL[(N + i * 2) % 5]));
+    const t = 0.45 + i * 0.3 + (N % 3) * 0.05;
+    tl.fromTo(st, { opacity: 0, scale: 0, rotation: -120 }, { opacity: 0.9, scale: 1, rotation: 0, duration: 0.7, ease: "back.out(3)" }, t);
+    tl.to(st, { rotation: 25, y: i % 2 ? 10 : -10, duration: 2.4 + i * 0.4, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / (2.4 + i * 0.4)) - 1) }, t + 0.7);
+  });
+  // confetti burst from (cx, cy) at time t
+  const burst = (cx, cy, t, n = 9) => {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + N, r = 90 + (i % 3) * 34, sz = 14 + (i % 4) * 5;
+      const p = mk(stage, "width:" + sz + "px;height:" + sz + "px;left:" + cx + "px;top:" + cy + "px;" + (i % 3 === 0 ? "border-radius:50%;background:" + COL[i % 5] : i % 3 === 1 ? "border-radius:3px;background:" + COL[(i + 2) % 5] : ""), i % 3 === 2 ? STAR(COL[(i + 1) % 5]) : "");
+      tl.fromTo(p, { opacity: 1, scale: 0.3, x: 0, y: 0, rotation: 0 }, { opacity: 0, scale: 1, x: Math.cos(a) * r, y: Math.sin(a) * r + 26, rotation: (i % 2 ? 1 : -1) * 220, duration: 0.85, ease: "power2.out", immediateRender: false }, t);
+    }
+  };
+  // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
+  const lineIn = (ln, t) => {
+    if (ln.getAttribute("stroke-dasharray")) { tl.fromTo(ln, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, t); return; }
+    const L = ln.getTotalLength();
+    tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t);
+  };
+  DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
+    .forEach((ln, i) => { ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }));
+  // element reveals — bouncy, a little wobbly ("duk-dik")
+  const FX = {
+    head:  [{ opacity: 0, x: -70, rotation: -2, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, x: 0, rotation: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "back.out(1.4)" }],
+    card:  [{ opacity: 0, y: 40, scale: 0.55, rotation: -5 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 1.0, ease: "elastic.out(1, 0.55)" }],
+    img:   [{ opacity: 0, y: 30, scale: 0.7, rotation: 3 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 0.9, ease: "back.out(2)" }],
+    text:  [{ opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "back.out(2)" }],
+    badge: [{ opacity: 0, scale: 0.3, rotation: -40 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.65, ease: "back.out(3.5)" }],
+  };
+  const cur = drags.length || false ? mk(stage, "width:62px;height:62px;z-index:50;filter:drop-shadow(0 8px 10px rgba(240,80,143,0.45));", '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M4 2 L4 19 L8.6 14.9 L11.6 21.6 L14.4 20.4 L11.4 13.8 L17.6 13.5 Z" fill="#ffffff" stroke="#1A1F36" stroke-width="1.6" stroke-linejoin="round"/></svg>') : null;
+  stage.querySelectorAll("[data-reveal]").forEach(el => {
+    const t = +el.dataset.t, [from, to] = FX[el.dataset.reveal], dd = el.hasAttribute("data-drag") ? 0.9 : 0;
+    const group = [el, ...stage.querySelectorAll('[data-follow="' + el.dataset.i + '"]')];
+    if (dd) {
+      const r = rect.get(el), k = drags.indexOf(el), right = r.x + r.w / 2 > 960;
+      const dx = (right ? 1 : -1) * 640, dy = k % 2 ? 260 : -210;
+      const gx = r.x + Math.min(70, r.w * 0.3), gy = r.y + Math.min(60, r.h * 0.3);
+      tl.fromTo(group, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "none" }, t);
+      tl.fromTo(group, { x: dx, y: dy, rotation: right ? 9 : -9, scale: 1.05 }, { x: 0, y: 0, rotation: 0, scale: 1, duration: dd, ease: "power3.out" }, t);
+      tl.set(cur, { x: gx + dx, y: gy + dy, scale: 1, opacity: 0 }, t - 0.15);
+      tl.to(cur, { opacity: 1, duration: 0.12 }, t - 0.15);
+      tl.to(cur, { scale: 0.84, duration: 0.08, ease: "power2.in" }, t - 0.03);
+      tl.to(cur, { x: gx, y: gy, duration: dd, ease: "power3.out" }, t);
+      tl.to(cur, { scale: 1, duration: 0.15, ease: "back.out(3)" }, t + dd);
+      tl.to(cur, { x: gx + 110, y: gy + 90, opacity: 0, duration: 0.4, ease: "power2.in" }, t + dd + 0.18);
+      tl.to(group, { scaleX: 1.05, scaleY: 0.93, duration: 0.07, ease: "power2.out" }, t + dd);
+      tl.to(group, { scaleX: 1, scaleY: 1, duration: 0.6, ease: "elastic.out(1, 0.35)" }, t + dd + 0.07);
+      burst(r.x + r.w / 2, r.y + r.h / 2, t + dd);
+    } else tl.fromTo(group, from, to, t);
+    const rows = el.querySelectorAll("tr");
+    if (rows.length > 2) tl.fromTo(rows, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "back.out(1.7)", stagger: 0.07 }, t + 0.3 + dd);
+    el.querySelectorAll("p").forEach(p => {                     // big numbers count up (integers, .xx, 52.9%)
+      const txt = p.textContent.trim(), fs = parseFloat(getComputedStyle(p).fontSize);
+      const m = txt.match(/^([0-9]{0,4})(\.[0-9]{1,3})?(%?)$/);
+      if (!m || !(m[1] || m[2]) || fs < 52 || el.dataset.reveal === "badge") return;
+      const v = parseFloat(txt), dec = m[2] ? m[2].length - 1 : 0, o = { v: 0 };
+      const fmt = x => { let s = x.toFixed(dec); if (!m[1]) s = s.replace(/^0/, ""); return s + m[3]; };
+      p.textContent = fmt(0);
+      tl.to(o, { v, duration: 1.2, ease: "power2.out", onUpdate: () => { p.textContent = fmt(o.v); } }, t + 0.15 + dd);
+    });
+    el.querySelectorAll("svg line, svg polyline").forEach((ln, i) => { if (!ln.dataset.cued) lineIn(ln, t + 0.45 + i * 0.18 + dd); });
+  });
+  // highlight rings on the words that name them
+  RINGS.forEach((g, k) => g.z.forEach((id, j) => {
+    const el = Z(id), r = zr.get(el), p = 10, c = g.c, t = g.t + j * 0.08;
+    const ring = mk(stage, "left:" + (r.x - p) + "px;top:" + (r.y - p) + "px;width:" + (r.w + 2 * p) + "px;height:" + (r.h + 2 * p) + "px;border:5px solid " + c + ";border-radius:18px;box-shadow:0 0 0 6px " + c + "33,0 0 26px " + c + "99;");
+    tl.fromTo(ring, { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, t);
+    tl.to(ring, { scale: 1.035, duration: 0.32, ease: "sine.inOut", yoyo: true, repeat: 3 }, t + 0.4);
+    tl.to(ring, { opacity: 0, duration: 0.45, ease: "power1.in" }, t + 2.3);
+    const sp = mk(stage, "width:30px;height:30px;left:" + (r.x + r.w + p - 14) + "px;top:" + (r.y - p - 16) + "px;", STAR(c));
+    tl.fromTo(sp, { opacity: 0, scale: 0, rotation: -90 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.45, ease: "back.out(3)" }, t + 0.1);
+    tl.to(sp, { opacity: 0, scale: 0.4, duration: 0.4 }, t + 1.6);
+    if (el.tagName !== "TR" && !el.hasAttribute("data-zrow") && getComputedStyle(el).display !== "inline") tl.to(el, { scale: 1.05, duration: 0.22, ease: "sine.inOut", yoyo: true, repeat: 1 }, t);
+  }));
+  // camera punch-ins on what is being talked about
+  ZOOMS.forEach(z => {
+    const r = zr.get(Z(z.z)), cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    const s = Math.max(1.12, Math.min(1.5, 0.8 * 1920 / r.w, 0.8 * 1080 / r.h));
+    const x = Math.min(0, Math.max(1920 - 1920 * s, 960 - s * cx)), y = Math.min(0, Math.max(1080 - 1080 * s, 540 - s * cy));
+    tl.to(cam, { x, y, scale: s, duration: 0.9, ease: "power3.inOut" }, z.t);
+    if (z.back) tl.to(cam, { x: 0, y: 0, scale: 1, duration: 0.9, ease: "power3.inOut" }, Math.min(z.t + 0.9 + z.hold, D - 1.0));
+  });
+  
+  
+  window.__timelines["f20"] = tl;
+</script>
+</div>
+</template>
+</body></html>
