@@ -25,3 +25,23 @@ stills at every camera punch-in and highlight ring.
 - **Demo clip** is a placeholder (6 s card) until `assets/video/EP2-SEM.mp4` is pushed; then run the pipeline from step 1.
 - Reveals follow the narration, so some pages hold empty space until a card is named (e.g. p21 right card, p32 right cards). This is the requested speech sync; the EP1 rule "everything within ~5 s" no longer holds on those pages.
 - Text under 28 px is the deck's own design (labels, chips, page numbers) — left as is.
+
+## Revision 2 (2026-10-22)
+
+- **Timing to the real speech**: narration transcribed with Whisper turbo (scripts/transcribe.py → scripts/asr.json); the script
+  is aligned to the transcript, and cues where the narrator ad-libs or the transcript garbles a term are pinned to the second
+  they are spoken (numbers in `CUES`). Camera punch-ins start 0.65 s early so the camera arrives on the word.
+- Zooms on tables/cards frame the whole card (`card:` targets), so rows ringed during a zoom stay in view.
+- **Arrowheads** travel with the drawing tip (marker replaced by a moving copy, path sampled at build time).
+- **Demo box** plays a teaser montage of the demo (scripts/make_preview.py) with a slow zoom, chip and pulsing play button.
+- **Voice**: every file tone-matched to one curve, light denoise, two-pass loudnorm → all tracks −16.0…−16.6 LUFS;
+  silence trimmed at the edges and pauses > 0.7 s shortened. Clip: silences ≥ 1.0 s sped up (17:45 → 11:49).
+
+### Open (needs the author)
+
+- **p19 has no narration of its own.** `EP2-SEM-03.mp3` is a clipped take of page 20's opening ("โมเดลนี้มีสองชั้น ชั้นนอกคือ
+  measurement model…"); the file re-uploaded as `EP2:SEM-03.mp3` on 22 Oct 18:49 is byte-identical to `EP2:SEM-19.mp3`.
+- **p21 narration stops early**: `EP2-SEM-05.mp3` ends at "…เอาคะแนนมาเป็นตัวชี้วัดของ RU และประ…" — the Embedded two-stage
+  part is not in the recording; the Embedded card is dragged in at the end without narration.
+- Full `hyperframes check` exceeds its deadline on this 20-min project; run per range (`--range 0,150` etc.) — all ranges pass,
+  only contrast warnings on the deck's own greyed "ns" rows.

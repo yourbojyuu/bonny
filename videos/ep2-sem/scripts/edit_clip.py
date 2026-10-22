@@ -4,7 +4,7 @@ mostly clicking/waiting) are sped up, audio is loudness-normalised. Source is un
 import re, subprocess, os, sys, tempfile
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))
 SRC, OUT = 'assets/video/EP2-SEM.mp4', 'assets/video/EP2-SEM-edit.mp4'
-GAP, NOISE, TARGET = 1.4, '-38dB', 0.7     # min silent gap, silence threshold, seconds a sped-up gap should last
+GAP, NOISE, TARGET = 1.0, '-38dB', 0.6     # min silent gap, silence threshold, seconds a sped-up gap should last
 dur = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',SRC]))
 log = subprocess.run(['ffmpeg','-hide_banner','-i',SRC,'-vn','-af',f'silencedetect=noise={NOISE}:d={GAP}','-f','null','-'],capture_output=True,text=True).stderr
 st = [float(x) for x in re.findall(r'silence_start: ([0-9.]+)', log)]

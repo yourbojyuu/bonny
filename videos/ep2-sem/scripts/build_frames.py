@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """EP2: convert the deck's slide HTML (source/slides, pages 17-35) into HyperFrames sub-compositions and
 write index.html. Every reveal, cursor drag, camera punch-in, highlight ring and arrow draw-on is timed
-to the word in SCRIPT.md that mentions it (see CUES), using an estimate of when each word is spoken:
-the narration text is spread over the voiced stretches of its audio file, weighted by how long each
-kind of character takes to say.
+to the word in SCRIPT.md that mentions it (see CUES), at the moment it is actually spoken: the script is
+aligned to a speech-recognition transcript of each narration file (scripts/transcribe.py -> asr.json).
 
-Pipeline: scripts/edit_clip.py -> scripts/process_voice.py -> scripts/make_sfx.py -> scripts/build_frames.py
+Pipeline: scripts/edit_clip.py -> scripts/process_voice.py -> scripts/transcribe.py -> scripts/make_sfx.py -> scripts/build_frames.py
 Background music is left to the editor: add it as its own <audio> track (see the BGM note in index.html)."""
 import re, subprocess, json, os, random
 import numpy as np
@@ -38,54 +37,63 @@ def choose(cat):
     pick = _bags[cat].pop(); _last[cat] = pick['file']; return pick
 
 # ---------- when is a word spoken? ----------
+# scripts/asr.json (scripts/transcribe.py) holds what each narration file actually says, phrase by phrase,
+# with times. The script text is aligned to that transcript character by character (global alignment), so a
+# cue's words map to the phrase where they are really spoken — ad-libs, skipped words and garbled terms in
+# the transcript only disturb their own neighbourhood.
 TEXT = {int(m.group(1)): m.group(2).strip().split('\n')[0] for m in re.finditer(r'^## p(\d+) [^\n]*\n(.+?)(?=\n## |\Z)', open('SCRIPT.md', encoding='utf8').read(), re.S | re.M)}
-SPOKEN = {'LEAD', 'SUPP', 'ORGA', 'KNOW', 'DIST', 'Run', 'Model', 'Factor', 'Mode', 'Path', 'Weight', 'Weights'}
-def weight(text):
-    """Approximate speaking time of each character: Thai letters 1, tone/vowel marks 0.3, digits and symbols
-    longer (they are read out as words), short capitalised acronyms spelled letter by letter."""
-    w = []
-    for tok in re.finditer(r'[A-Za-z]+|[0-9]|\s|.', text):
-        t = tok.group(0)
-        if t.isspace(): w += [1.2]
-        elif re.fullmatch(r'[A-Za-z]+', t):
-            per = 2.2 if (t.isupper() and len(t) <= 5 and t not in SPOKEN) or len(t) == 1 else 1.0
-            w += [per] * len(t)
-        elif t.isdigit(): w += [2.0]
-        elif t in '.': w += [1.6]
-        elif t in 'β²%': w += [4.0]
-        elif t in ',()·-–': w += [0.2]
-        elif 'ั' <= t <= 'ฺ' or '็' <= t <= '๎': w += [0.3]
-        else: w += [1.0]
-    return np.array(w)
-def voiced(f):
-    """Voiced stretches of a narration file: 20 ms RMS above an adaptive floor, small gaps bridged."""
-    raw = subprocess.run(['ffmpeg','-v','error','-i',f,'-ac','1','-ar','16000','-f','f32le','-'], capture_output=True).stdout
-    x = np.frombuffer(raw, np.float32); hop = 320
-    rms = np.sqrt(np.array([np.mean(x[i:i + hop] ** 2) for i in range(0, len(x) - hop, hop)]) + 1e-12)
-    db = 20 * np.log10(rms); thr = max(np.percentile(db, 10) + 10, np.max(db) - 38)
-    on = db > thr; segs, start = [], None
-    for i, v in enumerate(on):
-        if v and start is None: start = i
-        if not v and start is not None: segs.append([start, i]); start = None
-    if start is not None: segs.append([start, len(on)])
-    merged = []
-    for s in segs:
-        if merged and s[0] - merged[-1][1] < 9: merged[-1][1] = s[1]     # bridge gaps < 180 ms
-        else: merged.append(s)
-    return [(float(a * 0.02), float(b * 0.02)) for a, b in merged if b - a >= 4]
-VOICED = {}
+ASR = json.load(open('scripts/asr.json', encoding='utf8'))
+MARKS = set(chr(c) for c in list(range(0x0E31, 0x0E3B)) + list(range(0x0E47, 0x0E4F)))   # Thai vowel/tone marks: often dropped by ASR
+def norm(text):
+    """Comparable characters and, for each, its index in the original text."""
+    out, idx = [], []
+    for i, ch in enumerate(text.lower()):
+        if ch in MARKS or not (ch.isalnum() or '\u0e00' <= ch <= '\u0e7f'): continue
+        out.append(ch); idx.append(i)
+    return out, idx
+def align(a, b):
+    """Needleman-Wunsch: for each position in a, the matched position in b (or -1)."""
+    n, m = len(a), len(b); M, G = 2, -1
+    S = np.zeros((n + 1, m + 1)); S[:, 0] = np.arange(n + 1) * G; S[0, :] = np.arange(m + 1) * G
+    for i in range(1, n + 1):
+        sub = S[i - 1, :-1] + np.where(np.array(b) == a[i - 1], M, -1)
+        row = np.maximum(sub, S[i - 1, 1:] + G); S[i, 1:] = row
+        for j in range(1, m + 1): S[i, j] = max(S[i, j], S[i, j - 1] + G)
+    out, i, j = [-1] * n, n, m
+    while i > 0 and j > 0:
+        if S[i, j] == S[i - 1, j - 1] + (M if a[i - 1] == b[j - 1] else -1):
+            if a[i - 1] == b[j - 1]: out[i - 1] = j - 1
+            i, j = i - 1, j - 1
+        elif S[i, j] == S[i - 1, j] + G: i -= 1
+        else: j -= 1
+    return out
+TIMEMAP = {}
+def timemap(page, file):
+    """Seconds at which each character of the page's script is spoken."""
+    text = TEXT[page]; sc, sidx = norm(text)
+    tc, tt = [], []
+    for ph in ASR[file]:
+        cs, _ = norm(ph['text']); a, b = ph['a'] + 0.08, max(ph['a'] + 0.1, ph['b'] - 0.08)
+        tc += cs; tt += [a + (b - a) * k / max(1, len(cs)) for k in range(len(cs))]
+    match = align(sc, tc)
+    known = [(k, tt[j]) for k, j in enumerate(match) if j >= 0]
+    if len(known) < 0.25 * len(sc):                                  # transcript does not follow the script
+        print(f'  ! p{page}: only {len(known)}/{len(sc)} characters align — check its narration file')
+    if not known: known = [(0, 0.0), (len(sc) - 1, ASR[file][-1]['b'])]
+    ks, ts = zip(*known)
+    per = np.interp(range(len(sc)), ks, ts)
+    full = np.interp(range(len(text)), sidx, per)
+    TIMEMAP[page] = np.maximum.accumulate(full)                    # never run backwards
 def when(page, needle, occ=1):
-    """Seconds into the page's narration file at which `needle` (its occ-th occurrence) is spoken."""
+    """Seconds into the page's narration file at which `needle` (its occ-th occurrence) starts being spoken.
+    A number is taken as the time itself: used where the narrator ad-libs or the transcript garbles a term,
+    read off scripts/asr.json."""
+    if isinstance(needle, (int, float)): return float(needle)
     text = TEXT[page]; pos = -1
     for _ in range(occ):
         pos = text.find(needle, pos + 1)
         if pos < 0: raise SystemExit(f'p{page}: "{needle}" not in narration')
-    w = weight(text); frac = w[:pos].sum() / w.sum()
-    segs = VOICED[page]; total = sum(b - a for a, b in segs); goal = frac * total
-    for a, b in segs:
-        if goal <= b - a: return float(a + goal)
-        goal -= b - a
-    return float(segs[-1][1])
+    return float(TIMEMAP[page][pos])
 
 # ---------- per-page cues: (item text, action, spoken words) / (target, spoken words[, hold]) ----------
 # items: drag = the cursor drops the card as the words are spoken; pop = springs in on the words; others
@@ -93,8 +101,8 @@ def when(page, needle, occ=1):
 #        'row:x' = its table row, '*x' = every match, 'img:N' = the Nth screenshot).
 CUES = {
  17: dict(items=[('อะไรทำให้ครู', 'pop', 'ตอนที่สอง'), ('LEAD SUPP', 'drag', 'มีห้าปัจจัย')],
-          zoom=[('LEAD SUPP', 'สิบเอ็ดเส้นทาง', 2.6)],
-          hl=[('FAM + PAM', 'ทำความเข้าใจโมเดล'), ('^เตรียมข้อมูล', 'เตรียมข้อมูล แล้ว'), ('อ่านผล 5 ขั้น', 'อ่านผลห้าขั้น')]),
+          zoom=[('card:LEAD SUPP', 'สิบเอ็ดเส้นทาง', 2.6)],
+          hl=[('FAM + PAM', 'ทำความเข้าใจโมเดล'), ('^เตรียมข้อมูล', 'เตรียมข้อมูล แล้ว'), ('อ่านผล 5 ขั้น', 15.4)]),
  18: dict(items=[('RUการใช้ประโยชน์', 'drag', 'นี่คือโมเดล'), ('LEADภาวะ', 'pop', 'ภาวะผู้นำ'), ('SUPPการ', 'pop', 'การสนับสนุน'),
                  ('ORGAบรรยากาศ', 'pop', 'บรรยากาศองค์กร'), ('KNOWความรู้', 'pop', 'ความรู้ทักษะวิจัย'), ('DISTคุณ', 'pop', 'คุณลักษณะวิจัย'),
                  ('เส้นชมพู', 'pop', 'เส้นสีชมพู')],
@@ -103,62 +111,62 @@ CUES = {
           hl=[('เส้นเทา', 'ส่วนเส้นสีเทา')]),
  19: dict(items=[('FAMFactor', 'drag', 'ส่วนแรก FAM'), ('^+', 'pop', 'ส่วนที่สอง'), ('PAMPath', 'drag', 'ส่วนที่สอง PAM'),
                  ('^=', 'pop', 'SEM คือการรวม'), ('SEMStructural', 'drag', 'SEM คือการรวม'), ('อ่านผลตามลำดับ', 'pop', 'ลำดับการอ่าน')],
-          zoom=[('SEMStructural', 'สองส่วนนี้ไว้ในโมเดลเดียว', 2.4)],
+          zoom=[('card:SEMStructural', 'สองส่วนนี้ไว้ในโมเดลเดียว', 2.4)],
           hl=[('อ่านผลตามลำดับ', 'ตรวจ FAM ให้ผ่านก่อน')]),
  20: dict(items=[('OuterMeasurement', 'drag', 'ชั้นนอก'), ('InnerStructural', 'drag', 'ชั้นใน'), ('ทำไมเลือก', 'drag', 'งานนี้ใช้ PLS-SEM'),
                  ('5,000ทดสอบ', 'pop', 'เราทดสอบนัยสำคัญ')],
-          zoom=[('ทำไมเลือก', 'เพราะ RU เป็นตัวแปร', 7.0)],
+          zoom=[('card:ทำไมเลือก', 'เพราะ RU เป็นตัวแปร', 7.0)],
           hl=[('ตัวแปรปัจจัยร่วม', 'composite'), ('อันดับสูงทำได้', 'อันดับสูง'), ('^5,000', '5,000 รอบ')]),
- 21: dict(items=[('Disjoint two-stage', 'drag', 'วิธีแรก'), ('Embedded two-stage', 'drag', 'วิธีที่สอง'), ('ขั้นที่ 2 ของทั้งสองแบบ', 'pop', 'ขั้นที่ 2 เหมือนกัน')],
-          zoom=[('Disjoint two-stage ขั้นที่ 1', 'ยังไม่ใส่ RU', 3.2), ('Embedded two-stage ขั้นที่ 1', 'ใส่ RU ไว้ในโมเดล', 2.8)],
-          hl=[('^Disjoint two-stage', 'งานของภูชิชย์ใช้ Disjoint')]),
- 22: dict(items=[('Missing data', 'pop', 'หนึ่ง ข้อมูล'), ('Outlier', 'drag', 'สอง ค่านอกเกณฑ์'), ('ชื่อตัวแปร', 'pop', 'สาม ชื่อตัวแปร'),
+ 21: dict(items=[('Disjoint two-stage', 'drag', 'วิธีแรก'), ('Embedded two-stage', 'drag', 18.6), ('ขั้นที่ 2 ของทั้งสองแบบ', 'pop', 20.6)],   # recording stops before the Embedded part
+          zoom=[('card:Disjoint two-stage ขั้นที่ 1', 'ยังไม่ใส่ RU', 8.0)],
+          hl=[('^Disjoint two-stage', 'วิธีแรก')]),
+ 22: dict(items=[('Missing data', 'pop', 4.6), ('Outlier', 'drag', 'สอง ค่านอกเกณฑ์'), ('ชื่อตัวแปร', 'pop', 'สาม ชื่อตัวแปร'),
                  ('ขนาดตัวอย่าง', 'drag', 'สี่ ขนาดตัวอย่าง'), ('PLS ไม่ต้องการ', 'drag', 'สุดท้าย PLS')],
-          zoom=[('ขนาดตัวอย่าง', '688 คน', 3.6)],
+          zoom=[('card:ขนาดตัวอย่าง', 31.6, 3.0)],
           hl=[('Random imputation', 'Random imputation'), ('Disjoint ต้องมีไฟล์', 'อย่าลืมว่า Disjoint')]),
  23: dict(items=[('ขั้นที่ 1: IRU', 'drag', 'หากกดด้วย ADANCO')]),
  24: dict(items=[('Goodness of model fit (saturated', 'drag', 'เปิดตาราง')],
           zoom=[('img:0', 'ด้านซ้ายคือ', 2.0), ('img:1', 'ด้านขวาคือ', 2.6)],
           hl=[('ซ้าย = Saturated', 'ตัวเลขสีแดง')]),
  25: dict(items=[('ดัชนี Saturated', 'drag', 'Saturated ตรวจเฉพาะ'), ('อ่าน: Saturated', 'pop', 'ส่วน Estimated')],
-          zoom=[('ดัชนี Saturated', 'SRMR ของ Saturated', 6.0)],
+          zoom=[('card:ดัชนี Saturated', 'SRMR ของ Saturated', 6.0)],
           hl=[('^.0383', '.0383'), ('^.0784', '.0784'), ('row:dULS', 'ถ้าดู dULS'), ('row:dG', 'และ dG')]),
  26: dict(items=[('Weights T-Values', 'drag', 'เปิดสามตาราง')],
-          zoom=[('img:0', 'Weights T-Values', 1.4), ('img:1', 'Loadings และ', 1.4), ('img:2', 'Indicator Multicollinearity', 2.4)]),
+          zoom=[('img:0', 'Weights T-Values', 1.4), ('img:1', 'Loadings และ', 1.2), ('img:2', 9.6, 3.0)]),
  27: dict(items=[('loading ต่ำสุด', 'drag', 'ตัวแปรทั้งหก'), ('คงไว้ด้วย loading', 'drag', 'ที่เหลือสองตัว'), ('Weight RU ในโมเดลเต็ม', 'drag', 'ส่วน Weight ของ RU')],
-          zoom=[('คงไว้ด้วย loading', 'LEAD1', 5.0), ('Weight RU ในโมเดลเต็ม', 'IRU .309', 4.0)],
+          zoom=[('card:คงไว้ด้วย loading', 'LEAD1', 5.0), ('card:Weight RU ในโมเดลเต็ม', 36.6, 5.0)],
           hl=[('LEAD1', 'LEAD1'), ('DIST3', 'DIST3'), ('row:VIF', 'VIF อยู่ระหว่าง')]),
  28: dict(items=[('VIF = 1', 'drag', 'ขั้นที่ 3'), ('ต้นเหตุ', 'drag', 'สาเหตุคือ')],
-          zoom=[('VIF = 1', 'แต่ KNOW', 3.4), ('ต้นเหตุ', 'r เท่ากับ', 3.6)],
-          hl=[('row:ORGA', 'ORGA 4.37'), ('row:SUPP', 'SUPP 3.63'), ('row:LEAD', 'LEAD 2.94'), ('row:KNOW', 'KNOW 6.09'), ('row:DIST', 'DIST 5.54'),
+          zoom=[('card:VIF = 1', 'แต่ KNOW', 3.4), ('card:ต้นเหตุ', 'r เท่ากับ', 3.6)],
+          hl=[('row:ORGA', 'ORGA 4.37'), ('row:SUPP', 'SUPP 3.63'), ('row:LEAD', 15.2), ('row:KNOW', 'KNOW 6.09'), ('row:DIST', 21.0),
               ('r = .90', 'r เท่ากับ')]),
  29: dict(items=[('R² .603', 'drag', 'แผนที่เส้นทาง'), ('มีนัยสำคัญไม่มี', 'pop', 'เส้นประสองเส้น'), ('เส้นใหญ่สุด', 'drag', 'เส้นที่แรงที่สุด'),
                  ('ถูกอธิบายได้สูงสุด', 'drag', 'ตัวแปรที่ถูกอธิบาย')],
           draw=[('#6A2EE8', 'สิบเอ็ดเส้น'), ('#A3A8BC', 'เส้นประสองเส้น')],
-          zoom=[('^.83', 'KNOW ไป DIST', 2.4), ('^R² .814', 'DIST ที่ R²', 2.2)],
-          hl=[('*ns', 'LEAD ไป RU'), ('^.83', 'KNOW ไป DIST'), ('^R² .814', 'DIST ที่ R²')]),
+          zoom=[('^.83', 15.2, 2.6), ('^R² .814', 21.6, 2.4)],
+          hl=[('*ns', 'LEAD ไป RU'), ('^.83', 16.1), ('^R² .814', 21.9)]),
  30: dict(items=[('Direct Effects Inference R-Squared', 'drag', 'เปิดสามตาราง')],
-          zoom=[('img:0', 'ค่า β', 3.2), ('img:2', 'ส่วน f²', 2.4)],
-          hl=[('แถวสี', 'แถวสีเขียว')]),
- 31: dict(items=[('Direct Effects Inference', 'drag', 'เริ่มจากหกเส้น'), ('อ่าน: 95% CI', 'pop', 'ไม่คร่อม 0')],
-          zoom=[('Direct Effects Inference', 'เส้นที่เด่น', 8.0)],
-          hl=[('row:LEAD → SUPP', 'LEAD ไป SUPP'), ('row:KNOW → DIST', 'KNOW ไป DIST'), ('row:SUPP → DIST', 'SUPP ไป DIST'), ('Cohen', 'Cohen')]),
+          zoom=[('img:0', 7.6, 4.0), ('img:2', 13.9, 2.6)],
+          hl=[('แถวสี', 17.2)]),
+ 31: dict(items=[('Direct Effects Inference', 'drag', 'เริ่มจากหกเส้น'), ('อ่าน: 95% CI', 'pop', 8.8)],
+          zoom=[('card:Direct Effects Inference', 9.3, 8.0)],
+          hl=[('row:LEAD → SUPP', 9.7), ('row:KNOW → DIST', 14.0), ('row:SUPP → DIST', 22.6), ('Cohen', 31.0)]),
  32: dict(items=[('เส้นทางβ', 'drag', 'ขั้นที่ 5'), ('ระดับปานกลาง', 'drag', 'R² ของ RU'), ('ระวังตอนเทียบ', 'drag', 'สองข้อควรระวัง')],
-          zoom=[('เส้นทางβ', 'เรียงจากแรงสุด', 7.0), ('ระวังตอนเทียบ', 'ค่า .5254', 3.4)],
-          hl=[('row:DIST → RU', 'DIST β'), ('row:KNOW → RU', 'KNOW β'), ('row:SUPP → RU', 'SUPP β'), ('row:LEAD → RU', 'LEAD กับ ORGA'),
+          zoom=[('card:เส้นทางβ', 'เรียงจากแรงสุด', 7.0), ('card:ระวังตอนเทียบ', 'ค่า .5254', 3.4)],
+          hl=[('row:DIST → RU', 7.6), ('row:KNOW → RU', 10.6), ('row:SUPP → RU', 12.4), ('row:LEAD → RU', 'LEAD กับ ORGA'),
               ('row:ORGA → RU', 'ORGA ไม่มี'), ('^.529', '.529 ระดับ')]),
  33: dict(items=[('Model fitผ่านบางส่วน', 'drag', 'Model fit ผ่าน'), ('Measurement modelผ่าน', 'pop', 'Measurement model ผ่าน'),
                  ('VIF ระหว่างปัจจัย', 'drag', 'VIF ระหว่าง'), ('Path coefficient', 'pop', 'Path coefficient'),
-                 ('Effect size', 'drag', 'f² ของเส้น'), ('R² ของ RUปานกลาง', 'pop', 'R² ของ RU')],
-          zoom=[('VIF ระหว่างปัจจัย', 'จาก KNOW กับ DIST', 2.6)],
-          hl=[('^9/11 เส้น', '9 ใน 11'), ('^.001–.059', '.001 ถึง')]),
+                 ('Effect size', 'drag', 'f² ของเส้น'), ('R² ของ RUปานกลาง', 'pop', 22.0)],
+          zoom=[('card:VIF ระหว่างปัจจัย', 9.4, 2.4)],
+          hl=[('^9/11 เส้น', '9 ใน 11'), ('^.001–.059', 18.0)]),
  34: dict(items=[('รวมทุกส่วนไว้', 'drag', 'รวมในตารางเดียว'), ('นับรวม', 'drag', 'ผ่าน 4')],
-          zoom=[('นับรวม', 'ผ่าน 4', 4.2)],
+          zoom=[('card:นับรวม', 'ผ่าน 4', 4.2)],
           hl=[('^4', 'ผ่าน 4'), ('^2', 'ข้อจำกัด 2'), ('^1', 'ไม่ผ่าน 1'), ('row:Exact fit', 'คือ Exact fit')],
-          sfx=[('chime', 'ถึงเวลาแปลผล', 0.24)]),
- 35: dict(items=[('52.9%', 'drag', 'อธิบาย RU'), ('.39 คุณลักษณะ', 'drag', 'สูงสุดคือ'), ('.21 · .19', 'pop', 'รองลงมา'),
+          sfx=[('chime', 12.8, 0.24)]),
+ 35: dict(items=[('52.9%', 'drag', 5.6), ('.39 คุณลักษณะ', 'drag', 10.8), ('.21 · .19', 'pop', 'รองลงมา'),
                  ('ผู้นำและบรรยากาศองค์กรไม่มีผลตรง', 'drag', 'ส่วนภาวะผู้นำและ'), ('เขียนในรายงาน', 'pop', 'ปัจจัยที่ส่งผลตรงล้วน')],
-          zoom=[('52.9%', 'ได้ 52.9%', 2.4), ('เขียนในรายงาน', 'ใกล้ตัวครู', 4.0)],
+          zoom=[('card:52.9%', 6.0, 2.4), ('card:เขียนในรายงาน', 'ใกล้ตัวครู', 4.0)],
           hl=[('ผู้นำและบรรยากาศองค์กรไม่มีผลตรง', 'ส่วนภาวะผู้นำไม่มีผลตรง')],
           sfx=[('chime', 'คำถามที่ตามมา', 0.22)]),
 }
@@ -257,7 +265,10 @@ def tag_reveals(page, body, A):
     zooms, rings, draws, ids = [], [], [], {}
     def mark(spec):
         out = []
-        for h in find_targets(body, spec):
+        hits = find_targets(body, spec.removeprefix('card:'))
+        if spec.startswith('card:'):                                 # the whole revealed card that holds the text
+            hits = [next(e for e in elements(body) if e[0] == p['span'][0]) for h in hits for p in plan if p['span'][0] <= h[0] and h[2] <= p['span'][1]]
+        for h in hits:
             if h[0] not in ids:                                     # one id per element, however many cues name it
                 ids[h[0]] = len(ids) + 1
                 edits.append((h[0] + 1 + len(h[3]), f' data-z="{ids[h[0]]}"' + (' data-zrow' if h[-1] == 'row' else '')))
@@ -265,7 +276,7 @@ def tag_reveals(page, body, A):
         return out
     for spec, say, hold in cue.get('zoom', []):
         (z, rv), = mark(spec)
-        zooms.append({'z': z, 't': round(max(at(say) - 0.35, rv + 0.7), 3), 'hold': hold})
+        zooms.append({'z': z, 't': round(max(at(say) - 0.65, rv + 0.6), 3), 'hold': hold})   # camera arrives as the word is said
     for k, (spec, say) in enumerate(cue.get('hl', [])):
         hs = mark(spec); t = max(at(say) - 0.1, max(rv for _, rv in hs) + 0.5)
         rings.append({'z': [z for z, _ in hs], 't': round(t, 3), 'c': RING[(page + k) % len(RING)]})
@@ -324,11 +335,41 @@ MOTION = '''
       tl.fromTo(p, {{ opacity: 1, scale: 0.3, x: 0, y: 0, rotation: 0 }}, {{ opacity: 0, scale: 1, x: Math.cos(a) * r, y: Math.sin(a) * r + 26, rotation: (i % 2 ? 1 : -1) * 220, duration: 0.85, ease: "power2.out", immediateRender: false }}, t);
     }}
   }};
-  // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
+  // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them.
+  // The arrowhead travels with the drawing tip: the line's marker becomes a copy of its shape that is
+  // moved along the line as it draws (a marker would sit at the end, waiting, before the line got there).
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const headOf = ln => {{
+    const m = (ln.getAttribute("marker-end") || "").match(/url\\(#([^)]+)\\)/), mk = m && stage.querySelector('[id="' + m[1] + '"]');
+    if (!mk) return null;
+    const vb = (mk.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number), mw = +mk.getAttribute("markerWidth") || 3;
+    const k = (mk.getAttribute("markerUnits") === "userSpaceOnUse" ? 1 : +ln.getAttribute("stroke-width") || 1) * (vb.length === 4 ? mw / vb[2] : 1);
+    const g = document.createElementNS(SVGNS, "g");
+    [...mk.children].forEach(c => g.appendChild(c.cloneNode(true)));
+    ln.parentNode.appendChild(g); ln.removeAttribute("marker-end");
+    return {{ g, k, rx: +mk.getAttribute("refX") || 0, ry: +mk.getAttribute("refY") || 0 }};
+  }};
+  // the path is sampled once here, at build time; the draw tween only reads these numbers
+  const track = ln => {{
+    const L = ln.getTotalLength(), n = Math.max(8, Math.ceil(L / 6)), pts = [];
+    for (let i = 0; i <= n; i++) pts.push(ln.getPointAtLength(L * i / n));
+    return {{ L, n, pts: pts.map((p, i) => {{ const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n, Math.max(1, i))]; return {{ x: p.x, y: p.y, r: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI }}; }}) }};
+  }};
+  const putHead = (h, tr, d) => {{
+    const f = Math.max(0, Math.min(1, d / tr.L)) * tr.n, i = Math.floor(f), j = Math.min(tr.n, i + 1), u = f - i, A = tr.pts[i], B = tr.pts[j];
+    h.g.setAttribute("transform", "translate(" + (A.x + (B.x - A.x) * u) + "," + (A.y + (B.y - A.y) * u) + ") rotate(" + B.r + ") scale(" + h.k + ") translate(" + -h.rx + "," + -h.ry + ")");
+  }};
   const lineIn = (ln, t) => {{
-    if (ln.getAttribute("stroke-dasharray")) {{ tl.fromTo(ln, {{ opacity: 0 }}, {{ opacity: 1, duration: 0.5, ease: "power1.out" }}, t); return; }}
-    const L = ln.getTotalLength();
+    const h = headOf(ln), tr = track(ln), L = tr.L;
+    if (ln.getAttribute("stroke-dasharray")) {{
+      if (h) putHead(h, tr, L);
+      tl.fromTo(h ? [ln, h.g] : ln, {{ opacity: 0 }}, {{ opacity: 1, duration: 0.5, ease: "power1.out" }}, t); return;
+    }}
     tl.fromTo(ln, {{ strokeDasharray: L, strokeDashoffset: L }}, {{ strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }}, t);
+    if (!h) return;
+    const o = {{ d: 0 }}; putHead(h, tr, 0);
+    tl.fromTo(h.g, {{ opacity: 0 }}, {{ opacity: 1, duration: 0.08, ease: "none" }}, t);
+    tl.fromTo(o, {{ d: 0 }}, {{ d: L, duration: 0.7, ease: "power2.inOut", onUpdate: () => putHead(h, tr, o.d) }}, t);
   }};
   DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
     .forEach((ln, i) => {{ ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }}));
@@ -400,6 +441,16 @@ DEMO_JS = '''
   // demo: the cursor clicks play in the clip box, the box opens to full screen and the clip plays
   const box = stage.querySelector("[data-clipbox]"), btn = box.querySelector("svg").parentElement, b = place(box), p = place(btn);   // the round play button (an HTML box: SVG has no offset*)
   const TC = {t_click}, k = 1 + 0.03 * TC / D, sx = v => 960 + (v - 960) * k, sy = v => 540 + (v - 540) * k;
+  // preview in the box: slow zoom-out on the footage, blinking chip dot, play button pulsing to invite the click
+  const pz = document.getElementById("{id}-pvzoom"), dot = document.getElementById("{id}-dot");
+  if (pz) {{
+    tl.fromTo(pz, {{ scale: 1.14 }}, {{ scale: 1, duration: TC, ease: "sine.out" }}, 0);
+    tl.fromTo("#{id}-chip", {{ opacity: 0, x: -30 }}, {{ opacity: 1, x: 0, duration: 0.6, ease: "back.out(2)" }}, 1.2);
+    tl.to(dot, {{ opacity: 0.15, duration: 0.45, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor((TC - 1.2) / 0.45) | 1) }}, 1.4);
+    const pr = mk(box, "left:" + (p.x - b.x - 14) + "px;top:" + (p.y - b.y - 14) + "px;width:" + (p.w + 28) + "px;height:" + (p.h + 28) + "px;border-radius:999px;border:4px solid rgba(255,255,255,0.85);");
+    for (let i = 0, t0 = 1.6; t0 + 1.1 < TC - 0.3; i++, t0 += 1.25)
+      tl.fromTo(pr, {{ opacity: 0.9, scale: 0.8 }}, {{ opacity: 0, scale: 1.45, duration: 1.1, ease: "power2.out", immediateRender: false }}, t0);
+  }}
   const px = p.x + p.w / 2, py = p.y + p.h / 2;
   tl.set(cur, {{ x: px + 520, y: py + 330, scale: 1, opacity: 0 }}, TC - 1.4);
   tl.to(cur, {{ opacity: 1, duration: 0.2 }}, TC - 1.4);
@@ -417,6 +468,25 @@ DEMO_JS = '''
   tl.to(cam, {{ opacity: 0, duration: 0.3, ease: "none" }}, TC + 1.5);          // slide steps away once the clip fills the frame
   tl.to([...shell.children].filter(c => c !== cam && c !== vl), {{ opacity: 0, duration: 0.3, ease: "none" }}, TC + 0.35);   // stickers leave the clip uncovered
   tl.fromTo("#{id}-prog", {{ scaleX: 0 }}, {{ scaleX: 1, duration: {clip:.3f}, ease: "none" }}, {t_play});'''
+
+PREVIEW = 'assets/video/EP2-SEM-preview.mp4'                                  # teaser montage (scripts/make_preview.py)
+def demo_box(body, t_click):
+    """Page 23's clip box: a playful preview of the demo plays inside it (slow zoom, chip, pulsing play
+    button) until the cursor clicks play."""
+    body = body.replace('<div style="grid-column:span 7;', '<div data-clipbox style="position:relative;overflow:hidden;grid-column:span 7;', 1)
+    body = body.replace('<div style="width:128px;height:128px;', '<div style="position:relative;width:128px;height:128px;', 1)
+    body = body.replace('<p style="font-size:30px;font-weight:600;color:#FCFCFD">แทรกคลิป', '<p style="position:relative;font-size:30px;font-weight:600;color:#FCFCFD;text-shadow:0px 2px 10px rgba(0,0,0,0.6)">แทรกคลิป', 1)
+    if not os.path.exists(PREVIEW): return body
+    pv = min(probe(PREVIEW) - 0.05, t_click + 1.6)
+    layer = (f'<div id="f{DEMO}-pv" data-layout-allow-overflow data-layout-allow-overlap style="position:absolute;left:0px;top:0px;width:100%;height:100%;border-radius:30px;overflow:hidden">'
+             f'<div id="f{DEMO}-pvzoom" style="position:absolute;left:0px;top:0px;width:100%;height:100%">'
+             f'<video id="f{DEMO}-preview" class="clip" src="{PREVIEW}" data-start="0" data-duration="{pv:.3f}" data-hf-media-start-basis="local" data-track-index="2" muted playsinline style="position:absolute;left:0px;top:0px;width:100%;height:100%;object-fit:cover"></video></div>'
+             f'<div style="position:absolute;left:0px;top:0px;width:100%;height:100%;background:linear-gradient(180deg, rgba(26,31,54,0.10) 0%, rgba(26,31,54,0.35) 50%, rgba(26,31,54,0.88) 100%)"></div>'
+             f'<div id="f{DEMO}-chip" style="position:absolute;left:24px;top:22px;display:flex;align-items:center;gap:10px;padding:6px 18px;border-radius:999px;background:rgba(255,255,255,0.9);box-shadow:0px 8px 18px rgba(0,0,0,0.25)">'
+             f'<div id="f{DEMO}-dot" style="width:12px;height:12px;border-radius:6px;background:#F0508F"></div>'
+             f'<p style="font-family:\'Prompt\', sans-serif;font-size:24px;font-weight:600;color:#1A1F36">ตัวอย่างคลิปสาธิต</p></div></div>')
+    i = body.index('<div data-clipbox'); j = body.index('>', i) + 1
+    return body[:j] + layer + body[j:]
 
 def demo_layer(fid, t_play):
     """Full-frame clip layer for page 23 (revealed from the clip box by DEMO_JS)."""
@@ -437,7 +507,7 @@ def convert(n, slide, A, D, t_click=None, t_play=None):
     body = re.sub(r'<aside>.*?</aside>', '', body, flags=re.S)
     body = re.sub(r'/_blob/([0-9a-f]+)', r'assets/img/\1.png', body)
     body = body.replace('data-deco="1"', 'data-deco="1" data-layout-allow-overflow')
-    if n == DEMO: body = body.replace('<div style="grid-column:span 7;', '<div data-clipbox style="grid-column:span 7;', 1)
+    if n == DEMO: body = demo_box(body, t_click)
     for old in set(re.findall(r'\sid="([^"]+)"', body)):
         body = body.replace(f'url(#{old})', f'url(#f{n}-{old})')
     body = re.sub(r'\sid="([^"]+)"', lambda mm: f' id="f{n}-{mm.group(1)}"', body)
@@ -507,7 +577,7 @@ starts, durs, voices, sfx = {}, {}, [], []
 t = 0.0
 for n, slide, a in FRAMES:
     vf = f'assets/audio/voice/{a}.m4a'
-    A = probe(vf); VOICED[n] = voiced(vf)
+    A = probe(vf); timemap(n, a)
     voices.append((a, round(t + LEAD, 3), round(A, 3)))
     if n == DEMO:
         t_click = round(LEAD + A + 0.5, 3); t_play = round(t_click + 1.5, 3)

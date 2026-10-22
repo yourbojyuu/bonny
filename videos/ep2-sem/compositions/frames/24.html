@@ -31,12 +31,12 @@
 <div style="display:flex;align-items:center;gap:12px"><p style="font-size:24px;font-weight:700;color:#FCFCFD;background:linear-gradient(140deg, #9A6BFA, #6A2EE8);padding:6px 20px;border-radius:999px;box-shadow:0px 8px 18px rgba(106,46,232,0.28), inset 0px 1px 0px rgba(255,255,255,0.5)">EP 2 · PLS-SEM</p><p style="font-size:24px;font-weight:600;color:#FCFCFD;background:#1A1F36;padding:6px 18px;border-radius:999px;box-shadow:0px 6px 14px rgba(26,31,54,0.2)">ไฟล์ต้นฉบับ · Phuchit thesis SEM 2nd stage result.html</p></div>
 <h2 style="font-family:'Prompt', Tahoma, sans-serif;font-size:48px;font-weight:600;line-height:1.2">เปิดไฟล์ผลก่อน: Model fit สองตาราง</h2>
 </div>
-<div data-reveal="img" data-t="2.81" data-i="1" data-drag="1" style="position:relative;flex:1">
+<div data-reveal="img" data-t="5.283" data-i="1" data-drag="1" style="position:relative;flex:1">
 <div style="position:absolute;left:0px;top:10px;width:820px;height:450px;transform:rotate(-0.8deg);background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid rgba(26,31,54,0.10);box-shadow:0px 18px 40px rgba(26,31,54,0.12)"><div style="display:flex;align-items:center;gap:10px;height:52px;padding:0px 18px;background:#F1F2F6;border-bottom:1px solid #E1E3EA"><span style="width:12px;height:12px;border-radius:6px;background:#FF6159"></span><span style="width:12px;height:12px;border-radius:6px;background:#FFBD2E"></span><span style="width:12px;height:12px;border-radius:6px;background:#28C941"></span><p style="font-size:24px;color:#1A1F36;font-weight:600;white-space:nowrap;overflow:hidden;margin-left:8px">Goodness of model fit (saturated model)</p></div><div style="display:flex;align-items:center;justify-content:center;height:398px"><img data-z="1" src="assets/img/0f1826bade67a31f473fe40486b0e2a7.png" alt="ADANCO Goodness of model fit (saturated model)" style="width:792px;height:308px;object-fit:contain"></div></div>
 <div style="position:absolute;left:870px;top:30px;width:826px;height:450px;transform:rotate(0.8deg);background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid rgba(26,31,54,0.10);box-shadow:0px 18px 40px rgba(26,31,54,0.12)"><div style="display:flex;align-items:center;gap:10px;height:52px;padding:0px 18px;background:#F1F2F6;border-bottom:1px solid #E1E3EA"><span style="width:12px;height:12px;border-radius:6px;background:#FF6159"></span><span style="width:12px;height:12px;border-radius:6px;background:#FFBD2E"></span><span style="width:12px;height:12px;border-radius:6px;background:#28C941"></span><p style="font-size:24px;color:#1A1F36;font-weight:600;white-space:nowrap;overflow:hidden;margin-left:8px">Goodness of model fit (estimated model)</p></div><div style="display:flex;align-items:center;justify-content:center;height:398px"><img data-z="2" src="assets/img/0e7d801a6686b4672da087529f26cbfb.png" alt="ADANCO Goodness of model fit (estimated model)" style="width:798px;height:304px;object-fit:contain"></div></div>
 <div style="position:absolute;left:380px;top:520px;width:940px;transform:rotate(-1deg);padding:18px 22px;border-radius:18px;background:linear-gradient(135deg, rgba(255,232,210,0.96), rgba(255,212,170,0.94));border:1.5px solid rgba(255,255,255,0.8);box-shadow:0px 12px 26px rgba(26,31,54,0.12)"><p data-z="3" style="font-size:28px;line-height:1.4;color:#7A3A00">ซ้าย = Saturated · ขวา = Estimated · ตัวแดงทุกช่องคือเกิน HI99</p></div>
 </div>
-<p data-reveal="badge" data-t="2.99" data-i="2" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">24</p>
+<p data-reveal="badge" data-t="2.93" data-i="2" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">24</p>
 
 
 </div>
@@ -47,8 +47,8 @@
   const tl = gsap.timeline({ paused: true });
 
   const stage = document.getElementById("f24-stage"), shell = document.getElementById("f24-shell"), cam = document.getElementById("f24-cam");
-  const D = 18.172, V = 0, N = 24;
-  const ZOOMS = [{"z": 1, "t": 8.395, "hold": 1.0820000000000012, "back": false}, {"z": 2, "t": 10.377, "hold": 2.6, "back": true}], RINGS = [{"z": [3], "t": 13.501, "c": "#FFC53D"}], DRAWS = [];
+  const D = 17.724, V = 0, N = 24;
+  const ZOOMS = [{"z": 1, "t": 9.16, "hold": 0.4, "back": false}, {"z": 2, "t": 10.33, "hold": 2.6, "back": true}], RINGS = [{"z": [3], "t": 12.59, "c": "#FFC53D"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
@@ -91,11 +91,41 @@
       tl.fromTo(p, { opacity: 1, scale: 0.3, x: 0, y: 0, rotation: 0 }, { opacity: 0, scale: 1, x: Math.cos(a) * r, y: Math.sin(a) * r + 26, rotation: (i % 2 ? 1 : -1) * 220, duration: 0.85, ease: "power2.out", immediateRender: false }, t);
     }
   };
-  // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
+  // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them.
+  // The arrowhead travels with the drawing tip: the line's marker becomes a copy of its shape that is
+  // moved along the line as it draws (a marker would sit at the end, waiting, before the line got there).
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const headOf = ln => {
+    const m = (ln.getAttribute("marker-end") || "").match(/url\(#([^)]+)\)/), mk = m && stage.querySelector('[id="' + m[1] + '"]');
+    if (!mk) return null;
+    const vb = (mk.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number), mw = +mk.getAttribute("markerWidth") || 3;
+    const k = (mk.getAttribute("markerUnits") === "userSpaceOnUse" ? 1 : +ln.getAttribute("stroke-width") || 1) * (vb.length === 4 ? mw / vb[2] : 1);
+    const g = document.createElementNS(SVGNS, "g");
+    [...mk.children].forEach(c => g.appendChild(c.cloneNode(true)));
+    ln.parentNode.appendChild(g); ln.removeAttribute("marker-end");
+    return { g, k, rx: +mk.getAttribute("refX") || 0, ry: +mk.getAttribute("refY") || 0 };
+  };
+  // the path is sampled once here, at build time; the draw tween only reads these numbers
+  const track = ln => {
+    const L = ln.getTotalLength(), n = Math.max(8, Math.ceil(L / 6)), pts = [];
+    for (let i = 0; i <= n; i++) pts.push(ln.getPointAtLength(L * i / n));
+    return { L, n, pts: pts.map((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n, Math.max(1, i))]; return { x: p.x, y: p.y, r: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI }; }) };
+  };
+  const putHead = (h, tr, d) => {
+    const f = Math.max(0, Math.min(1, d / tr.L)) * tr.n, i = Math.floor(f), j = Math.min(tr.n, i + 1), u = f - i, A = tr.pts[i], B = tr.pts[j];
+    h.g.setAttribute("transform", "translate(" + (A.x + (B.x - A.x) * u) + "," + (A.y + (B.y - A.y) * u) + ") rotate(" + B.r + ") scale(" + h.k + ") translate(" + -h.rx + "," + -h.ry + ")");
+  };
   const lineIn = (ln, t) => {
-    if (ln.getAttribute("stroke-dasharray")) { tl.fromTo(ln, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, t); return; }
-    const L = ln.getTotalLength();
+    const h = headOf(ln), tr = track(ln), L = tr.L;
+    if (ln.getAttribute("stroke-dasharray")) {
+      if (h) putHead(h, tr, L);
+      tl.fromTo(h ? [ln, h.g] : ln, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, t); return;
+    }
     tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t);
+    if (!h) return;
+    const o = { d: 0 }; putHead(h, tr, 0);
+    tl.fromTo(h.g, { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "none" }, t);
+    tl.fromTo(o, { d: 0 }, { d: L, duration: 0.7, ease: "power2.inOut", onUpdate: () => putHead(h, tr, o.d) }, t);
   };
   DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
     .forEach((ln, i) => { ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }));
