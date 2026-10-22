@@ -195,10 +195,10 @@ total = round(starts[16] + durs[16], 3)
 hosts = [f'      <div id="f{n:02d}" class="clip" data-composition-id="f{n:02d}" data-composition-src="compositions/frames/{n:02d}.html" data-start="{starts[n]}" data-duration="{durs[n]}" data-track-index="{1 + n % 2}" data-width="1920" data-height="1080"></div>' for n, _, _ in FRAMES]
 vo = [f'      <audio id="vo-{a}" src="assets/audio/voice/{a}.m4a" data-start="{st}" data-duration="{A}" data-track-index="4"></audio>' for a, st, A in voices]
 sfx.sort()
-fx, lane_free = [], [0.0] * 4                    # spread effects over tracks 6-9 so none overlap on a track
+fx, lane_free = [], [0.0] * 8                    # spread effects over tracks 6-13 so none overlap on a track
 for i, (st, name, vol) in enumerate(sfx):
     if st + 0.05 >= total: continue
-    d = min(SFX_DUR[name], round(total - st, 3)); lane = next((k for k in range(4) if lane_free[k] <= st), 0); lane_free[lane] = st + d
+    d = min(SFX_DUR[name], round(total - st, 3)); lane = next((k for k in range(8) if lane_free[k] <= st), 0); lane_free[lane] = st + d
     fx.append(f'      <audio id="sfx-{i:03d}" src="assets/sfx/{name}.mp3" data-start="{round(st, 3)}" data-duration="{d}" data-volume="{vol}" data-track-index="{6 + lane}"></audio>')
 idx = f'''<!doctype html>
 <html lang="th">
@@ -220,7 +220,7 @@ idx = f'''<!doctype html>
 {chr(10).join(vo)}
       <!-- BGM (track 5): add your music here, e.g.
       <audio id="bgm" src="assets/audio/bgm.mp3" data-start="0" data-duration="{total}" data-volume="0.12" data-track-index="5"></audio> -->
-      <!-- sound effects (tracks 6-9) -->
+      <!-- sound effects (tracks 6-13) -->
 {chr(10).join(fx)}
     </div>
     <script>

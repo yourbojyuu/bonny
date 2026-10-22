@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "3ec8a2e0-de6a-4d23-8271-29d1b69a7e20",
-  "currentRevision": "59cc7199-7d9b-48bd-82ef-98f396c62f92",
+  "currentRevision": "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2",
   "pendingChanges": false,
   "files": {
     "AGENTS.md": {
@@ -101,8 +101,8 @@
       "content": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/ad/ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
     },
     "index.html": {
-      "hash": "fb75cab2c948029a7fee3fdcfb66c24c1c566924db05f35020edc597cc71b8d1",
-      "content": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/fb/fb75cab2c948029a7fee3fdcfb66c24c1c566924db05f35020edc597cc71b8d1"
+      "hash": "d0333ce0b2b24f32971c9a249fe7a8bef1d95e2addee24aa0400563e1fa0af86",
+      "content": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/d0/d0333ce0b2b24f32971c9a249fe7a8bef1d95e2addee24aa0400563e1fa0af86"
     },
     "meta.json": {
       "hash": "e018e8acbeddabbcc99f0c027d6773e954324a0d69e80c73a2981afc7a13d398",
@@ -181,8 +181,8 @@
       "content": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/26/2660c549b090b3488d7e102a7de58a7eab297f460c1736767535d1f14e552f70"
     },
     "scripts/build_frames.py": {
-      "hash": "29100e2f2031e02d271bd182c09eed5e0437d821bb4e952cb1f69fd420c38b88",
-      "content": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/29/29100e2f2031e02d271bd182c09eed5e0437d821bb4e952cb1f69fd420c38b88"
+      "hash": "bec5d3b9ea5ed9f3b204021669d8966398603c2001719a09737bb288b0b1f4a1",
+      "content": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/be/bec5d3b9ea5ed9f3b204021669d8966398603c2001719a09737bb288b0b1f4a1"
     },
     "scripts/schedule.json": {
       "hash": "df0fd42304105525590fc38c3bddefbe1b26f69c69bb01547c218c12118aaa67",
@@ -1597,12 +1597,31 @@
           "after": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/29/29100e2f2031e02d271bd182c09eed5e0437d821bb4e952cb1f69fd420c38b88"
         }
       }
+    },
+    "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792635657567,
+      "endedAt": 1792635658017,
+      "files": {
+        "index.html": {
+          "before": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/fb/fb75cab2c948029a7fee3fdcfb66c24c1c566924db05f35020edc597cc71b8d1",
+          "after": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/d0/d0333ce0b2b24f32971c9a249fe7a8bef1d95e2addee24aa0400563e1fa0af86"
+        },
+        "scripts/build_frames.py": {
+          "before": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/29/29100e2f2031e02d271bd182c09eed5e0437d821bb4e952cb1f69fd420c38b88",
+          "after": "/root/.cache/hyperframes/history/3ec8a2e0-de6a-4d23-8271-29d1b69a7e20/blobs/be/bec5d3b9ea5ed9f3b204021669d8966398603c2001719a09737bb288b0b1f4a1"
+        }
+      }
     }
   },
   "checks": {
     "latest": {
-      "revision": "59cc7199-7d9b-48bd-82ef-98f396c62f92",
-      "id": "6cff1a84-4a8d-49c5-be7e-256735640197"
+      "revision": "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2",
+      "id": "0cbba805-b202-47ea-8f9b-5228e8b3ef28"
     },
     "revisions": {
       "b030920d-582a-4bae-84c0-bc0826793cd8": [
@@ -1947,6 +1966,35 @@
           "contentHash": "9e15edca614803eaeff137e0b1da40451b9c2f5fe2269ef27176c715e7f950a3",
           "revision": "59cc7199-7d9b-48bd-82ef-98f396c62f92",
           "inputFingerprint": "5858b97e5fa424b7264435275b3bd427d3c94b8573ffab844b457f5fd01ffd9b",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2": [
+        {
+          "id": "0cbba805-b202-47ea-8f9b-5228e8b3ef28",
+          "scope": "project",
+          "report": "/home/user/bonny/videos/ep1-ru/.hyperframes/artifacts/checks/0cbba805-b202-47ea-8f9b-5228e8b3ef28.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792635664957,
+          "contentHash": "417eedf8f22ebf91c0b09a26d98a02d62929d98bd9580eaba84af82b45da5642",
+          "revision": "4f1b1ba4-e6ae-4f22-a9a3-65955a77d1c2",
+          "inputFingerprint": "38fcbb791e0ea7622ca9b98fb987c40014250b4367655440326c8da49416a31d",
           "inputScope": "local-project-files",
           "attribution": "recorded-revision"
         }
