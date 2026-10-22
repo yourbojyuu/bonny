@@ -12,9 +12,11 @@
 @font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
 @font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 #f03-root{position:absolute;inset:0;overflow:hidden}
+#f03-shell{position:absolute;inset:0}
 #f03-stage{position:absolute;inset:0;background:#EDEFF5;color:#1A1F36;font-family:'Anuphan', Tahoma, sans-serif;padding:96px 112px 140px;display:flex;flex-direction:column;gap:32px}
 </style>
 <div id="f03-root" data-composition-id="f03" data-width="1920" data-height="1080">
+<div id="f03-shell">
 <div id="f03-stage">
 
 <div style="position:absolute;left:0px;top:0px;width:1000px;height:760px;background:radial-gradient(circle at 18% 18%, #C9DBFF 0%, rgba(201,219,255,0) 62%)"></div>
@@ -24,16 +26,16 @@
 <div data-deco="1" data-layout-allow-overflow style="position:absolute;left:1630px;top:80px;width:180px;height:180px;border-radius:50%;transform:rotate(0deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
 <div data-deco="1" data-layout-allow-overflow style="position:absolute;left:1838px;top:490px;width:150px;height:200px;border-radius:75px 0px 0px 75px;transform:rotate(0deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
 <div data-deco="1" data-layout-allow-overflow style="position:absolute;left:-30px;top:900px;width:120px;height:120px;border-radius:28px;transform:rotate(-14deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
-<div style="position:relative;display:flex;flex-direction:column;justify-content:center;gap:12px">
+<div data-reveal="head" data-t="0.7" style="position:relative;display:flex;flex-direction:column;justify-content:center;gap:12px">
 <p style="font-size:24px;font-weight:700;color:#FCFCFD;background:linear-gradient(140deg, #3D4459, #1A1F36);padding:6px 20px;border-radius:999px;box-shadow:0px 8px 18px rgba(26,31,54,0.25), inset 0px 1px 0px rgba(255,255,255,0.35);align-self:start">เปิดเรื่อง</p>
 <h2 style="font-family:'Prompt', Tahoma, sans-serif;font-size:48px;font-weight:600;line-height:1.2">ครูใช้ประโยชน์จากงานวิจัยแค่ไหน และอะไรทำให้ใช้มากขึ้น</h2>
 </div>
 <div style="position:relative;flex:1;min-height:0;display:grid;grid-template-columns:repeat(12, 1fr);grid-template-rows:1fr 1.7fr;gap:24px">
-<div style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:linear-gradient(140deg, #4C8DF8 0%, #1666E8 55%, #0E7FB0 100%);border:2px solid rgba(255,255,255,0.5);border-radius:30px;box-shadow:0px 20px 44px rgba(22,102,232,0.28), inset 0px 2px 0px rgba(255,255,255,0.5), inset 0px -6px 14px rgba(10,30,80,0.18);padding:24px 30px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:72px;font-weight:600;line-height:1;color:#FCFCFD">688</p><p style="font-size:24px;color:#E3EEFF">ครูผู้สอนสังกัด สพฐ.</p></div>
-<div style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:72px;font-weight:600;line-height:1;color:#1666E8">8</p><p style="font-size:24px;color:#3D4459">จังหวัดภาคเหนือ สุ่มแบบแบ่งชั้น</p></div>
-<div style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:72px;font-weight:600;line-height:1;color:#6A2EE8">34</p><p style="font-size:24px;color:#3D4459">ข้อวัด RU มาตร 5 ระดับ</p></div>
-<div style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:52px;font-weight:600;line-height:1.1;color:#6A2EE8">.946–.958</p><p style="font-size:24px;color:#3D4459">α รายองค์ประกอบของ RU</p></div>
-<div style="grid-column:span 8;display:flex;flex-direction:column;justify-content:center;gap:12px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px">
+<div data-reveal="card" data-t="1.325" style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:linear-gradient(140deg, #4C8DF8 0%, #1666E8 55%, #0E7FB0 100%);border:2px solid rgba(255,255,255,0.5);border-radius:30px;box-shadow:0px 20px 44px rgba(22,102,232,0.28), inset 0px 2px 0px rgba(255,255,255,0.5), inset 0px -6px 14px rgba(10,30,80,0.18);padding:24px 30px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:72px;font-weight:600;line-height:1;color:#FCFCFD">688</p><p style="font-size:24px;color:#E3EEFF">ครูผู้สอนสังกัด สพฐ.</p></div>
+<div data-reveal="card" data-t="1.95" style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:72px;font-weight:600;line-height:1;color:#1666E8">8</p><p style="font-size:24px;color:#3D4459">จังหวัดภาคเหนือ สุ่มแบบแบ่งชั้น</p></div>
+<div data-reveal="card" data-t="2.575" style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:72px;font-weight:600;line-height:1;color:#6A2EE8">34</p><p style="font-size:24px;color:#3D4459">ข้อวัด RU มาตร 5 ระดับ</p></div>
+<div data-reveal="card" data-t="3.2" style="grid-column:span 3;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:52px;font-weight:600;line-height:1.1;color:#6A2EE8">.946–.958</p><p style="font-size:24px;color:#3D4459">α รายองค์ประกอบของ RU</p></div>
+<div data-reveal="card" data-t="3.825" style="grid-column:span 8;display:flex;flex-direction:column;justify-content:center;gap:12px;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:30px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px);padding:30px 36px">
 <p style="font-size:24px;font-weight:700;color:#6B7185">ตัวแปรในการวิเคราะห์</p>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <div style="grid-column:span 2;display:flex;align-items:center;gap:16px;background:linear-gradient(140deg, #F0508F, #C8236F);border-radius:18px;padding:12px 20px;box-shadow:inset 0px 1px 0px rgba(255,255,255,0.45)"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:28px;font-weight:600;color:#FCFCFD">RU</p><p style="font-size:24px;color:#FCFCFD">การใช้ประโยชน์วิจัย · 3 องค์ประกอบ 9 ด้าน</p></div>
@@ -44,38 +46,56 @@
 <div style="grid-column:span 2;display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.7);border-radius:16px;padding:10px 18px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:26px;font-weight:600;width:96px">DIST</p><p style="font-size:24px;color:#3D4459">คุณลักษณะการวิจัย · 5 ด้าน</p></div>
 </div>
 </div>
-<div style="grid-column:span 4;display:flex;flex-direction:column;justify-content:space-between;gap:14px;background:linear-gradient(140deg, #3D4459, #1A1F36);border:2px solid rgba(255,255,255,0.35);border-radius:30px;box-shadow:0px 20px 44px rgba(26,31,54,0.25), inset 0px 2px 0px rgba(255,255,255,0.25), inset 0px -6px 14px rgba(0,0,0,0.2);padding:28px 30px">
+<div data-reveal="card" data-t="4.45" style="grid-column:span 4;display:flex;flex-direction:column;justify-content:space-between;gap:14px;background:linear-gradient(140deg, #3D4459, #1A1F36);border:2px solid rgba(255,255,255,0.35);border-radius:30px;box-shadow:0px 20px 44px rgba(26,31,54,0.25), inset 0px 2px 0px rgba(255,255,255,0.25), inset 0px -6px 14px rgba(0,0,0,0.2);padding:28px 30px">
 <p style="font-size:24px;font-weight:700;color:#C9CEDB">ชื่อในไฟล์ ≠ ชื่อในเล่ม</p>
 <div style="display:flex;flex-direction:column;justify-content:center;gap:10px"><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:36px;font-weight:600;color:#FCFCFD">KNOW = KNOWS</p><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:36px;font-weight:600;color:#FCFCFD">DIST = ATTR</p></div>
 <p style="font-size:32px;line-height:1.5;color:#C9CEDB">สไลด์ใช้ชื่อตามเล่ม (KNOW, DIST) ส่วนบนหน้าจอ ADANCO จะเห็นชื่อตามไฟล์</p>
 </div>
 </div>
-<p style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">3</p>
+<p data-reveal="badge" data-t="5.075" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">3</p>
 
 
 </div>
+</div>
 <script>
   const tl = gsap.timeline({ paused: true });
-  tl.fromTo("#f03-stage", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 0);
-  const stage = document.getElementById("f03-stage");
-  const A = 49.580;
-  const pos = el => getComputedStyle(el).position;
-  const items = [];
-  [...stage.children].forEach(c => {
-    if (c.hasAttribute("data-deco")) return;
-    if (pos(c) === "absolute" && c.textContent.trim() === "" && !c.querySelector("img")) return;
-    if (getComputedStyle(c).display === "grid") { [...c.children].forEach(g => items.push(g)); } else items.push(c);
-  });
-  const win = Math.min(0.3 * A, 8), step = items.length > 1 ? win / items.length : 0;
-  items.forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.6 + i * step));
-  stage.querySelectorAll("[data-deco]").forEach((d, i) => tl.fromTo(d, { opacity: 0.0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1));
-  stage.querySelectorAll("svg line").forEach((ln, i) => { if (ln.closest("[data-deco]")) return; const L = ln.getTotalLength(); tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.9 + win * 0.6 + i * 0.25); });
-  [["688", 688], ["8", 8], ["34", 34]].forEach(([txt, v], i) => {
-    const el = [...stage.querySelectorAll("p")].find(p => p.textContent.trim() === txt);
-    if (!el) return; const o = { v: 0 };
-    tl.to(o, { v, duration: 1.6, ease: "power2.out", onUpdate: () => { el.textContent = Math.round(o.v); } }, 1.0 + i * 0.3);
-  });
 
+  const stage = document.getElementById("f03-stage"), shell = document.getElementById("f03-shell");
+  const D = 50.534, V = 0;
+  // scene entrance: zoom / slide / rise, then a slow camera push for the rest of the scene
+  const enter = [{ scale: 1.07 }, { x: 160 }, { y: 110 }][V];
+  if (true) tl.fromTo(shell, { opacity: 0, ...enter }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }, 0);
+  tl.fromTo(stage, { scale: 1 }, { scale: 1.03, duration: D, ease: "none" }, 0);
+  // decorations drift in and float
+  stage.querySelectorAll("[data-deco]").forEach((d, i) => {
+    tl.fromTo(d, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1);
+    const per = 2.6 + (i % 3) * 0.5; tl.to(d, { y: i % 2 ? 12 : -12, duration: per, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / per) - 1) }, 0.3);
+  });
+  // element reveals
+  const FX = {
+    head:  [{ opacity: 0, x: -60, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, x: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.85, ease: "power3.out" }],
+    card:  [{ opacity: 0, y: 56, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.6)" }],
+    img:   [{ opacity: 0, y: 30, scale: 1.12 }, { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: "expo.out" }],
+    text:  [{ opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.65, ease: "power2.out" }],
+    badge: [{ opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(3)" }],
+  };
+  stage.querySelectorAll("[data-reveal]").forEach(el => {
+    const t = +el.dataset.t, [from, to] = FX[el.dataset.reveal];
+    tl.fromTo(el, from, to, t);
+    const rows = el.querySelectorAll("tr");
+    if (rows.length > 2) tl.fromTo(rows, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, t + 0.3);
+    el.querySelectorAll("p").forEach(p => {                     // big integers count up
+      const txt = p.textContent.trim(), fs = parseFloat(getComputedStyle(p).fontSize);
+      if (!/^[0-9]{1,4}$/.test(txt) || fs < 52 || el.dataset.reveal === "badge") return;
+      const o = { v: 0 }, v = +txt;
+      tl.to(o, { v, duration: 1.2, ease: "power2.out", onUpdate: () => { p.textContent = Math.round(o.v); } }, t + 0.15);
+    });
+    el.querySelectorAll("svg line").forEach((ln, i) => {        // diagram arrows draw on
+      const L = ln.getTotalLength();
+      tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t + 0.45 + i * 0.18);
+    });
+  });
+  
   window.__timelines["f03"] = tl;
 </script>
 </div>

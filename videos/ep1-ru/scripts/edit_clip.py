@@ -22,15 +22,15 @@ import tempfile, shutil
 tmp = tempfile.mkdtemp(prefix='clipedit-', dir='/tmp/claude-0/ep1')
 lst = []
 for i, (a, b, f) in enumerate(segs):
-    o = f'{tmp}/s{i:03d}.mp4'
+    o = f'{tmp}/s{i:03d}.mkv'
     vf = f'setpts=(PTS-STARTPTS)/{f:.3f},fps=30,scale=1280:720'
     af = f'asetpts=PTS-STARTPTS,atempo={f:.3f},aresample=48000'
     subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',f'{a:.3f}','-to',f'{b:.3f}','-i',SRC,'-vf',vf,'-af',af,
-        '-c:v','libx264','-preset','veryfast','-crf','20','-pix_fmt','yuv420p','-c:a','aac','-b:a','160k','-ar','48000','-shortest',o],check=True)
+        '-c:v','libx264','-preset','veryfast','-crf','20','-pix_fmt','yuv420p','-c:a','pcm_s16le','-ar','48000','-shortest',o],check=True)  # PCM audio: no AAC priming drift across joins
     lst.append(f"file '{o}'")
 open(f'{tmp}/list.txt','w').write('\n'.join(lst))
-subprocess.run(['ffmpeg','-y','-loglevel','error','-f','concat','-safe','0','-i',f'{tmp}/list.txt','-c','copy',f'{tmp}/joined.mp4'],check=True)
-subprocess.run(['ffmpeg','-y','-loglevel','error','-i',f'{tmp}/joined.mp4','-c:v','copy','-af','loudnorm=I=-16:TP=-1.5:LRA=9','-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart',OUT],check=True)
+subprocess.run(['ffmpeg','-y','-loglevel','error','-f','concat','-safe','0','-i',f'{tmp}/list.txt','-c','copy',f'{tmp}/joined.mkv'],check=True)
+subprocess.run(['ffmpeg','-y','-loglevel','error','-i',f'{tmp}/joined.mkv','-c:v','copy','-af','loudnorm=I=-16:TP=-1.5:LRA=9','-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart',OUT],check=True)
 shutil.rmtree(tmp)
 new = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',OUT]))
 print(f'segments={len(segs)} gaps={len(gaps)} {dur:.1f}s -> {new:.1f}s')

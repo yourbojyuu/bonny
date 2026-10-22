@@ -12,9 +12,11 @@
 @font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-thai.woff2') format('woff2');unicode-range:U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;}
 @font-face{font-family:'Anuphan';font-weight:700;font-style:normal;src:url('assets/fonts/Anuphan-700-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 #f08-root{position:absolute;inset:0;overflow:hidden}
+#f08-shell{position:absolute;inset:0}
 #f08-stage{position:absolute;inset:0;background:#EAF0FA;color:#1A1F36;font-family:'Anuphan', Tahoma, sans-serif;padding:96px 112px 140px;display:flex;flex-direction:column;gap:32px}
 </style>
 <div id="f08-root" data-composition-id="f08" data-width="1920" data-height="1080">
+<div id="f08-shell">
 <div id="f08-stage">
 
 <div style="position:absolute;left:0px;top:0px;width:1100px;height:800px;background:radial-gradient(circle at 15% 20%, #B9D3FF 0%, rgba(185,211,255,0) 62%)"></div>
@@ -23,36 +25,59 @@
 <svg data-deco="1" data-layout-allow-overflow style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;pointer-events:none" viewBox="0 0 1920 1080"><path d="M1920 0 v290 a290 290 0 0 1 -290 -290z" fill="#9CC4FF" opacity="0.6"/><path d="M1920 0 v160 a160 160 0 0 1 -160 -160z" fill="#1666E8" opacity="0.22"/><path d="M1560 220 l30 -52 l30 52z" fill="#22B8CF" opacity="0.55"/><circle cx="1470" cy="70" r="14" fill="none" stroke="#1666E8" stroke-width="3" opacity="0.5"/><path d="M0 800 a140 140 0 0 1 0 280z" fill="#1666E8" opacity="0.16"/><rect x="60" y="760" width="70" height="70" rx="16" fill="#22B8CF" opacity="0.35" transform="rotate(20 95 795)"/><circle cx="1530" cy="36" r="4.5" fill="#1666E8" opacity="0.4"/><circle cx="1554" cy="36" r="4.5" fill="#1666E8" opacity="0.4"/><circle cx="1578" cy="36" r="4.5" fill="#1666E8" opacity="0.4"/><circle cx="1602" cy="36" r="4.5" fill="#1666E8" opacity="0.4"/></svg>
 <div data-deco="1" data-layout-allow-overflow style="position:absolute;left:1700px;top:40px;width:160px;height:160px;border-radius:38px;transform:rotate(12deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
 <div data-deco="1" data-layout-allow-overflow style="position:absolute;left:-50px;top:890px;width:150px;height:150px;border-radius:50%;transform:rotate(0deg);background:linear-gradient(135deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.10) 100%);border:1.5px solid rgba(255,255,255,0.78);backdrop-filter:blur(10px);box-shadow:0px 8px 22px rgba(26,31,54,0.05), inset 0px 1px 0px rgba(255,255,255,0.7)"></div>
-<div style="position:relative;display:flex;flex-direction:column;gap:12px">
+<div data-reveal="head" data-t="0.7" style="position:relative;display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;align-items:center;gap:12px"><p style="font-size:24px;font-weight:700;color:#FCFCFD;background:linear-gradient(140deg, #4C8DF8, #1666E8);padding:6px 20px;border-radius:999px;box-shadow:0px 8px 18px rgba(22,102,232,0.28), inset 0px 1px 0px rgba(255,255,255,0.5)">EP 1 · CCA</p><p style="font-size:24px;font-weight:600;color:#FCFCFD;background:#1A1F36;padding:6px 18px;border-radius:999px;box-shadow:0px 6px 14px rgba(26,31,54,0.2)">ไฟล์ต้นฉบับ · Phuchit CCA result.html</p></div>
 <h2 style="font-family:'Prompt', Tahoma, sans-serif;font-size:48px;font-weight:600;line-height:1.2">เปิดไฟล์ผลก่อน: Overall Model</h2>
 </div>
-<div style="position:relative;flex:1">
+<div data-reveal="img" data-t="2.367" style="position:relative;flex:1">
 <div style="position:absolute;left:0px;top:10px;width:820px;height:540px;transform:rotate(-1deg);background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid rgba(26,31,54,0.10);box-shadow:0px 18px 40px rgba(26,31,54,0.12)"><div style="display:flex;align-items:center;gap:10px;height:52px;padding:0px 18px;background:#F1F2F6;border-bottom:1px solid #E1E3EA"><span style="width:12px;height:12px;border-radius:6px;background:#FF6159"></span><span style="width:12px;height:12px;border-radius:6px;background:#FFBD2E"></span><span style="width:12px;height:12px;border-radius:6px;background:#28C941"></span><p style="font-size:24px;color:#1A1F36;font-weight:600;white-space:nowrap;overflow:hidden;margin-left:8px">Overall Model › Goodness of model fit (saturated model)</p></div><div style="display:flex;align-items:center;justify-content:center;height:488px"><img src="assets/img/0879204781ed96d1c2414f53660a40e6.png" alt="ADANCO Overall Model › Goodness of model fit (saturated model)" style="width:792px;height:308px;object-fit:contain"></div></div>
 <div style="position:absolute;left:900px;top:60px;width:640px;transform:rotate(2deg);padding:18px 22px;border-radius:18px;background:linear-gradient(135deg, rgba(255,232,210,0.96), rgba(255,212,170,0.94));border:1.5px solid rgba(255,255,255,0.8);box-shadow:0px 12px 26px rgba(26,31,54,0.12)"><p style="font-size:28px;line-height:1.4;color:#7A3A00">ตัวเลขสีแดง ADANCO ระบายเองเมื่อค่าเกิน HI99</p></div>
 <div style="position:absolute;left:960px;top:300px;width:600px;transform:rotate(-2deg);padding:18px 22px;border-radius:18px;background:linear-gradient(135deg, rgba(255,232,210,0.96), rgba(255,212,170,0.94));border:1.5px solid rgba(255,255,255,0.8);box-shadow:0px 12px 26px rgba(26,31,54,0.12)"><p style="font-size:28px;line-height:1.4;color:#7A3A00">ไฟล์รายงานทศนิยม 4 ตำแหน่ง<br>ตารางของเราปัดเหลือ 3–4 ตำแหน่ง</p></div>
 </div>
-<p style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">8</p>
+<p data-reveal="badge" data-t="4.033" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">8</p>
 
 
 </div>
+</div>
 <script>
   const tl = gsap.timeline({ paused: true });
-  tl.fromTo("#f08-stage", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 0);
-  const stage = document.getElementById("f08-stage");
-  const A = 25.548;
-  const pos = el => getComputedStyle(el).position;
-  const items = [];
-  [...stage.children].forEach(c => {
-    if (c.hasAttribute("data-deco")) return;
-    if (pos(c) === "absolute" && c.textContent.trim() === "" && !c.querySelector("img")) return;
-    if (getComputedStyle(c).display === "grid") { [...c.children].forEach(g => items.push(g)); } else items.push(c);
-  });
-  const win = Math.min(0.3 * A, 8), step = items.length > 1 ? win / items.length : 0;
-  items.forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.6 + i * step));
-  stage.querySelectorAll("[data-deco]").forEach((d, i) => tl.fromTo(d, { opacity: 0.0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1));
-  stage.querySelectorAll("svg line").forEach((ln, i) => { if (ln.closest("[data-deco]")) return; const L = ln.getTotalLength(); tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.9 + win * 0.6 + i * 0.25); });
 
+  const stage = document.getElementById("f08-stage"), shell = document.getElementById("f08-shell");
+  const D = 26.513, V = 2;
+  // scene entrance: zoom / slide / rise, then a slow camera push for the rest of the scene
+  const enter = [{ scale: 1.07 }, { x: 160 }, { y: 110 }][V];
+  if (true) tl.fromTo(shell, { opacity: 0, ...enter }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }, 0);
+  tl.fromTo(stage, { scale: 1 }, { scale: 1.03, duration: D, ease: "none" }, 0);
+  // decorations drift in and float
+  stage.querySelectorAll("[data-deco]").forEach((d, i) => {
+    tl.fromTo(d, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0.1);
+    const per = 2.6 + (i % 3) * 0.5; tl.to(d, { y: i % 2 ? 12 : -12, duration: per, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / per) - 1) }, 0.3);
+  });
+  // element reveals
+  const FX = {
+    head:  [{ opacity: 0, x: -60, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, x: 0, clipPath: "inset(0% 0% 0% 0%)", duration: 0.85, ease: "power3.out" }],
+    card:  [{ opacity: 0, y: 56, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.6)" }],
+    img:   [{ opacity: 0, y: 30, scale: 1.12 }, { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: "expo.out" }],
+    text:  [{ opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.65, ease: "power2.out" }],
+    badge: [{ opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(3)" }],
+  };
+  stage.querySelectorAll("[data-reveal]").forEach(el => {
+    const t = +el.dataset.t, [from, to] = FX[el.dataset.reveal];
+    tl.fromTo(el, from, to, t);
+    const rows = el.querySelectorAll("tr");
+    if (rows.length > 2) tl.fromTo(rows, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, t + 0.3);
+    el.querySelectorAll("p").forEach(p => {                     // big integers count up
+      const txt = p.textContent.trim(), fs = parseFloat(getComputedStyle(p).fontSize);
+      if (!/^[0-9]{1,4}$/.test(txt) || fs < 52 || el.dataset.reveal === "badge") return;
+      const o = { v: 0 }, v = +txt;
+      tl.to(o, { v, duration: 1.2, ease: "power2.out", onUpdate: () => { p.textContent = Math.round(o.v); } }, t + 0.15);
+    });
+    el.querySelectorAll("svg line").forEach((ln, i) => {        // diagram arrows draw on
+      const L = ln.getTotalLength();
+      tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t + 0.45 + i * 0.18);
+    });
+  });
+  
   window.__timelines["f08"] = tl;
 </script>
 </div>
