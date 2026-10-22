@@ -1128,15 +1128,14 @@
   },
   "checks": {
     "latest": {
-      "revision": "141bb30f-e55f-4c97-b7be-cd867efbc304",
-      "id": "8b106551-269f-43f1-a63f-0890c320b145"
+      "revision": null,
+      "id": "56823100-a98e-4ef1-988f-e6c90328817d"
     },
     "revisions": {
       "ac5be7fc-0f03-4420-8b35-66cf7f1e6d0d": [
         {
           "id": "44201c67-98c5-4de6-a4ab-74a041dc3f49",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/44201c67-98c5-4de6-a4ab-74a041dc3f49.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1158,14 +1157,15 @@
           "revision": "ac5be7fc-0f03-4420-8b35-66cf7f1e6d0d",
           "inputFingerprint": "7385a70812d6880c42bb14828397bb8d14668cbc315d9cf57c26e81727b2b456",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "822ee861-114a-42a2-a565-257330a95ca0"
         }
       ],
       "4ad0ce60-26e9-4c82-b2a1-017a95eedeb0": [
         {
           "id": "ea2dedc0-8b3c-4454-b684-ba0050ccf18e",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/ea2dedc0-8b3c-4454-b684-ba0050ccf18e.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1187,14 +1187,15 @@
           "revision": "4ad0ce60-26e9-4c82-b2a1-017a95eedeb0",
           "inputFingerprint": "b280abfdb06ffc3ad87aa271de15ca61dae481e7736eb3f27bd4c365b8340ddd",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "822ee861-114a-42a2-a565-257330a95ca0"
         }
       ],
       "5a865f86-8078-467f-bb2b-57b752861a53": [
         {
           "id": "d3613616-9f09-4fe7-9018-5f1a8d0eb0dc",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/d3613616-9f09-4fe7-9018-5f1a8d0eb0dc.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1216,14 +1217,15 @@
           "revision": "5a865f86-8078-467f-bb2b-57b752861a53",
           "inputFingerprint": "e954fe9b90465d2868f6a21acae985dbfe689dc5fc0fa1ce12ddd4ce289f2c58",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "822ee861-114a-42a2-a565-257330a95ca0"
         }
       ],
       "7e1020c8-0eb4-4ce8-ab98-8d3964c852b4": [
         {
           "id": "db0c67a6-a7f9-4f95-9031-f2749decf41a",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/db0c67a6-a7f9-4f95-9031-f2749decf41a.json",
           "metadata": {
             "ok": false,
             "browserSkipped": false,
@@ -1245,14 +1247,15 @@
           "revision": "7e1020c8-0eb4-4ce8-ab98-8d3964c852b4",
           "inputFingerprint": "971efa48b373184b600375ddcecdf2dcdb25eba237dc9f75733da130b8a4b5fc",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "822ee861-114a-42a2-a565-257330a95ca0"
         }
       ],
       "141bb30f-e55f-4c97-b7be-cd867efbc304": [
         {
           "id": "8b106551-269f-43f1-a63f-0890c320b145",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/8b106551-269f-43f1-a63f-0890c320b145.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1274,7 +1277,9 @@
           "revision": "141bb30f-e55f-4c97-b7be-cd867efbc304",
           "inputFingerprint": "dd6627452e77eaa049e3f64fc726bc513f93dad0f13b47e671582df7a263d617",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "822ee861-114a-42a2-a565-257330a95ca0"
         }
       ]
     },
@@ -7514,13 +7519,15 @@
   },
   "renders": {
     "latest": {
-      "id": "64138bb7-6e4c-4dd7-8254-eb185fc24a74",
-      "completedAt": 1792688290974,
-      "output": "/home/user/bonny/videos/ep2-sem/renders/EP2-SEM-draft.mp4",
+      "id": "822ee861-114a-42a2-a565-257330a95ca0",
+      "completedAt": 1792693735816,
+      "output": "/home/user/bonny/videos/ep2-sem/renders/EP2-SEM.mp4",
       "status": "completed",
-      "revision": null
+      "revision": "c67aa38f-db84-4037-9fab-b2e020267f5a"
     },
-    "retainedRevisions": []
+    "retainedRevisions": [
+      "c67aa38f-db84-4037-9fab-b2e020267f5a"
+    ]
   },
   "pendingArtifactCleanup": []
 }
