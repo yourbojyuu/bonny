@@ -37,8 +37,7 @@ stills at every camera punch-in and highlight ring.
 
 ### Open (needs the author)
 
-- **p19 has no narration of its own.** `EP2-SEM-03.mp3` is a clipped take of page 20's opening ("โมเดลนี้มีสองชั้น ชั้นนอกคือ
-  measurement model…"); the file re-uploaded as `EP2:SEM-03.mp3` on 22 Oct 18:49 is byte-identical to `EP2:SEM-19.mp3`.
+- p19: real narration added 23 Oct (`EP2SEM-03.mp3`, 36 s); cues re-timed to it (FAM 6.9 s, PAM 16.0 s, SEM 25.9 s, rings on "CFA หรือ CCA", "β และ R²" and the closing bar).
 - **p21 narration stops early**: `EP2-SEM-05.mp3` ends at "…เอาคะแนนมาเป็นตัวชี้วัดของ RU และประ…" — the Embedded two-stage
   part is not in the recording; the Embedded card is dragged in at the end without narration.
 - Full `hyperframes check` exceeds its deadline on this 20-min project; run per range (`--range 0,150` etc.) — all ranges pass,

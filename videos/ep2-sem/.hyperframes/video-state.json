@@ -1,12 +1,12 @@
 {
   "version": 1,
   "historyId": "9358453b-c020-4225-8e94-dcba905b8dc4",
-  "currentRevision": "c41931e0-448a-41fc-ac1a-6fd497027aca",
+  "currentRevision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
   "pendingChanges": false,
   "files": {
     "SCRIPT.md": {
-      "hash": "769a2d9dd494e97a56f1be218e82d017b0346d8ab3d4bd838a277551005c51ad",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/76/769a2d9dd494e97a56f1be218e82d017b0346d8ab3d4bd838a277551005c51ad"
+      "hash": "c73f7bc15976a0037c8d3e80d05c597d6d950d39bce76032082b5a1733fa3021",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c7/c73f7bc15976a0037c8d3e80d05c597d6d950d39bce76032082b5a1733fa3021"
     },
     "assets/audio/voice/01.m4a": {
       "hash": "d4bac60679a904b867dd14258d046de785c383cfba4079df63733badecc99eda",
@@ -17,8 +17,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/fd/fdf0eae1e8dc6f8fe4db9f793972c0be54f578c41eea183023f948d1405c87a1"
     },
     "assets/audio/voice/03.m4a": {
-      "hash": "a1a14ff2dc95ca237c31be0ec73a218a1a657d5a97531556fd0d3d4a10effd49",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/a1/a1a14ff2dc95ca237c31be0ec73a218a1a657d5a97531556fd0d3d4a10effd49"
+      "hash": "6dda10cf2f8520456b8ab0430c6dbc9051cd8b84f47f794a987b2ef22e1d0308",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/6d/6dda10cf2f8520456b8ab0430c6dbc9051cd8b84f47f794a987b2ef22e1d0308"
     },
     "assets/audio/voice/04.m4a": {
       "hash": "c13fcca2820e65e048d2f55101cd1f71fae6ffa6a1c3e93d298ecd8c8dc1f16c",
@@ -465,8 +465,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/80/808e9668c8a4bbd1a4737970926f310e5275552b33f431d6ca891c9f6967648f"
     },
     "compositions/frames/19.html": {
-      "hash": "0a6c19afd12ac968488ae740e5e98754879f3ce813c04bd5b16d16cd2b090b52",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/0a/0a6c19afd12ac968488ae740e5e98754879f3ce813c04bd5b16d16cd2b090b52"
+      "hash": "c0df9d2c70dc2c8cfd1c9d6a059ecd430c54baca0920a7ccb20998783ce844e2",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c0/c0df9d2c70dc2c8cfd1c9d6a059ecd430c54baca0920a7ccb20998783ce844e2"
     },
     "compositions/frames/20.html": {
       "hash": "7aeb5da15502f875dfb5437354a5b7ebccd05becb3c42aed9a63de709725b5b1",
@@ -537,8 +537,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/ad/ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
     },
     "index.html": {
-      "hash": "c6359d505211c6f1b38d869d67c72dc392899a768c745f469d52425fe2e50f79",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c6/c6359d505211c6f1b38d869d67c72dc392899a768c745f469d52425fe2e50f79"
+      "hash": "c5d58112b0f24293013ca0c1cce913b2f27c323c62f7a46964caa8a6179a47e1",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c5/c5d58112b0f24293013ca0c1cce913b2f27c323c62f7a46964caa8a6179a47e1"
     },
     "meta.json": {
       "hash": "9738c7345177574e147dd04744b37d2c4ad7cf5302ee6500b06585cd17926931",
@@ -549,8 +549,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/52/529fccceacd864164160f52d3077d04e9ce8c8b0c0495204c1e6ba8f55f3ac5e"
     },
     "scripts/build_frames.py": {
-      "hash": "cd95becf0d63ff63e958f050c73fe91652e7f81142d8e31ca75ad5f144674861",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/cd/cd95becf0d63ff63e958f050c73fe91652e7f81142d8e31ca75ad5f144674861"
+      "hash": "e14491b8474d88a75a00887f3ff35e1d0b682c6d6f1290ad16033c2876d0cb98",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/e1/e14491b8474d88a75a00887f3ff35e1d0b682c6d6f1290ad16033c2876d0cb98"
     },
     "scripts/edit_clip.py": {
       "hash": "7b2bf3da65f27f18b0e40e062e24a60fde1bfe56bb6d210772ba0211b94f0548",
@@ -565,8 +565,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/b1/b160bce76dc0df3a05a4258622c4b75777a528d33bc61dbf2314717130a842d9"
     },
     "scripts/schedule.json": {
-      "hash": "f6c8217d1eee12010f7c2878679acf1941af0797ca7bf643135ed9d2278b9611",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/f6/f6c8217d1eee12010f7c2878679acf1941af0797ca7bf643135ed9d2278b9611"
+      "hash": "aa60125ec83ada6dc2a58b35d276713d83038389a6281935f81f33d2010aa70b",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/aa/aa60125ec83ada6dc2a58b35d276713d83038389a6281935f81f33d2010aa70b"
     },
     "source/audio-raw/EP2-SEM-01.mp3": {
       "hash": "01c39e4ca67de99eba603532783b4eca04c75a5b6e0f744dd9a8a52c7d242951",
@@ -577,8 +577,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/5b/5baa8aadb72e310cbc9f2749cfa6c7c3dbb535ec31173f01760f83e636e11717"
     },
     "source/audio-raw/EP2-SEM-03.mp3": {
-      "hash": "5a479f84ebfa103dbc386a8bfcf9742b7aaa047f08989415eaf8df369698ad43",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/5a/5a479f84ebfa103dbc386a8bfcf9742b7aaa047f08989415eaf8df369698ad43"
+      "hash": "d1aac48c4ea74c083707f7b11c716271bccc2f5f14d20a1a47e59848f3575493",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/d1/d1aac48c4ea74c083707f7b11c716271bccc2f5f14d20a1a47e59848f3575493"
     },
     "source/audio-raw/EP2-SEM-05.mp3": {
       "hash": "9b2a7f604b79af22206549637f961ab5d3e5c4b552c276e8a7ad30ecca037704",
@@ -749,12 +749,12 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/4a/4a1b39f978a3bb5dc103eaef68f5b2cba06b2e23ef7de49835a527f1c8c4154e"
     },
     "deliverables/EP2-SEM.mp4": {
-      "hash": "461d6c7a3ab824491a4c9c6c63c49b78f349be89766be5646952c64d509fb96d",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/46/461d6c7a3ab824491a4c9c6c63c49b78f349be89766be5646952c64d509fb96d"
+      "hash": "13c39ea8cc89fa970bef12b54f556f911b4511d98c71359bc6f292d5d2c20820",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/13/13c39ea8cc89fa970bef12b54f556f911b4511d98c71359bc6f292d5d2c20820"
     },
     "scripts/asr.json": {
-      "hash": "985cbbbc930bc670f28e0d35bdce1ba0159199ac9536daa5dc9edbd42f4097c1",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/98/985cbbbc930bc670f28e0d35bdce1ba0159199ac9536daa5dc9edbd42f4097c1"
+      "hash": "ae3f054d67aebe0a8fb9ec6b930ff73bd0601d301d35b972b1e2e93a575f2aaf",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/ae/ae3f054d67aebe0a8fb9ec6b930ff73bd0601d301d35b972b1e2e93a575f2aaf"
     },
     "scripts/make_preview.py": {
       "hash": "e1d62b98cb0e22c53fda58dc0e7087993a936e4b94a22b6ad18bda30b0eb549e",
@@ -1524,12 +1524,78 @@
           "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/d8/d8959d938fbcb18695b392cbfc703795d4bde611bbbd649cdaa0845d3d6a21b0"
         }
       }
+    },
+    "40b937c9-b34c-4b49-a479-44de01a0b91f": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792725738484,
+      "endedAt": 1792725738766,
+      "files": {
+        "assets/audio/voice/03.m4a": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/a1/a1a14ff2dc95ca237c31be0ec73a218a1a657d5a97531556fd0d3d4a10effd49",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/6d/6dda10cf2f8520456b8ab0430c6dbc9051cd8b84f47f794a987b2ef22e1d0308"
+        },
+        "compositions/frames/19.html": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/0a/0a6c19afd12ac968488ae740e5e98754879f3ce813c04bd5b16d16cd2b090b52",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/7b/7b785bdc7149ff3561392fc6971af6b8c41ff3a536790d75bd652f853d41c66e"
+        },
+        "deliverables/EP2-SEM.mp4": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/46/461d6c7a3ab824491a4c9c6c63c49b78f349be89766be5646952c64d509fb96d",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/13/13c39ea8cc89fa970bef12b54f556f911b4511d98c71359bc6f292d5d2c20820"
+        },
+        "index.html": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c6/c6359d505211c6f1b38d869d67c72dc392899a768c745f469d52425fe2e50f79",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c5/c5d58112b0f24293013ca0c1cce913b2f27c323c62f7a46964caa8a6179a47e1"
+        },
+        "SCRIPT.md": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/76/769a2d9dd494e97a56f1be218e82d017b0346d8ab3d4bd838a277551005c51ad",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c7/c73f7bc15976a0037c8d3e80d05c597d6d950d39bce76032082b5a1733fa3021"
+        },
+        "scripts/asr.json": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/98/985cbbbc930bc670f28e0d35bdce1ba0159199ac9536daa5dc9edbd42f4097c1",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/ae/ae3f054d67aebe0a8fb9ec6b930ff73bd0601d301d35b972b1e2e93a575f2aaf"
+        },
+        "scripts/build_frames.py": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/cd/cd95becf0d63ff63e958f050c73fe91652e7f81142d8e31ca75ad5f144674861",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/b9/b971dbd8545c0ebf7b80c840791ec03ee42467da79dfa339308b5e5424c0bb00"
+        },
+        "scripts/schedule.json": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/f6/f6c8217d1eee12010f7c2878679acf1941af0797ca7bf643135ed9d2278b9611",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/aa/aa60125ec83ada6dc2a58b35d276713d83038389a6281935f81f33d2010aa70b"
+        },
+        "source/audio-raw/EP2-SEM-03.mp3": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/5a/5a479f84ebfa103dbc386a8bfcf9742b7aaa047f08989415eaf8df369698ad43",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/d1/d1aac48c4ea74c083707f7b11c716271bccc2f5f14d20a1a47e59848f3575493"
+        }
+      }
+    },
+    "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792725770203,
+      "endedAt": 1792725770236,
+      "files": {
+        "compositions/frames/19.html": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/7b/7b785bdc7149ff3561392fc6971af6b8c41ff3a536790d75bd652f853d41c66e",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/c0/c0df9d2c70dc2c8cfd1c9d6a059ecd430c54baca0920a7ccb20998783ce844e2"
+        },
+        "scripts/build_frames.py": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/b9/b971dbd8545c0ebf7b80c840791ec03ee42467da79dfa339308b5e5424c0bb00",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/e1/e14491b8474d88a75a00887f3ff35e1d0b682c6d6f1290ad16033c2876d0cb98"
+        }
+      }
     }
   },
   "checks": {
     "latest": {
-      "revision": null,
-      "id": "56823100-a98e-4ef1-988f-e6c90328817d"
+      "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+      "id": "633616b4-1229-484d-bf6e-0600758ef53b"
     },
     "revisions": {
       "ac5be7fc-0f03-4420-8b35-66cf7f1e6d0d": [
@@ -2027,6 +2093,344 @@
           "status": "cleaned",
           "cleanedAfterRender": "fda1b1e6-3a50-4a9e-befa-4ee22ec5d6b4"
         }
+      ],
+      "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8": [
+        {
+          "id": "de4e7e90-69db-4c60-a34b-7bad8c3180ff",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/de4e7e90-69db-4c60-a34b-7bad8c3180ff.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "scope": {
+              "range": [
+                0,
+                150
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 5,
+              "range": [
+                0,
+                150
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725782211,
+          "contentHash": "30bb967122ee9a21f3f08671d91f98af66a7c779b50aa3a84acbd061c4bff13c",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "6dbcf262-82f6-45e1-b8d1-904c152c5a8b",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/6dbcf262-82f6-45e1-b8d1-904c152c5a8b.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "scope": {
+              "range": [
+                150,
+                880
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 5,
+              "range": [
+                150,
+                880
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725795416,
+          "contentHash": "372e3447553e6b957c7da8034adf3dd6d718a600d11dd90c05060194fda910de",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "4ee585a0-cf23-468c-b6f0-f0558fbfc91c",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/4ee585a0-cf23-468c-b6f0-f0558fbfc91c.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": true,
+            "scope": {
+              "range": [
+                880,
+                1260
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 5,
+              "range": [
+                880,
+                1260
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725806380,
+          "contentHash": "d2890b162540b090292eb0234b9172ceee83c89520b2de72f99b39bd6c1b0a95",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "0b6e4671-5701-4d69-b935-9bd9f717b32b",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/0b6e4671-5701-4d69-b935-9bd9f717b32b.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "scope": {
+              "range": [
+                880,
+                1080
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 5,
+              "range": [
+                880,
+                1080
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725827359,
+          "contentHash": "b17feec7917aabb992f391a8511512a18e974af9069b47c04613bef49a65c9e0",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "6a26da8d-b6b2-4d07-8600-cd43c441407d",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/6a26da8d-b6b2-4d07-8600-cd43c441407d.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": true,
+            "scope": {
+              "range": [
+                1080,
+                1260
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 5,
+              "range": [
+                1080,
+                1260
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725838289,
+          "contentHash": "da85ebd3578369c7a063762bade2514f62ce2b658da152ce15e64c855498f7b4",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "b97d2740-d883-43d5-b209-ee1f16d2e611",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/b97d2740-d883-43d5-b209-ee1f16d2e611.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "scope": {
+              "range": [
+                1080,
+                1170
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 3,
+              "range": [
+                1080,
+                1170
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 20000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725857947,
+          "contentHash": "75b2928756caa931336f3d06020335446772d5c659d575c10f9ce8392acd7cab",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "67802d2d-a714-4dde-9959-c8089fd2dbf0",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/67802d2d-a714-4dde-9959-c8089fd2dbf0.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": true,
+            "scope": {
+              "range": [
+                1170,
+                1260
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 3,
+              "range": [
+                1170,
+                1260
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 20000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725869603,
+          "contentHash": "880d1e22163d06a06d07010fdbc9eb03bf661a580ecf5be22751a57df85c78b5",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "633616b4-1229-484d-bf6e-0600758ef53b",
+          "scope": "scoped",
+          "report": "/home/user/bonny/videos/ep2-sem/.hyperframes/artifacts/checks/633616b4-1229-484d-bf6e-0600758ef53b.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "scope": {
+              "range": [
+                1170,
+                1250
+              ],
+              "hiddenFindings": 0,
+              "notes": [
+                "Static lint and unscoped runtime failures remain project-wide.",
+                "Whole-timeline motion assertions, frozen-sweep detection and craft warnings are skipped for range checks."
+              ]
+            },
+            "options": {
+              "samples": 3,
+              "range": [
+                1170,
+                1250
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 20000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792725890626,
+          "contentHash": "e85ace6ba770d24398cea81e75bb83eaf3ec6aa49237a683ec272b72b613f6ed",
+          "revision": "0365e919-7d32-4ed9-9ff9-8bb6ddc555b8",
+          "inputFingerprint": "82611a2cc9433fede91bbd2163e562fd41733f114cc235c8911fb728d9ff5bcc",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
       ]
     },
     "unversioned": [
@@ -2061,8 +2465,8 @@
   },
   "snapshots": {
     "latest": {
-      "revision": "965d363b-d4af-46d4-9ae0-262d871ad39f",
-      "id": "41bfe5be-01e1-41ea-963a-8a0652c692ee-4"
+      "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+      "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-5"
     },
     "revisions": {
       "f205c238-a23c-4a09-a4d7-3ec3ec6eb953": [],
@@ -8660,6 +9064,128 @@
           "contentHash": "ceccb4e5a78d86513ef3835b06bf47522b48a9b8039d0daf0645a0505938bf69",
           "revision": "965d363b-d4af-46d4-9ae0-262d871ad39f",
           "inputFingerprint": "d127a8366e38e6833654ad61d6bbf457dc1b17566dd687b1389ed149f4b96ace",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "40b937c9-b34c-4b49-a479-44de01a0b91f": [
+        {
+          "scope": "full",
+          "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-0",
+          "image": "/tmp/claude-0/-home-user-bonny/494628ce-457c-5cbf-ab1f-7eb328bb20c4/scratchpad/snapH/frame-00-at-45.4s.png",
+          "time": 45.4,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792725753629,
+          "contentHash": "a4daf7d1ffd0b8c6bebb9e879678a870221e805386aefed029071b267239ab2a",
+          "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+          "inputFingerprint": "0af98d3744bcc2e2181c4b1dfba921f2f89aaf57a592b2196e984a4a108b46ac",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-1",
+          "image": "/tmp/claude-0/-home-user-bonny/494628ce-457c-5cbf-ab1f-7eb328bb20c4/scratchpad/snapH/frame-01-at-51.1s.png",
+          "time": 51.1,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792725753633,
+          "contentHash": "5c8b74bc19324ed5fe067a09207be700051efdc31fcc991d836d0048b7194877",
+          "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+          "inputFingerprint": "0af98d3744bcc2e2181c4b1dfba921f2f89aaf57a592b2196e984a4a108b46ac",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-2",
+          "image": "/tmp/claude-0/-home-user-bonny/494628ce-457c-5cbf-ab1f-7eb328bb20c4/scratchpad/snapH/frame-02-at-54.6s.png",
+          "time": 54.6,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792725753634,
+          "contentHash": "404a19e882205435be7b7f528f1aa3a6045c8c6ea7d4266a7578c0b448361eb4",
+          "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+          "inputFingerprint": "0af98d3744bcc2e2181c4b1dfba921f2f89aaf57a592b2196e984a4a108b46ac",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-3",
+          "image": "/tmp/claude-0/-home-user-bonny/494628ce-457c-5cbf-ab1f-7eb328bb20c4/scratchpad/snapH/frame-03-at-61.9s.png",
+          "time": 61.9,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792725753634,
+          "contentHash": "de2df03a343e3ff1de473fd3048520e8ab5a641c852e5bc2395fd93d0887be5f",
+          "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+          "inputFingerprint": "0af98d3744bcc2e2181c4b1dfba921f2f89aaf57a592b2196e984a4a108b46ac",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-4",
+          "image": "/tmp/claude-0/-home-user-bonny/494628ce-457c-5cbf-ab1f-7eb328bb20c4/scratchpad/snapH/frame-04-at-66.4s.png",
+          "time": 66.4,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792725753635,
+          "contentHash": "a4c2be6260242e7a337c872d2065e9fbf4a6302baba2f89bd0ff9f379a631f49",
+          "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+          "inputFingerprint": "0af98d3744bcc2e2181c4b1dfba921f2f89aaf57a592b2196e984a4a108b46ac",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "fd57ea13-c7d6-4ec2-afbe-0137e5c61b8a-5",
+          "image": "/tmp/claude-0/-home-user-bonny/494628ce-457c-5cbf-ab1f-7eb328bb20c4/scratchpad/snapH/frame-05-at-71.6s.png",
+          "time": 71.6,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792725753635,
+          "contentHash": "4ea3b44d6a4c985ca4e340c5a7d35a1170e66a3326b7f099f0b8fa50a45d7491",
+          "revision": "40b937c9-b34c-4b49-a479-44de01a0b91f",
+          "inputFingerprint": "0af98d3744bcc2e2181c4b1dfba921f2f89aaf57a592b2196e984a4a108b46ac",
           "inputScope": "local-project-files",
           "attribution": "recorded-revision"
         }
