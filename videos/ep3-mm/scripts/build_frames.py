@@ -84,6 +84,32 @@ def silent_length(page):
 def norm_chars(text):
     keep = [(i, c.lower()) for i, c in enumerate(text) if c.isalnum() or 'ก' <= c <= '๛']
     return [i for i, _ in keep], ''.join(c for _, c in keep)
+def global_align(a, b, run=3):
+    """Edit-distance alignment of two strings (in order, no greedy jumps); returns (i, j) of equal characters that sit
+    in runs of at least `run` matches, which are reliable enough to be time anchors."""
+    n, m = len(a), len(b)
+    D = np.zeros((n + 1, m + 1), np.int32); D[:, 0] = np.arange(n + 1); D[0, :] = np.arange(m + 1)
+    bv = np.frombuffer(b.encode('utf-32-le'), np.uint32)
+    for i in range(1, n + 1):
+        sub = D[i - 1, :-1] + (bv != ord(a[i - 1]))
+        row = np.minimum(sub, D[i - 1, 1:] + 1)
+        for j in range(1, m + 1):                          # insertions run along the row
+            row[j - 1] = min(row[j - 1], (row[j - 2] if j > 1 else D[i, 0]) + 1)
+        D[i, 1:] = row
+    pairs, i, j = [], n, m
+    while i and j:
+        if a[i - 1] == b[j - 1] and D[i, j] == D[i - 1, j - 1]: pairs.append((i - 1, j - 1)); i -= 1; j -= 1
+        elif D[i, j] == D[i - 1, j - 1] + 1: i -= 1; j -= 1
+        elif D[i, j] == D[i - 1, j] + 1: i -= 1
+        else: j -= 1
+    pairs.reverse(); keep = []
+    for k, (i, j) in enumerate(pairs):
+        lo = k
+        while lo > 0 and pairs[lo - 1] == (pairs[lo][0] - 1, pairs[lo][1] - 1): lo -= 1
+        hi = k
+        while hi + 1 < len(pairs) and pairs[hi + 1] == (pairs[hi][0] + 1, pairs[hi][1] + 1): hi += 1
+        if hi - lo + 1 >= run: keep.append((i, j))
+    return keep
 ANCHORS = {}
 def anchors(page):
     if page in ANCHORS: return ANCHORS[page]
@@ -96,10 +122,7 @@ def anchors(page):
             b = a if b is None else b
             for k, c in enumerate(t): chars.append(c); times.append(a + (b - a) * k / max(1, len(t)))
         pos, ref = norm_chars(TEXT[page])
-        from difflib import SequenceMatcher
-        for blk in SequenceMatcher(None, ref, ''.join(chars), autojunk=False).get_matching_blocks():
-            if blk.size >= 4:
-                for k in range(0, blk.size, 2): out.append((pos[blk.a + k], times[blk.b + k]))
+        for i, j in global_align(ref, ''.join(chars)): out.append((pos[i], times[j]))
         mono = []                                            # keep anchors moving forward in time
         for p_, t_ in out:
             if not mono or t_ >= mono[-1][1]: mono.append((p_, t_))
@@ -152,18 +175,18 @@ CUES = {
  40: dict(items=[('รันโมเดลหลัก แล้ว', 'drag', 'หากกดด้วย ADANCO')]),
  41: dict(items=[('เหตุผลที่เลือก', 'drag', 'นอกจากนี้')],
           zoom=[('row:99% CI', 'คือ .011', 3.6), ('row:SRMR (Estimated)', 'ส่วนโมเดล ORGA', 7.0), ('ไม่หลุดนัยสำคัญ', 'การปรับ Bonferroni', 5.0)],
-          hl=[('^.093', 'β .093'), ('^[.011, .169]', 'คือ .011'), ('^.0772', 'SRMR .0772'), ('^[−.017, .197] ✗', 'ช่วง 99% คร่อม'),
-              ('^.0816 ✗', 'SRMR .0816'), ('^.0807 ✗', 'ก็ไม่ผ่าน'), ('ไม่หลุดนัยสำคัญ', 'การปรับ Bonferroni'), ('^เลือกใช้', 'เราจึงเลือก')],
-          sfx=[('chime', 'เราจึงเลือก', 0.2)]),
+          hl=[('^.093', 'ค่า β อยู่ที่'), ('^[.011, .169]', 'คือ .011'), ('^.0772', 'SRMR อยู่ที่ .0772'), ('^[−.017, .197] ✗', 'RU ช่วงความเชื่อมั่น'),
+              ('^.0816 ✗', 'SRMR อยู่ที่ .0816'), ('^.0807 ✗', 'ก็ไม่ผ่าน'), ('ไม่หลุดนัยสำคัญ', 'การปรับ Bonferroni'), ('^เลือกใช้', 'เราจะเลือกใช้')],
+          sfx=[('chime', 'เราจะเลือกใช้', 0.2)]),
  42: dict(items=[('Direct Effects Inference', 'drag', 'เปิดดูสี่ตาราง')],
           zoom=[('img:0', 'Direct Effects Inference,', 1.6), ('img:1', 'Indirect Effects', 1.6), ('img:2', 'R-Squared และ', 1.4),
                 ('img:3', 'Goodness of model', 2.0)],
           hl=[('แถวสีเขียว', 'แถวสีเขียว')]),
  43: dict(items=[('Direct / Indirect', 'drag', 'อ่านแถวที่ไฮไลต์'), ('อ่านแถวที่ไฮไลต์ก่อน:', 'pop', 'ส่วนสองแถวล่าง')],
-          zoom=[('row:LEAD_SUPP → ORGA', 'β .093', 8.0), ('row:ORGA → RU', 'ORGA ไป RU', 6.0)],
-          hl=[('row:LEAD_SUPP → ORGA', 'LEAD_SUPP ไป ORGA β'), ('^3.04', 't 3.04'), ('^[.027, .147]', '.027 ถึง'), ('^[.011, .169]', 'และ 99%'),
-              ('^.024', 'f² เท่ากับ'), ('R² ORGA', 'R² ของ ORGA'), ('row:ORGA → RU', 'ORGA ไป RU'), ('row:LEAD_SUPP → RU', 'Indirect effect')]),
- 44: dict(items=[('ความชันของ LEAD', 'drag', 'ภาพนี้คือ'), ('ความชัน = .355', 'drag', 'เมื่อ SUPP ต่ำ'), ('เสริมแรง · Enhancing', 'drag', 'ทุกเส้นเป็นบวก')],
+          zoom=[('row:LEAD_SUPP → ORGA', 'β ที่ .093', 8.0), ('row:ORGA → RU', 'ORGA ไปหา RU', 6.0)],
+          hl=[('row:LEAD_SUPP → ORGA', 'LEAD_SUPP ไปหา ORGA'), ('^3.04', 't 3.04'), ('^[.027, .147]', '.027 ถึง'), ('^[.011, .169]', 'และช่วงความเชื่อมั่น 99%'),
+              ('^.024', 'f² เท่ากับ'), ('R² ORGA', 'R² ของ ORGA'), ('row:ORGA → RU', 'ORGA ไปหา RU'), ('row:LEAD_SUPP → RU', 'Indirect effect')]),
+ 44: dict(items=[('ความชันของ LEAD', 'drag', 'simple slope ความชัน'), ('ความชัน = .355', 'drag', 'เมื่อ SUPP ต่ำ'), ('เสริมแรง · Enhancing', 'drag', 'ทุกเส้นเป็นบวก')],
           draw=[('#B9BEDA', 'ลบหนึ่ง SD'), ('#E8367F', 'ที่ระดับเฉลี่ย'), ('#C24A0A', 'บวกหนึ่ง SD')],
           zoom=[('เสริมแรง · Enhancing', 'นี่คือการกำกับ', 3.0)],
           hl=[('^.293', 'ความชัน .293'), ('^.355', 'เฉลี่ย .355'), ('^.416', 'ขึ้นเป็น .416')]),
@@ -178,7 +201,7 @@ CUES = {
  47: dict(items=[('การได้รับการสนับสนุนกำกับ', 'drag', 'ใจความคือ'), ('ข้อจำกัดที่ต้องเขียน', 'drag', 'ต้องเขียนข้อจำกัด'),
 ],
           zoom=[('การได้รับการสนับสนุนกำกับ', 'ความชันของภาวะผู้นำ', 5.0), ('ข้อจำกัดที่ต้องเขียน คัด', 'โมเดลนี้คัดมาจาก', 6.0)],
-          hl=[('คัดจากการทดสอบ 12 คู่', 'คัดมาจาก 12 คู่'), ('SRMR สูงกว่า HI99', 'SRMR สูงกว่า'), ('หาง', 'หางหนัก'), ('ตัดขวาง', 'ข้อมูลตัดขวาง')]),
+          hl=[('คัดจากการทดสอบ 12 คู่', 'คัดมาจาก 12 คู่'), ('SRMR สูงกว่า HI99', 'SRMR สูงกว่า'), ('หาง', 'หางหนัก')]),
  48: dict(items=[('RU เป็นตัวแปรแบบรวมตัว', 'drag', 'หนึ่ง ตัวแปร'), ('ปัจจัยอธิบาย RU', 'drag', 'สอง ห้าปัจจัย'),
                  ('การสนับสนุนทำให้', 'drag', 'และสาม การสนับสนุน'), ('นัยเชิงปฏิบัติ', 'drag', 'ในทางปฏิบัติ')],
           zoom=[('ผู้บริหารควรลงทุน', 'ผู้บริหารควร', 6.0)],
@@ -575,7 +598,7 @@ for n, slide, a in FRAMES:
     else:                                                          # not recorded yet: silent page, cues on the estimate
         A = silent_length(n); VOICED[n] = [(0.3, A)]; silent.append(n)
     if n == DEMO:
-        t_click = round(LEAD + A + 0.5, 3); t_play = round(t_click + 1.5, 3)
+        t_click = round(LEAD + A + 0.5, 3); t_play = round(t_click + 0.35, 3)    # the clip plays while its box opens
         d = t_play + CLIP; overlap = 0.8
         plan, zooms, rings, draws = convert(n, slide, A, d, t_click, t_play)
         sfx += scene_sfx(n, t, plan, zooms, rings, draws)

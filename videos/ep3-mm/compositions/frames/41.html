@@ -65,7 +65,7 @@
 <div data-reveal="card" data-t="4.243" data-i="31" style="display:flex;align-items:center;padding:6px 20px;border-radius:16px;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9)"><p style="font-size:26px;color:#1A1F36;"><span data-z="8" style="color:#B42318;font-weight:400">.0816 ✗</span></p></div>
 <div data-reveal="card" data-t="4.357" data-i="32" style="display:flex;align-items:center;padding:6px 20px;border-radius:16px;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9)"><p style="font-size:26px;color:#1A1F36;"><span data-z="9" style="color:#B42318;font-weight:400">.0807 ✗</span></p></div>
 </div>
-<div data-reveal="card" data-t="43.502" data-i="33" data-drag="1" style="grid-column:span 12;display:flex;align-items:center;gap:20px;padding:18px 30px;line-height:1.45;background:rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.9);border-radius:26px;box-shadow:0px 12px 28px rgba(28,36,80,0.08), inset 0px 2px 0px rgba(255,255,255,0.95);backdrop-filter:blur(18px)">
+<div data-reveal="card" data-t="44.097" data-i="33" data-drag="1" style="grid-column:span 12;display:flex;align-items:center;gap:20px;padding:18px 30px;line-height:1.45;background:rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.9);border-radius:26px;box-shadow:0px 12px 28px rgba(28,36,80,0.08), inset 0px 2px 0px rgba(255,255,255,0.95);backdrop-filter:blur(18px)">
 <svg style="width:36px;height:36px;color:#E8641B" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
 <p data-z="3" style="font-size:28px;color:#1A1F36"><b>เหตุผลที่เลือก</b> 99% CI ไม่คร่อม 0 · SRMR ต่ำกว่า .08 · ยังมีนัยสำคัญเมื่อปรับ Bonferroni สำหรับ 12 คู่ (.05 / 12 = .0042) · ไม่หลุดนัยสำคัญเมื่อตัดค่าสุดโต่ง</p>
 </div>
@@ -81,7 +81,7 @@
 
   const stage = document.getElementById("f41-stage"), shell = document.getElementById("f41-shell"), cam = document.getElementById("f41-cam");
   const D = 59.800, V = 2, N = 41;
-  const ZOOMS = [{"z": 1, "t": 18.527, "hold": 3.6, "back": true}, {"z": 2, "t": 27.823, "hold": 7.0, "back": true}, {"z": 3, "t": 46.814, "hold": 5.0, "back": true}], RINGS = [{"z": [4], "t": 14.677, "c": "#F0508F"}, {"z": [5], "t": 18.777, "c": "#22B8CF"}, {"z": [6], "t": 24.164, "c": "#4C8DF8"}, {"z": [7], "t": 31.56, "c": "#FFC53D"}, {"z": [8], "t": 34.291, "c": "#F0508F"}, {"z": [9], "t": 42.525, "c": "#22B8CF"}, {"z": [3], "t": 47.064, "c": "#4C8DF8"}, {"z": [10], "t": 57.128, "c": "#FFC53D"}], DRAWS = [];
+  const ZOOMS = [{"z": 1, "t": 16.09, "hold": 3.6, "back": true}, {"z": 2, "t": 26.067, "hold": 7.0, "back": true}, {"z": 3, "t": 47.38, "hold": 5.0, "back": true}], RINGS = [{"z": [4], "t": 12.38, "c": "#F0508F"}, {"z": [5], "t": 16.34, "c": "#22B8CF"}, {"z": [6], "t": 21.74, "c": "#4C8DF8"}, {"z": [7], "t": 29.67, "c": "#FFC53D"}, {"z": [8], "t": 33.39, "c": "#F0508F"}, {"z": [9], "t": 43.366, "c": "#22B8CF"}, {"z": [3], "t": 47.63, "c": "#4C8DF8"}, {"z": [10], "t": 57.37, "c": "#FFC53D"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };

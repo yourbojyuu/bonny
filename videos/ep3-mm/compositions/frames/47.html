@@ -60,7 +60,7 @@
 
   const stage = document.getElementById("f47-stage"), shell = document.getElementById("f47-shell"), cam = document.getElementById("f47-cam");
   const D = 17.000, V = 2, N = 47;
-  const ZOOMS = [{"z": 1, "t": 3.581, "hold": 5.0, "back": true}, {"z": 2, "t": 11.379, "hold": 6.0, "back": true}], RINGS = [{"z": [3], "t": 11.603, "c": "#4C8DF8"}, {"z": [4], "t": 12.688, "c": "#FFC53D"}, {"z": [5], "t": 14.892, "c": "#F0508F"}, {"z": [5], "t": 15.265, "c": "#22B8CF"}], DRAWS = [];
+  const ZOOMS = [{"z": 1, "t": 3.581, "hold": 5.0, "back": true}, {"z": 2, "t": 11.379, "hold": 6.0, "back": true}], RINGS = [{"z": [3], "t": 11.603, "c": "#4C8DF8"}, {"z": [4], "t": 12.688, "c": "#FFC53D"}, {"z": [5], "t": 14.892, "c": "#F0508F"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };

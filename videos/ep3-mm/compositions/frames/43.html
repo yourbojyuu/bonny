@@ -80,7 +80,7 @@
 <div style="display:flex;align-items:center;padding:10px 18px;background:rgba(255,255,255,0.0);border-bottom:1px solid rgba(200,35,111,0.1);font-variant-numeric:tabular-nums"><p style="font-size:30px;line-height:1.35;color:#1A1F36">–</p></div>
 </div>
 </div>
-<div data-reveal="card" data-t="32.382" data-i="2" style="grid-column:span 12;display:flex;align-items:center;gap:20px;padding:18px 30px;line-height:1.45;background:rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.9);border-radius:26px;box-shadow:0px 12px 28px rgba(28,36,80,0.08), inset 0px 2px 0px rgba(255,255,255,0.95);backdrop-filter:blur(18px)">
+<div data-reveal="card" data-t="30.55" data-i="2" style="grid-column:span 12;display:flex;align-items:center;gap:20px;padding:18px 30px;line-height:1.45;background:rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.9);border-radius:26px;box-shadow:0px 12px 28px rgba(28,36,80,0.08), inset 0px 2px 0px rgba(255,255,255,0.95);backdrop-filter:blur(18px)">
 <svg style="width:36px;height:36px;color:#C8236F" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 <p style="font-size:28px;color:#1A1F36">อ่านแถวที่ไฮไลต์ก่อน: β Interaction term มีนัยสำคัญที่ .01 · สองแถวล่างบอกว่าผลไม่ส่งต่อถึง RU</p>
 </div>
@@ -97,7 +97,7 @@
 
   const stage = document.getElementById("f43-stage"), shell = document.getElementById("f43-shell"), cam = document.getElementById("f43-cam");
   const D = 52.300, V = 1, N = 43;
-  const ZOOMS = [{"z": 1, "t": 4.398, "hold": 8.0, "back": true}, {"z": 2, "t": 37.578, "hold": 6.0, "back": true}], RINGS = [{"z": [1], "t": 2.323, "c": "#4C8DF8"}, {"z": [3], "t": 6.232, "c": "#FFC53D"}, {"z": [4], "t": 12.014, "c": "#F0508F"}, {"z": [5], "t": 16.585, "c": "#22B8CF"}, {"z": [6], "t": 20.263, "c": "#4C8DF8"}, {"z": [7], "t": 26.444, "c": "#FFC53D"}, {"z": [2], "t": 37.828, "c": "#F0508F"}, {"z": [8], "t": 44.194, "c": "#22B8CF"}], DRAWS = [];
+  const ZOOMS = [{"z": 1, "t": 4.885, "hold": 8.0, "back": true}, {"z": 2, "t": 36.17, "hold": 6.0, "back": true}], RINGS = [{"z": [1], "t": 2.415, "c": "#4C8DF8"}, {"z": [3], "t": 6.97, "c": "#FFC53D"}, {"z": [4], "t": 13.254, "c": "#F0508F"}, {"z": [5], "t": 17.52, "c": "#22B8CF"}, {"z": [6], "t": 20.78, "c": "#4C8DF8"}, {"z": [7], "t": 25.414, "c": "#FFC53D"}, {"z": [2], "t": 36.42, "c": "#F0508F"}, {"z": [8], "t": 45.13, "c": "#22B8CF"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
