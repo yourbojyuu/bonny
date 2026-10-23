@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "79d7ab17-6da0-4e82-90d8-2585fb2da119",
-  "currentRevision": "c87b2e74-c389-4eb3-b71b-8471bc39b4df",
+  "currentRevision": "cd1bb424-3f66-40ec-9f78-bb732539cc94",
   "pendingChanges": false,
   "files": {
     "SCRIPT.md": {
@@ -621,8 +621,8 @@
       "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/bb/bb442b7429e5c7d3dbe2a8971531dc415ace0fed14393ed536fc1caf9d7f85ba"
     },
     "REVIEW.md": {
-      "hash": "c3f50e763852d9c2d377795a5d9d501730eba53c7f4d920bf67f76bde139ca9b",
-      "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/c3/c3f50e763852d9c2d377795a5d9d501730eba53c7f4d920bf67f76bde139ca9b"
+      "hash": "8c254e28acf74d4e173125f0ba14496a5351eb1ed57b27462cf05546c5d3c07c",
+      "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/8c/8c254e28acf74d4e173125f0ba14496a5351eb1ed57b27462cf05546c5d3c07c"
     },
     "scripts/transcribe.mjs": {
       "hash": "5d9ab6eadc9a17c377a16cac264797b756382d1d40d882d269c8f1cac63817a6",
@@ -1116,6 +1116,21 @@
         "scripts/schedule.json": {
           "before": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/98/98f6f67a69a9c75e36582d5cd818f914480ce39a63891f5435f4792486a10400",
           "after": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/8a/8add79e287c127a79dcb1f9d8dfba1fe60c5bbbf5cc1535b3c7e16c1c0e47cc7"
+        }
+      }
+    },
+    "cd1bb424-3f66-40ec-9f78-bb732539cc94": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792718804156,
+      "endedAt": 1792718804158,
+      "files": {
+        "REVIEW.md": {
+          "before": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/c3/c3f50e763852d9c2d377795a5d9d501730eba53c7f4d920bf67f76bde139ca9b",
+          "after": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/8c/8c254e28acf74d4e173125f0ba14496a5351eb1ed57b27462cf05546c5d3c07c"
         }
       }
     }

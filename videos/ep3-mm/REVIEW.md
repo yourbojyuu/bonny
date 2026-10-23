@@ -1,4 +1,21 @@
-# EP3 review — build of 2026-10-22
+# EP3 review — build of 2026-10-23 (second pass)
+
+## Second pass (author feedback: sync, arrows, demo box, voice, pace, dead air)
+
+- **Sync**: cue times come from whisper-small transcripts of the final narration (`scripts/words/`, windows of ≤ 18 s cut at
+  pauses), aligned to SCRIPT.md by edit distance. Every cue was checked against the transcript at its time; examples of
+  corrections over the old estimate: p41 "ค่า β อยู่ที่ .093" 13.3 → 12.1 s, p43 "R² ของ ORGA" 28.4 → 25.1 s, p44 ".293" 8.3 → 6.9 s.
+  SCRIPT.md p41/p43/p44 rewritten to the spoken wording (the speaker repeats "ช่วงความเชื่อมั่น", says "ไปหา").
+- **Arrows**: lines grow from their start with the head at the tip (p36, p37, p44 checked mid-draw).
+- **Demo box (p40)**: plays a 12 s montage of the clip (Excel → model → bootstrap → result) with push-in, scan light, PREVIEW /
+  duration chips and a pulsing play button; the clip starts as the box opens (no empty frame). Caption "แทรกคลิป:" (a placeholder
+  note on the slide) shown as "คลิปสาธิต:".
+- **Voice**: narration −16.1 LUFS on every file (LRA 1.3–2.4), clip voice −16.1 LUFS, levelled and EQ-matched (+5 dB presence,
+  −3 dB low end) to the narration.
+- **Pace**: narration pauses > 0.38 s cut to 0.30 s and 1.07×; clip speech 1.08×, silent stretches squeezed (13:49 → 8:25).
+  Whole episode 18:17 → 15:17. Silent pages 45–47 shortened from 80 s to ~35 s.
+
+# First pass — build of 2026-10-22
 
 `npx hyperframes check`: **ok** (0 errors). Stills reviewed at every camera punch-in, every highlight ring and late in each scene.
 
