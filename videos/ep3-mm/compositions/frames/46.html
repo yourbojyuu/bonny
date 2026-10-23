@@ -70,7 +70,7 @@
 <div data-z="2" style="display:flex;align-items:center;gap:18px;padding:12px 20px;border-radius:24px;background:rgba(255,255,255,0.92);transform:rotate(-2deg);box-shadow:0px 12px 24px rgba(0,0,0,0.16), inset 0px -4px 0px rgba(31,169,113,0.25)"><div style="display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:28px;background:#1FA971;box-shadow:inset 0px -4px 0px rgba(0,0,0,0.15)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FCFCFD" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:64px;font-weight:600;line-height:1;color:#0E7A4E">3</p><p style="font-size:28px;font-weight:600;color:#3D4459">ผ่าน</p></div><div data-z="3" style="display:flex;align-items:center;gap:18px;padding:12px 20px;border-radius:24px;background:rgba(255,255,255,0.92);transform:rotate(1.5deg);box-shadow:0px 12px 24px rgba(0,0,0,0.16), inset 0px -4px 0px rgba(240,154,26,0.25)"><div style="display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:28px;background:#F09A1A;box-shadow:inset 0px -4px 0px rgba(0,0,0,0.15)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FCFCFD" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v6"/><path d="M12 17h.01"/></svg></div><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:64px;font-weight:600;line-height:1;color:#A15C00">2</p><p style="font-size:28px;font-weight:600;color:#3D4459">ข้อจำกัด</p></div><div data-z="4" style="display:flex;align-items:center;gap:18px;padding:12px 20px;border-radius:24px;background:rgba(255,255,255,0.92);transform:rotate(-1deg);box-shadow:0px 12px 24px rgba(0,0,0,0.16), inset 0px -4px 0px rgba(224,69,58,0.25)"><div style="display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:28px;background:#E0453A;box-shadow:inset 0px -4px 0px rgba(0,0,0,0.15)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FCFCFD" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div><p style="font-family:'Prompt', Tahoma, sans-serif;font-size:64px;font-weight:600;line-height:1;color:#B42318">1</p><p style="font-size:28px;font-weight:600;color:#3D4459">ไม่ผ่าน</p></div><div style="display:flex;align-items:center;gap:12px;margin-top:6px"><p style="font-size:26px;font-weight:600;color:#FCFCFD">ไปแปลผลกัน</p><div style="display:flex;width:44px;height:44px;border-radius:22px;align-items:center;justify-content:center;background:rgba(255,255,255,0.25)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FCFCFD" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div></div>
 </div>
 </div>
-<p data-reveal="badge" data-t="2.13" data-i="3" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">46</p>
+<p data-reveal="badge" data-t="1.75" data-i="3" style="position:absolute;left:1672px;bottom:48px;width:120px;font-size:24px;font-weight:700;color:#1A1F36;text-align:center;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9);border-radius:999px;padding:4px 0px">46</p>
 
 
 </div>
@@ -81,8 +81,8 @@
   const tl = gsap.timeline({ paused: true });
 
   const stage = document.getElementById("f46-stage"), shell = document.getElementById("f46-shell"), cam = document.getElementById("f46-cam");
-  const D = 10.530, V = 1, N = 46;
-  const ZOOMS = [{"z": 1, "t": 4.1, "hold": 4.0, "back": true}], RINGS = [{"z": [2], "t": 3.9, "c": "#22B8CF"}, {"z": [3], "t": 3.9, "c": "#4C8DF8"}, {"z": [4], "t": 5.069, "c": "#FFC53D"}, {"z": [5], "t": 6.454, "c": "#F0508F"}], DRAWS = [];
+  const D = 8.000, V = 1, N = 46;
+  const ZOOMS = [{"z": 1, "t": 4.1, "hold": 4.0, "back": true}], RINGS = [{"z": [2], "t": 3.9, "c": "#22B8CF"}, {"z": [3], "t": 3.9, "c": "#4C8DF8"}, {"z": [4], "t": 3.9, "c": "#FFC53D"}, {"z": [5], "t": 4.849, "c": "#F0508F"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
@@ -127,9 +127,16 @@
   };
   // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
   const lineIn = (ln, t) => {
-    if (ln.getAttribute("stroke-dasharray")) { tl.fromTo(ln, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, t); return; }
-    const L = ln.getTotalLength();
-    tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t);
+    tl.set(ln, { opacity: 0 }, 0);
+    if (ln.tagName.toLowerCase() === "line") {          // grow the line itself: its marker (arrowhead) travels with the tip
+      const x1 = +ln.getAttribute("x1"), y1 = +ln.getAttribute("y1"), x2 = +ln.getAttribute("x2"), y2 = +ln.getAttribute("y2");
+      tl.fromTo(ln, { opacity: 1, attr: { x2: x1 + (x2 - x1) * 0.02, y2: y1 + (y2 - y1) * 0.02 } },
+                    { attr: { x2, y2 }, duration: 0.75, ease: "power2.inOut", immediateRender: false }, t);
+      return;
+    }
+    const L = ln.getTotalLength(), mk = ln.getAttribute("marker-end");   // polyline: draw on, head appears at the end
+    if (mk) tl.set(ln, { attr: { "marker-end": "none" } }, 0), tl.set(ln, { attr: { "marker-end": mk } }, t + 0.7);
+    tl.fromTo(ln, { opacity: 1, strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut", immediateRender: false }, t);
   };
   DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
     .forEach((ln, i) => { ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }));

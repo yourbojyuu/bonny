@@ -65,7 +65,7 @@
 <div data-reveal="card" data-t="4.243" data-i="31" style="display:flex;align-items:center;padding:6px 20px;border-radius:16px;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9)"><p style="font-size:26px;color:#1A1F36;"><span data-z="8" style="color:#B42318;font-weight:400">.0816 ✗</span></p></div>
 <div data-reveal="card" data-t="4.357" data-i="32" style="display:flex;align-items:center;padding:6px 20px;border-radius:16px;background:rgba(255,255,255,0.6);border:2px solid rgba(255,255,255,0.9)"><p style="font-size:26px;color:#1A1F36;"><span data-z="9" style="color:#B42318;font-weight:400">.0807 ✗</span></p></div>
 </div>
-<div data-reveal="card" data-t="50.073" data-i="33" data-drag="1" style="grid-column:span 12;display:flex;align-items:center;gap:20px;padding:18px 30px;line-height:1.45;background:rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.9);border-radius:26px;box-shadow:0px 12px 28px rgba(28,36,80,0.08), inset 0px 2px 0px rgba(255,255,255,0.95);backdrop-filter:blur(18px)">
+<div data-reveal="card" data-t="43.502" data-i="33" data-drag="1" style="grid-column:span 12;display:flex;align-items:center;gap:20px;padding:18px 30px;line-height:1.45;background:rgba(255,255,255,0.5);border:2px solid rgba(255,255,255,0.9);border-radius:26px;box-shadow:0px 12px 28px rgba(28,36,80,0.08), inset 0px 2px 0px rgba(255,255,255,0.95);backdrop-filter:blur(18px)">
 <svg style="width:36px;height:36px;color:#E8641B" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
 <p data-z="3" style="font-size:28px;color:#1A1F36"><b>เหตุผลที่เลือก</b> 99% CI ไม่คร่อม 0 · SRMR ต่ำกว่า .08 · ยังมีนัยสำคัญเมื่อปรับ Bonferroni สำหรับ 12 คู่ (.05 / 12 = .0042) · ไม่หลุดนัยสำคัญเมื่อตัดค่าสุดโต่ง</p>
 </div>
@@ -80,8 +80,8 @@
   const tl = gsap.timeline({ paused: true });
 
   const stage = document.getElementById("f41-stage"), shell = document.getElementById("f41-shell"), cam = document.getElementById("f41-cam");
-  const D = 68.070, V = 2, N = 41;
-  const ZOOMS = [{"z": 1, "t": 21.52, "hold": 3.6, "back": true}, {"z": 2, "t": 32.48, "hold": 7.0, "back": true}, {"z": 3, "t": 53.646, "hold": 5.0, "back": true}], RINGS = [{"z": [4], "t": 17.59, "c": "#F0508F"}, {"z": [5], "t": 21.77, "c": "#22B8CF"}, {"z": [6], "t": 27.702, "c": "#4C8DF8"}, {"z": [7], "t": 36.348, "c": "#FFC53D"}, {"z": [8], "t": 39.337, "c": "#F0508F"}, {"z": [9], "t": 48.929, "c": "#22B8CF"}, {"z": [3], "t": 53.896, "c": "#4C8DF8"}, {"z": [10], "t": 64.938, "c": "#FFC53D"}], DRAWS = [];
+  const D = 59.800, V = 2, N = 41;
+  const ZOOMS = [{"z": 1, "t": 18.527, "hold": 3.6, "back": true}, {"z": 2, "t": 27.823, "hold": 7.0, "back": true}, {"z": 3, "t": 46.814, "hold": 5.0, "back": true}], RINGS = [{"z": [4], "t": 14.677, "c": "#F0508F"}, {"z": [5], "t": 18.777, "c": "#22B8CF"}, {"z": [6], "t": 24.164, "c": "#4C8DF8"}, {"z": [7], "t": 31.56, "c": "#FFC53D"}, {"z": [8], "t": 34.291, "c": "#F0508F"}, {"z": [9], "t": 42.525, "c": "#22B8CF"}, {"z": [3], "t": 47.064, "c": "#4C8DF8"}, {"z": [10], "t": 57.128, "c": "#FFC53D"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
@@ -126,9 +126,16 @@
   };
   // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
   const lineIn = (ln, t) => {
-    if (ln.getAttribute("stroke-dasharray")) { tl.fromTo(ln, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, t); return; }
-    const L = ln.getTotalLength();
-    tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t);
+    tl.set(ln, { opacity: 0 }, 0);
+    if (ln.tagName.toLowerCase() === "line") {          // grow the line itself: its marker (arrowhead) travels with the tip
+      const x1 = +ln.getAttribute("x1"), y1 = +ln.getAttribute("y1"), x2 = +ln.getAttribute("x2"), y2 = +ln.getAttribute("y2");
+      tl.fromTo(ln, { opacity: 1, attr: { x2: x1 + (x2 - x1) * 0.02, y2: y1 + (y2 - y1) * 0.02 } },
+                    { attr: { x2, y2 }, duration: 0.75, ease: "power2.inOut", immediateRender: false }, t);
+      return;
+    }
+    const L = ln.getTotalLength(), mk = ln.getAttribute("marker-end");   // polyline: draw on, head appears at the end
+    if (mk) tl.set(ln, { attr: { "marker-end": "none" } }, 0), tl.set(ln, { attr: { "marker-end": mk } }, t + 0.7);
+    tl.fromTo(ln, { opacity: 1, strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut", immediateRender: false }, t);
   };
   DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
     .forEach((ln, i) => { ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }));

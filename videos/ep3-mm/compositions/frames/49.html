@@ -33,7 +33,7 @@
 <h2 data-z="1" style="font-family:'Prompt', Tahoma, sans-serif;font-size:150px;font-weight:600;line-height:1;color:#FCFCFD">ขอบคุณ</h2>
 <p style="font-size:28px;line-height:1.5;color:#F3EEFF">วุฒิพันธ์ ไชยศิลป์ · 680232027</p>
 </div>
-<div data-reveal="card" data-t="2.225" data-i="1" style="grid-column:span 7;grid-row:span 2;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:30px 36px;line-height:1.4;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:32px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px)">
+<div data-reveal="card" data-t="2.07" data-i="1" style="grid-column:span 7;grid-row:span 2;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:30px 36px;line-height:1.4;background:rgba(255,255,255,0.58);border:2px solid rgba(255,255,255,0.9);border-radius:32px;box-shadow:0px 18px 40px rgba(28,36,80,0.10), inset 0px 2px 0px rgba(255,255,255,0.95), inset 0px -4px 10px rgba(28,36,80,0.05);backdrop-filter:blur(18px)">
 <p style="font-size:24px;font-weight:700;color:#1A1F36">เอกสารอ้างอิง</p>
 <p style="font-size:24px;color:#3D4459;padding-left:28px;text-indent:-28px">Becker, J.-M., Cheah, J.-H., Gholamzade, R., Ringle, C. M., &amp; Sarstedt, M. (2023). Revisiting the specification, estimation, and evaluation of higher-order constructs in PLS-SEM. <i>IJCHM, 35</i>(1), 321–346.</p>
 <p style="font-size:24px;color:#3D4459;padding-left:28px;text-indent:-28px">Hair, J. F., Hult, G. T. M., Ringle, C. M., &amp; Sarstedt, M. (2022). <i>A primer on partial least squares structural equation modeling</i> (3rd ed.). Sage.</p>
@@ -53,8 +53,8 @@
   const tl = gsap.timeline({ paused: true });
 
   const stage = document.getElementById("f49-stage"), shell = document.getElementById("f49-shell"), cam = document.getElementById("f49-cam");
-  const D = 20.152, V = 1, N = 49;
-  const ZOOMS = [], RINGS = [{"z": [1], "t": 1.0, "c": "#F0508F"}], DRAWS = [];
+  const D = 18.600, V = 1, N = 49;
+  const ZOOMS = [], RINGS = [{"z": [1], "t": 0.85, "c": "#F0508F"}], DRAWS = [];
   const COL = ["#4C8DF8", "#6A2EE8", "#F0508F", "#FFC53D", "#22B8CF"];
   // layout positions measured with offset* (immune to preview scaling), before any tween touches transforms
   const place = el => { let x = 0, y = 0, e = el; while (e && e !== stage) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
@@ -99,9 +99,16 @@
   };
   // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
   const lineIn = (ln, t) => {
-    if (ln.getAttribute("stroke-dasharray")) { tl.fromTo(ln, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, t); return; }
-    const L = ln.getTotalLength();
-    tl.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, t);
+    tl.set(ln, { opacity: 0 }, 0);
+    if (ln.tagName.toLowerCase() === "line") {          // grow the line itself: its marker (arrowhead) travels with the tip
+      const x1 = +ln.getAttribute("x1"), y1 = +ln.getAttribute("y1"), x2 = +ln.getAttribute("x2"), y2 = +ln.getAttribute("y2");
+      tl.fromTo(ln, { opacity: 1, attr: { x2: x1 + (x2 - x1) * 0.02, y2: y1 + (y2 - y1) * 0.02 } },
+                    { attr: { x2, y2 }, duration: 0.75, ease: "power2.inOut", immediateRender: false }, t);
+      return;
+    }
+    const L = ln.getTotalLength(), mk = ln.getAttribute("marker-end");   // polyline: draw on, head appears at the end
+    if (mk) tl.set(ln, { attr: { "marker-end": "none" } }, 0), tl.set(ln, { attr: { "marker-end": mk } }, t + 0.7);
+    tl.fromTo(ln, { opacity: 1, strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut", immediateRender: false }, t);
   };
   DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
     .forEach((ln, i) => { ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }));

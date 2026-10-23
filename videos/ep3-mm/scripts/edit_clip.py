@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Tighten the ADANCO screen recording: speech stays at 1x, silent stretches (>= GAP s,
-mostly clicking/waiting) are sped up, audio is loudness-normalised. Source is untouched."""
+"""Tighten the ADANCO screen recording: speech plays a little faster (SPEECH, pitch kept), silent stretches
+(>= GAP s, mostly clicking/waiting) are sped up to about TARGET s each (at most MAXF x, so clicks stay visible),
+audio is loudness-normalised. Source is untouched."""
 import re, subprocess, os, sys, tempfile
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))
 SRC, OUT = 'assets/video/EP3-MOD.mp4', 'assets/video/EP3-MOD-edit.mp4'
-GAP, NOISE, TARGET = 1.4, '-38dB', 0.7     # min silent gap, silence threshold, seconds a sped-up gap should last
+GAP, NOISE, TARGET, MAXF, SPEECH = 0.8, '-38dB', 0.6, 12.0, 1.08   # min silent gap, threshold, seconds a sped-up gap lasts, max speed-up, speech speed
 dur = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',SRC]))
 log = subprocess.run(['ffmpeg','-hide_banner','-i',SRC,'-vn','-af',f'silencedetect=noise={NOISE}:d={GAP}','-f','null','-'],capture_output=True,text=True).stderr
 st = [float(x) for x in re.findall(r'silence_start: ([0-9.]+)', log)]
@@ -15,9 +16,9 @@ for i, s in enumerate(st):
     if e - s >= GAP: gaps.append((max(0, s), min(dur, e)))
 segs = []; t = 0.0
 for s, e in gaps:
-    if s - t > 0.05: segs.append((t, s, 1.0))
-    f = min(8.0, max(2.0, (e - s) / TARGET)); segs.append((s, e, f)); t = e
-if dur - t > 0.05: segs.append((t, dur, 1.0))
+    if s - t > 0.05: segs.append((t, s, SPEECH))
+    f = min(MAXF, max(2.0, (e - s) / TARGET)); segs.append((s, e, f)); t = e
+if dur - t > 0.05: segs.append((t, dur, SPEECH))
 import tempfile, shutil
 tmp = tempfile.mkdtemp(prefix='clipedit-', dir=tempfile.gettempdir())
 lst = []

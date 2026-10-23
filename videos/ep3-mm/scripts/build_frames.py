@@ -74,15 +74,52 @@ def voiced(f):
     return [(float(a * 0.02), float(b * 0.02)) for a, b in merged if b - a >= 4]
 VOICED = {}
 def silent_length(page):
-    """A page without a recording yet: hold it about as long as its outline text takes to say."""
-    return round(float(weight(TEXT[page]).sum()) / 11.5 * 1.15 + 1.0, 2)
+    """A page without a recording yet: a short reading hold (no dead air), about 45% of the time its text takes to say."""
+    return round(min(16.0, max(7.0, float(weight(TEXT[page]).sum()) / 11.5 * 0.45)), 2)
+
+# Where the recordings were transcribed (scripts/words/pNN.json, whisper-small, per-character times for Thai),
+# the script is aligned to the transcript character by character; matched runs become time anchors and a
+# word between anchors is placed by the speaking-weight of the text in between. Pages without a transcript
+# fall back to spreading the text over the voiced audio.
+def norm_chars(text):
+    keep = [(i, c.lower()) for i, c in enumerate(text) if c.isalnum() or 'ก' <= c <= '๛']
+    return [i for i, _ in keep], ''.join(c for _, c in keep)
+ANCHORS = {}
+def anchors(page):
+    if page in ANCHORS: return ANCHORS[page]
+    f = f'scripts/words/p{page}.json'; out = []
+    if os.path.exists(f):
+        times, chars = [], []
+        for a, b, tok in json.load(open(f, encoding='utf8')):
+            idx, t = norm_chars(tok)
+            if not t: continue
+            b = a if b is None else b
+            for k, c in enumerate(t): chars.append(c); times.append(a + (b - a) * k / max(1, len(t)))
+        pos, ref = norm_chars(TEXT[page])
+        from difflib import SequenceMatcher
+        for blk in SequenceMatcher(None, ref, ''.join(chars), autojunk=False).get_matching_blocks():
+            if blk.size >= 4:
+                for k in range(0, blk.size, 2): out.append((pos[blk.a + k], times[blk.b + k]))
+        mono = []                                            # keep anchors moving forward in time
+        for p_, t_ in out:
+            if not mono or t_ >= mono[-1][1]: mono.append((p_, t_))
+        out = mono
+    ANCHORS[page] = out
+    return out
 def when(page, needle, occ=1):
     """Seconds into the page's narration file at which `needle` (its occ-th occurrence) is spoken."""
     text = TEXT[page]; pos = -1
     for _ in range(occ):
         pos = text.find(needle, pos + 1)
         if pos < 0: raise SystemExit(f'p{page}: "{needle}" not in narration')
-    w = weight(text); frac = w[:pos].sum() / w.sum()
+    w = weight(text); an = anchors(page)
+    before = [a for a in an if a[0] <= pos]; after = [a for a in an if a[0] >= pos]
+    if before and after:
+        (pa, ta), (pb, tb) = before[-1], after[0]
+        return float(ta if pb == pa else ta + (tb - ta) * w[pa:pos].sum() / w[pa:pb].sum())
+    if before and before[-1][0] > pos - 60: return float(before[-1][1] + w[before[-1][0]:pos].sum() / 11.5 / 1.07)
+    if after and after[0][0] < pos + 60: return float(max(0.0, after[0][1] - w[pos:after[0][0]].sum() / 11.5 / 1.07))
+    frac = w[:pos].sum() / w.sum()
     segs = VOICED[page]; total = sum(b - a for a, b in segs); goal = frac * total
     for a, b in segs:
         if goal <= b - a: return float(a + goal)
@@ -315,9 +352,16 @@ MOTION = '''
   }};
   // arrows: lines named by a draw cue wait for their words; the rest draw on with the card that holds them
   const lineIn = (ln, t) => {{
-    if (ln.getAttribute("stroke-dasharray")) {{ tl.fromTo(ln, {{ opacity: 0 }}, {{ opacity: 1, duration: 0.5, ease: "power1.out" }}, t); return; }}
-    const L = ln.getTotalLength();
-    tl.fromTo(ln, {{ strokeDasharray: L, strokeDashoffset: L }}, {{ strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }}, t);
+    tl.set(ln, {{ opacity: 0 }}, 0);
+    if (ln.tagName.toLowerCase() === "line") {{          // grow the line itself: its marker (arrowhead) travels with the tip
+      const x1 = +ln.getAttribute("x1"), y1 = +ln.getAttribute("y1"), x2 = +ln.getAttribute("x2"), y2 = +ln.getAttribute("y2");
+      tl.fromTo(ln, {{ opacity: 1, attr: {{ x2: x1 + (x2 - x1) * 0.02, y2: y1 + (y2 - y1) * 0.02 }} }},
+                    {{ attr: {{ x2, y2 }}, duration: 0.75, ease: "power2.inOut", immediateRender: false }}, t);
+      return;
+    }}
+    const L = ln.getTotalLength(), mk = ln.getAttribute("marker-end");   // polyline: draw on, head appears at the end
+    if (mk) tl.set(ln, {{ attr: {{ "marker-end": "none" }} }}, 0), tl.set(ln, {{ attr: {{ "marker-end": mk }} }}, t + 0.7);
+    tl.fromTo(ln, {{ opacity: 1, strokeDasharray: L, strokeDashoffset: L }}, {{ strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut", immediateRender: false }}, t);
   }};
   DRAWS.forEach(d => [...stage.querySelectorAll("line, polyline")].filter(l => !l.closest("[data-deco]") && (l.getAttribute("stroke") || "").toUpperCase() === d.c.toUpperCase())
     .forEach((ln, i) => {{ ln.dataset.cued = "1"; lineIn(ln, d.t + i * 0.16); }}));
@@ -388,6 +432,15 @@ MOTION = '''
 DEMO_JS = '''
   // demo: the cursor clicks play in the clip box, the box opens to full screen and the clip plays
   const box = stage.querySelector("[data-clipbox]"), btn = box.querySelector("svg").parentElement, b = place(box), p = place(btn);   // the round play button (an HTML box: SVG has no offset*)
+  // before the click the box plays a montage of the clip: slow push-in, scan line, chips, pulsing play button
+  const pv = document.getElementById("{id}-preview");
+  if (pv) {{
+    tl.fromTo(pv, {{ scale: 1.0 }}, {{ scale: 1.12, duration: {t_click}, ease: "none" }}, 0);
+    tl.fromTo(stage.querySelector("[data-pvscan]"), {{ x: -200 }}, {{ x: b.w + 200, duration: 2.2, ease: "power1.inOut", repeat: Math.max(0, Math.floor({t_click} / 2.6) - 1), repeatDelay: 0.4 }}, 0.8);
+    stage.querySelectorAll("[data-pvchip]").forEach((c, i) => tl.fromTo(c, {{ opacity: 0, y: -14, scale: 0.8 }}, {{ opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2.5)" }}, 1.2 + i * 0.25));
+    const halo = mk(btn, "left:-14px;top:-14px;width:156px;height:156px;border-radius:78px;border:4px solid rgba(255,197,61,0.9);", "");
+    tl.fromTo(halo, {{ opacity: 0.9, scale: 0.85 }}, {{ opacity: 0, scale: 1.45, duration: 1.3, ease: "power2.out", repeat: Math.max(0, Math.floor(({t_click} - 1.5) / 1.5) - 1), repeatDelay: 0.2, immediateRender: false }}, 1.0);
+  }}
   const TC = {t_click}, k = 1 + 0.03 * TC / D, sx = v => 960 + (v - 960) * k, sy = v => 540 + (v - 540) * k;
   const px = p.x + p.w / 2, py = p.y + p.h / 2;
   tl.set(cur, {{ x: px + 520, y: py + 330, scale: 1, opacity: 0 }}, TC - 1.4);
@@ -418,6 +471,19 @@ def demo_layer(fid, t_play):
     return (f'<div id="{fid}-vlayer" data-layout-allow-overflow data-layout-allow-overlap style="position:absolute;left:0;top:0;width:1920px;height:1080px;background:#0d1020;overflow:hidden;opacity:0">{media}'
             f'<div style="position:absolute;left:0;bottom:0;width:1920px;height:6px;background:rgba(255,255,255,0.12)"><div id="{fid}-prog" style="width:100%;height:100%;background:linear-gradient(90deg,#4C8DF8,#6A2EE8,#F0508F);transform-origin:left center"></div></div></div>')
 
+PREVIEW = 'assets/video/EP3-MOD-preview.mp4'                                 # scripts/make_preview.py
+def preview_layer(n):
+    """Clip montage filling the clip box (behind its play button and caption), with a dark wash for legibility,
+    a light scan line and two chips."""
+    vid = (f'<video id="f{n}-preview" class="clip" src="{PREVIEW}" data-start="0" data-duration="{probe(PREVIEW):.3f}" data-hf-media-start-basis="local" '
+           f'data-track-index="2" muted playsinline style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%"></video>') if os.path.exists(PREVIEW) else ''
+    chip = 'position:absolute;top:24px;padding:6px 16px;border-radius:999px;font-family:\'Prompt\',sans-serif;font-size:22px;font-weight:600;'
+    return (f'<div data-layout-allow-overflow data-layout-allow-overlap data-layout-ignore style="position:absolute;inset:0;border-radius:30px;overflow:hidden;z-index:0">{vid}'
+            f'<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,31,54,0.35) 0%,rgba(26,31,54,0.15) 40%,rgba(26,31,54,0.78) 100%)"></div>'
+            f'<div data-pvscan style="position:absolute;top:0;left:0;width:160px;height:100%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.22),rgba(255,255,255,0));transform:skewX(-14deg)"></div>'
+            f'<p data-pvchip style="{chip}left:24px;color:#1A1F36;background:#FFC53D">● PREVIEW</p>'
+            f'<p data-pvchip style="{chip}right:24px;color:#FCFCFD;background:rgba(26,31,54,0.7)">ADANCO · {int(CLIP // 60)}:{int(CLIP % 60):02d}</p></div>')
+
 def convert(n, slide, A, D, t_click=None, t_play=None):
     s = open(f'source/slides/{slide}.html', encoding='utf8').read()
     m = re.match(r'\s*<section id="[^"]+"[^>]*?style="([^"]*)"[^>]*>', s)
@@ -426,7 +492,14 @@ def convert(n, slide, A, D, t_click=None, t_play=None):
     body = re.sub(r'<aside>.*?</aside>', '', body, flags=re.S)
     body = re.sub(r'/_blob/([0-9a-f]+)', r'assets/img/\1.png', body)
     body = body.replace('data-deco="1"', 'data-deco="1" data-layout-allow-overflow')
-    if n == DEMO: body = body.replace('<div style="grid-column:span 7;', '<div data-clipbox style="grid-column:span 7;', 1)
+    if n == DEMO and HAS_CLIP:
+        body = body.replace('<div style="grid-column:span 7;', '<div data-clipbox style="position:relative;overflow:hidden;grid-column:span 7;', 1)
+        a = body.index('data-clipbox'); a = body.index('>', a) + 1
+        body = body[:a] + preview_layer(n) + body[a:]
+        body = body.replace('แทรกคลิป: สร้าง LEAD × SUPP', 'คลิปสาธิต: สร้าง LEAD × SUPP')
+        for tag in ('width:128px;height:128px;display:flex', 'font-size:34px;font-weight:600;color:#FCFCFD">คลิปสาธิต'):
+            body = body.replace(tag, 'position:relative;z-index:2;' + tag, 1)
+    elif n == DEMO: body = body.replace('<div style="grid-column:span 7;', '<div data-clipbox style="grid-column:span 7;', 1)
     for old in set(re.findall(r'\sid="([^"]+)"', body)):
         body = body.replace(f'url(#{old})', f'url(#f{n}-{old})')
     body = re.sub(r'\sid="([^"]+)"', lambda mm: f' id="f{n}-{mm.group(1)}"', body)

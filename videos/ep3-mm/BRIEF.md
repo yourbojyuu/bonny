@@ -6,7 +6,7 @@ destination: youtube
 aspect: 1920x1080
 language: th
 audience: "ผู้เรียนวิชาโมเดลสมการโครงสร้าง / ผู้สนใจ ADANCO"
-length: "~9 min narration + demo clip"
+length: "~15 min including the 8:25 demo clip"
 angle: "สไลด์บรรยายเสียงพากย์ (EP3 ตอนสุดท้ายของซีรีส์) ตาม videos/STYLE-GUIDE.md"
 ---
 
@@ -25,15 +25,22 @@ EP 3 ของซีรีส์ "Phuchit × ADANCO": ผลแรงขึ้�
 
 ## Pipeline
 
-1. `python3 scripts/edit_clip.py` (once `assets/video/EP3-MOD.mp4` is in place)
-2. `python3 scripts/process_voice.py` — page-keyed voice files `assets/audio/voice/pNN.m4a` (VOICE table: recording, cut points)
-3. `python3 scripts/make_sfx.py` (palette already built; only needed if the SFX change)
-4. `python3 scripts/build_frames.py` — scene schedule, reveals, cues (`CUES`), SFX, `index.html`
-5. `npx hyperframes@0.8.185 check` → snapshot → render
+1. `python3 scripts/edit_clip.py` — clip 13:49 → 8:25: speech 1.08×, silent stretches ≥ 0.8 s squeezed to ~0.6 s (≤ 12×)
+2. `python3 scripts/make_preview.py` — 12 s montage of the clip for the clip box on page 40
+3. `python3 scripts/process_voice.py` — page-keyed voice files `assets/audio/voice/pNN.m4a` (VOICE table: recording, cut points);
+   pauses > 0.38 s cut to 0.30 s, 1.07× (pitch kept), shared EQ/compression, two-pass loudness −16 LUFS;
+   clip voice levelled harder and EQ-matched to the narration's spectrum
+4. word times: `node /tmp/asr/words.mjs scripts/words assets/audio/voice/p*.m4a` (see `scripts/transcribe.mjs` for the model setup) — rerun after step 3
+5. `python3 scripts/make_sfx.py` (palette already built; only needed if the SFX change)
+6. `python3 scripts/build_frames.py` — scene schedule, reveals, cues (`CUES`), SFX, `index.html`
+7. `npx hyperframes@0.8.185 check` → snapshot → render
 
 ## Timing to the words
 
-Same estimator as EP2 (`when()` spreads the SCRIPT.md text over the voiced audio). For EP3 the SCRIPT.md text was
-corrected to what the recordings actually say, using a rough whisper-small transcript (`scripts/transcribe.mjs`).
-A page with no recording yet is held for about as long as its outline text takes to say, silent, with cues on that estimate;
-drop the file in and rerun steps 2 and 4.
+`scripts/words/pNN.json` holds whisper-small timestamps of the processed narration (Thai comes out with a time per
+character). `when()` aligns the SCRIPT.md text to that transcript character by character; every matched run of 4+
+characters is a time anchor, and a cue word between anchors is placed by speaking weight. So every reveal, drag,
+punch-in, ring and line draw lands on the spoken word, not on an estimate. Pages without a transcript fall back to
+the EP2 estimator. A page with no recording yet gets a short silent reading hold (7–16 s); drop the file in and rerun 3, 4, 6.
+
+Arrows grow from their start point with the arrowhead riding the tip (SVG `<line>` x2/y2 tween), so no head waits at the end.
