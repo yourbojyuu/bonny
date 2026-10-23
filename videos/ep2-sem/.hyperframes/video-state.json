@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "9358453b-c020-4225-8e94-dcba905b8dc4",
-  "currentRevision": "965d363b-d4af-46d4-9ae0-262d871ad39f",
+  "currentRevision": "c41931e0-448a-41fc-ac1a-6fd497027aca",
   "pendingChanges": false,
   "files": {
     "SCRIPT.md": {
@@ -741,8 +741,8 @@
       "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/40/400c5d28266b8c51f2d1a75bc9a5e7e539896508641872dfb209c14a9bfc1396"
     },
     "REVIEW.md": {
-      "hash": "dc271a1572450cf764ec091c302ceee40eb9b98329ee86a65c44f7e1dbb16faf",
-      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/dc/dc271a1572450cf764ec091c302ceee40eb9b98329ee86a65c44f7e1dbb16faf"
+      "hash": "d8959d938fbcb18695b392cbfc703795d4bde611bbbd649cdaa0845d3d6a21b0",
+      "content": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/d8/d8959d938fbcb18695b392cbfc703795d4bde611bbbd649cdaa0845d3d6a21b0"
     },
     "assets/video/EP2-SEM-preview.mp4": {
       "hash": "4a1b39f978a3bb5dc103eaef68f5b2cba06b2e23ef7de49835a527f1c8c4154e",
@@ -1507,6 +1507,21 @@
         "scripts/build_frames.py": {
           "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/2b/2b287b99d1ab234f457d33df09d609074e9a26e18dbe797152314415f278fcb4",
           "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/cd/cd95becf0d63ff63e958f050c73fe91652e7f81142d8e31ca75ad5f144674861"
+        }
+      }
+    },
+    "c41931e0-448a-41fc-ac1a-6fd497027aca": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792715780705,
+      "endedAt": 1792715780749,
+      "files": {
+        "REVIEW.md": {
+          "before": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/dc/dc271a1572450cf764ec091c302ceee40eb9b98329ee86a65c44f7e1dbb16faf",
+          "after": "/root/.cache/hyperframes/history/9358453b-c020-4225-8e94-dcba905b8dc4/blobs/d8/d8959d938fbcb18695b392cbfc703795d4bde611bbbd649cdaa0845d3d6a21b0"
         }
       }
     }
