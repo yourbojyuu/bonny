@@ -21,8 +21,6 @@ stills at every camera punch-in and highlight ring.
 
 ## Open
 
-- p19 narration (`EP2-SEM-03.mp3`, 8.4 s) is short by design (confirmed by the author); its cards reveal quickly to fit.
-- **Demo clip** is a placeholder (6 s card) until `assets/video/EP2-SEM.mp4` is pushed; then run the pipeline from step 1.
 - Reveals follow the narration, so some pages hold empty space until a card is named (e.g. p21 right card, p32 right cards). This is the requested speech sync; the EP1 rule "everything within ~5 s" no longer holds on those pages.
 - Text under 28 px is the deck's own design (labels, chips, page numbers) — left as is.
 
