@@ -1137,8 +1137,8 @@
   },
   "checks": {
     "latest": {
-      "revision": "c87b2e74-c389-4eb3-b71b-8471bc39b4df",
-      "id": "9d495177-52fa-4e8d-85b5-36129410740b"
+      "revision": null,
+      "id": "c480dc52-c2f4-4570-8cfe-a5d125fb7a27"
     },
     "revisions": {
       "9a4c2d44-f88f-41c9-8bf0-e6268bdd1768": [
@@ -1175,7 +1175,6 @@
         {
           "id": "337db1e3-033c-4ee2-9594-b4a48206408b",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep3-mm/.hyperframes/artifacts/checks/337db1e3-033c-4ee2-9594-b4a48206408b.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1197,14 +1196,15 @@
           "revision": "0b98213a-1d4b-4680-9e86-fe25de104ac8",
           "inputFingerprint": "84472e1d5e36f7ec72db1734b2a3217a3b8113c5798bf66e2d6d347b2e1f398f",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "0d0e7f67-a7cf-4c85-bbce-5455fdb0ddc8"
         }
       ],
       "c87b2e74-c389-4eb3-b71b-8471bc39b4df": [
         {
           "id": "9d495177-52fa-4e8d-85b5-36129410740b",
           "scope": "project",
-          "report": "/home/user/bonny/videos/ep3-mm/.hyperframes/artifacts/checks/9d495177-52fa-4e8d-85b5-36129410740b.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1226,7 +1226,9 @@
           "revision": "c87b2e74-c389-4eb3-b71b-8471bc39b4df",
           "inputFingerprint": "bef6c8bf6cc732970785bbea90c5182028853c2a32a7671659df86ec6c943b31",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "0d0e7f67-a7cf-4c85-bbce-5455fdb0ddc8"
         }
       ]
     },
@@ -5402,13 +5404,14 @@
   },
   "renders": {
     "latest": {
-      "id": "62a6c237-f262-4199-a4f3-8a00a24a85c3",
-      "completedAt": 1792699685865,
+      "id": "0d0e7f67-a7cf-4c85-bbce-5455fdb0ddc8",
+      "completedAt": 1792723646433,
       "output": "/home/user/bonny/videos/ep3-mm/renders/EP3-MOD-render.mp4",
       "status": "completed",
-      "revision": "0c6f68a4-3548-470e-bdfe-278fbca41cab"
+      "revision": "cd1bb424-3f66-40ec-9f78-bb732539cc94"
     },
     "retainedRevisions": [
+      "cd1bb424-3f66-40ec-9f78-bb732539cc94",
       "0c6f68a4-3548-470e-bdfe-278fbca41cab"
     ]
   },
