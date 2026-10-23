@@ -73,5 +73,37 @@ for i, s in enumerate([0, 5, -3]): variant('chime', 'chime', f'chime-{i}', s)
 for i, src in enumerate(['impact-bass-1', 'impact-bass-2']): variant('impact', src, f'impact-{i}', 0, 1, 'lowpass=f=2500')
 # demo-clip click + expand
 variant('click', 'click-soft', 'click-0', 0); variant('expand', 'whoosh-cinematic', 'expand-0', -2, 1, 'volume=-3dB')
+
+# EP2 additions -------------------------------------------------------------------------------
+def sweep(f0, f1, d, seed, noise=0.35):
+    """Soft air sweep: filtered noise + a gliding sine, bell-shaped envelope."""
+    rng = np.random.default_rng(seed); t = t_(d)
+    f = f0 * (f1 / f0) ** (t / d)
+    n = np.convolve(rng.standard_normal(len(t)), np.ones(40) / 40, 'same')
+    return (noise * n * 3 + 0.5 * np.sin(2*np.pi*np.cumsum(f)/SR)) * np.sin(np.pi * t / d) ** 2
+def glass(m, d=0.7):
+    """Glassy ding: two partials, quick attack, long soft tail."""
+    t = t_(d); f = hz(m)
+    return (np.sin(2*np.pi*f*t) + 0.3*np.sin(2*np.pi*2.76*f*t)*np.exp(-t/0.08)) * np.exp(-t/0.22) * np.minimum(1, t/0.004)
+def duo(m1, m2, gap=0.07):
+    """Two quick marimba notes, a little 'ta-da' for highlights."""
+    a, b = marimba(m1, 0.3), marimba(m2, 0.4)
+    out = np.zeros(int(gap * SR) + len(b)); out[:len(a)] += a; out[int(gap * SR):] += b; return out
+def scribble(seed, d=0.32):
+    """Pen-on-paper whisper for arrows drawing on."""
+    rng = np.random.default_rng(seed + 10); t = t_(d)
+    n = rng.standard_normal(len(t)); n = n - np.convolve(n, np.ones(8) / 8, 'same')
+    return n * (0.5 + 0.5 * np.sin(2*np.pi*(14 + 3*seed)*t)) * np.sin(np.pi * t / d)
+# camera punch-in / back out
+for i, (a, b, d) in enumerate([(260, 900, 0.5), (220, 760, 0.55), (300, 1100, 0.45), (240, 820, 0.6)]): write('zoomin', f'zoomin-{i}', sweep(a, b, d, i))
+for i, (a, b, d) in enumerate([(700, 240, 0.45), (820, 260, 0.5), (640, 220, 0.42)]): write('zoomout', f'zoomout-{i}', sweep(a, b, d, 20 + i, 0.5))
+# highlight ring: glass dings + two-note marimba, pentatonic
+for i, m in enumerate([84, 88, 81, 86]): write('hl', f'hl-glass-{i}', glass(m))
+for i, (a, b) in enumerate([(76, 81), (79, 84), (81, 88)]): write('hl', f'hl-duo-{i}', duo(a, b))
+# arrows drawing on
+for i in range(3): write('draw', f'draw-{i}', scribble(i))
+# extra drop / pop colours so neighbours rarely match
+for i, m in enumerate([74, 81, 86]): write('drop', f'drop-kalimba-{i}', mix(kalimba(m, 0.6), 0.4 * bubble(m)))
+for i, s in enumerate([-5, 4]): variant('pop', 'pop', f'pop-soft-{i}', s, extra='volume=-4dB')
 json.dump(palette, open(f'{OUT}/palette.json', 'w'), indent=1)
 print({k: len(v) for k, v in palette.items()})

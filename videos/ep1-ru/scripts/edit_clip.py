@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Tighten the ADANCO screen recording: speech stays at 1x, silent stretches (>= GAP s,
 mostly clicking/waiting) are sped up, audio is loudness-normalised. Source is untouched."""
-import re, subprocess, os, sys
+import re, subprocess, os, sys, tempfile
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))
 SRC, OUT = 'assets/video/EP1-CCA.mp4', 'assets/video/EP1-CCA-edit.mp4'
-GAP, NOISE, TARGET = 1.4, '-38dB', 0.7     # min silent gap, silence threshold, seconds a sped-up gap should last
+GAP, NOISE, TARGET = 1.0, '-38dB', 0.6     # min silent gap, silence threshold, seconds a sped-up gap should last
 dur = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',SRC]))
 log = subprocess.run(['ffmpeg','-hide_banner','-i',SRC,'-vn','-af',f'silencedetect=noise={NOISE}:d={GAP}','-f','null','-'],capture_output=True,text=True).stderr
 st = [float(x) for x in re.findall(r'silence_start: ([0-9.]+)', log)]
@@ -19,7 +19,7 @@ for s, e in gaps:
     f = min(8.0, max(2.0, (e - s) / TARGET)); segs.append((s, e, f)); t = e
 if dur - t > 0.05: segs.append((t, dur, 1.0))
 import tempfile, shutil
-tmp = tempfile.mkdtemp(prefix='clipedit-', dir='/tmp/claude-0/ep1')
+tmp = tempfile.mkdtemp(prefix='clipedit-', dir=tempfile.gettempdir())
 lst = []
 for i, (a, b, f) in enumerate(segs):
     o = f'{tmp}/s{i:03d}.mkv'
