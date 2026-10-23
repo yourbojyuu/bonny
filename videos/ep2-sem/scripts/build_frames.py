@@ -13,8 +13,9 @@ FONTS = open('assets/fonts/fonts.css', encoding='utf8').read()
 SLIDES = ['ep2', 'model', 'sem-pic', 'sem-idea', 'sem-hoc', 'sem-prep', 'sem-ph-demo', 'prn-sem-fit', 'sem-tab-fit',
           'prn-sem-outer', 'sem-ph-outer', 'sem-tab-vif', 'sem-ph-map', 'prn-sem-paths', 'sem-tab-paths', 'sem-ph-ru',
           'sem-tab-src', 'sem-tab-sum', 'sem-ph-sum']
-FRAMES = [(17 + i, s, f'{i + 1:02d}') for i, s in enumerate(SLIDES)]          # (page, slide id, narration file)
-FIRST, LAST, DEMO = 17, 35, 23
+FRAMES = [(16, 'cover', None)] + [(17 + i, s, f'{i + 1:02d}') for i, s in enumerate(SLIDES)]   # (page, slide id, narration file); 16 = episode cover
+FIRST, LAST, DEMO, COVER = 16, 35, 23, 16
+COVER_DUR = 5.2                                  # silent opening cover, on screen from the first frame (thumbnail)
 def probe(f): return float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',f]))
 CLIP_FILE = 'assets/video/EP2-SEM-edit.mp4'                                  # edited demo clip (scripts/edit_clip.py)
 HAS_CLIP = os.path.exists(CLIP_FILE)
@@ -475,7 +476,7 @@ def demo_box(body, t_click):
     button) until the cursor clicks play."""
     body = body.replace('<div style="grid-column:span 7;', '<div data-clipbox style="position:relative;overflow:hidden;grid-column:span 7;', 1)
     body = body.replace('<div style="width:128px;height:128px;', '<div style="position:relative;width:128px;height:128px;', 1)
-    body = body.replace('<p style="font-size:30px;font-weight:600;color:#FCFCFD">แทรกคลิป', '<p style="position:relative;font-size:30px;font-weight:600;color:#FCFCFD;text-shadow:0px 2px 10px rgba(0,0,0,0.6)">แทรกคลิป', 1)
+    body = body.replace('<p style="font-size:30px;font-weight:600;color:#FCFCFD">คลิปสาธิต', '<p style="position:relative;font-size:30px;font-weight:600;color:#FCFCFD;text-shadow:0px 2px 10px rgba(0,0,0,0.6)">คลิปสาธิต', 1)
     if not os.path.exists(PREVIEW): return body
     pv = min(probe(PREVIEW) - 0.05, t_click + 1.6)
     layer = (f'<div id="f{DEMO}-pv" data-layout-allow-overflow data-layout-allow-overlap style="position:absolute;left:0px;top:0px;width:100%;height:100%;border-radius:30px;overflow:hidden">'
@@ -487,6 +488,19 @@ def demo_box(body, t_click):
              f'<p style="font-family:\'Prompt\', sans-serif;font-size:24px;font-weight:600;color:#1A1F36">ตัวอย่างคลิปสาธิต</p></div></div>')
     i = body.index('<div data-clipbox'); j = body.index('>', i) + 1
     return body[:j] + layer + body[j:]
+
+COVER_JS = """
+  // episode cover: the series cover with this episode's card lifted, ringed and zoomed into before page 17
+  const cards = [...stage.querySelectorAll("div")].filter(d => (d.style.gridColumn || "").includes("span 5"));
+  const ep = cards.find(c => c.textContent.includes("PLS-SEM")), rest = cards.filter(c => c !== ep), er = place(ep);
+  tl.to(rest, { opacity: 0.35, scale: 0.95, duration: 0.6, ease: "power2.out" }, 1.0);
+  tl.to(ep, { scale: 1.06, duration: 0.55, ease: "back.out(2.6)" }, 1.0);
+  const ring = mk(stage, "left:" + (er.x - 12) + "px;top:" + (er.y - 12) + "px;width:" + (er.w + 24) + "px;height:" + (er.h + 24) + "px;border:5px solid #FFC53D;border-radius:40px;box-shadow:0 0 0 6px #FFC53D33,0 0 30px #FFC53D99;");
+  tl.fromTo(ring, { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1.06, duration: 0.45, ease: "back.out(2.2)", immediateRender: false }, 1.1);
+  tl.to(ring, { scale: 1.09, duration: 0.35, ease: "sine.inOut", yoyo: true, repeat: 3 }, 1.55);
+  burst(er.x + er.w / 2, er.y + er.h / 2, 1.15, 12);
+  const s = Math.min(1.6, 0.7 * 1920 / er.w), cx = er.x + er.w / 2, cy = er.y + er.h / 2;
+  tl.to(cam, { x: Math.min(0, Math.max(1920 - 1920 * s, 960 - s * cx)), y: Math.min(0, Math.max(1080 - 1080 * s, 540 - s * cy)), scale: s, duration: 1.6, ease: "power3.inOut" }, 2.6);"""
 
 def demo_layer(fid, t_play):
     """Full-frame clip layer for page 23 (revealed from the clip box by DEMO_JS)."""
@@ -511,10 +525,13 @@ def convert(n, slide, A, D, t_click=None, t_play=None):
     for old in set(re.findall(r'\sid="([^"]+)"', body)):
         body = body.replace(f'url(#{old})', f'url(#f{n}-{old})')
     body = re.sub(r'\sid="([^"]+)"', lambda mm: f' id="f{n}-{mm.group(1)}"', body)
-    body, plan, zooms, rings, draws = tag_reveals(n, body, A)
+    if n == COVER:                                                  # the cover is fully on screen at 0 s; COVER_JS animates it
+        body = body.replace('ศ.ว.055743 การวิเคราะห์โมเดลสมการโครงสร้าง', 'SEM : Structural Equation Modeling')
+        plan, zooms, rings, draws = [], [], [], []
+    else: body, plan, zooms, rings, draws = tag_reveals(n, body, A)
     fid = f'f{n}'
     fadeout = f'tl.to(shell, {{ opacity: 0, duration: 0.8, ease: "power1.inOut" }}, D - 0.8);' if n == LAST else ''
-    demo_js = DEMO_JS.format(id=fid, t_click=t_click, t_play=t_play, clip=CLIP) if n == DEMO else ''
+    demo_js = DEMO_JS.format(id=fid, t_click=t_click, t_play=t_play, clip=CLIP) if n == DEMO else COVER_JS if n == COVER else ''
     js = MOTION.format(id=fid, D=D, n=n, drag_dur=DRAG_DUR, variant=n % 3, fade_in='true' if n != FIRST else 'false', fadeout=fadeout,
                        zooms=json.dumps([{k: z[k] for k in ('z', 't', 'hold', 'back')} for z in zooms]), rings=json.dumps(rings),
                        draws=json.dumps(draws), zin=ZOOM_IN, demo='true' if n == DEMO else 'false', demo_js=demo_js)
@@ -576,6 +593,11 @@ def scene_sfx(n, start, plan, zooms, rings, draws):
 starts, durs, voices, sfx = {}, {}, [], []
 t = 0.0
 for n, slide, a in FRAMES:
+    if a is None:                                                   # episode cover: no narration
+        d = COVER_DUR; plan, zooms, rings, draws = convert(n, slide, 0, d)
+        sfx += scene_sfx(n, t, plan, [{'t': 2.6, 'back': False, 'hold': 0}], [{'t': 1.1}], [])
+        starts[n], durs[n] = round(t, 3), round(d, 3); t += d - XFADE
+        continue
     vf = f'assets/audio/voice/{a}.m4a'
     A = probe(vf); timemap(n, a)
     voices.append((a, round(t + LEAD, 3), round(A, 3)))
