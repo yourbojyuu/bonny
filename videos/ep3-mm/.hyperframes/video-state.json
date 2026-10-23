@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "79d7ab17-6da0-4e82-90d8-2585fb2da119",
-  "currentRevision": "78c2e0d5-2044-451b-86a4-28cfd5cca497",
+  "currentRevision": "5c04f24f-a004-409c-b6eb-b909edf9b18e",
   "pendingChanges": false,
   "files": {
     "SCRIPT.md": {
@@ -473,8 +473,8 @@
       "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/8d/8d459d5ea34bbe468a8b9bc938a3d7cab1ecd59cbc3b0daf9e4f2ff143a8e3c0"
     },
     "scripts/edit_clip.py": {
-      "hash": "0d3359289dc8e878ae30e2b19b0636227a860487e8f9e701a0acf2e4eceda541",
-      "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/0d/0d3359289dc8e878ae30e2b19b0636227a860487e8f9e701a0acf2e4eceda541"
+      "hash": "7681cc9aae56c5d3b04498773a26963fee815c8ba2bcf56160a8cf4f3fe9f682",
+      "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/76/7681cc9aae56c5d3b04498773a26963fee815c8ba2bcf56160a8cf4f3fe9f682"
     },
     "scripts/make_sfx.py": {
       "hash": "033db21eedf051867143a65132b43957fef6a6ae127f1edf136ca0452c4a9c42",
@@ -609,8 +609,8 @@
       "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/55/55dbc247d4ed696354bf81a1792e7fe34c69a5ee0000efbba282d41ee2b7a5ee"
     },
     "assets/video/EP3-MOD-edit.mp4": {
-      "hash": "0058fea7d825913ce676a6b286bf583376e4d567573f5a4360ed9ac61bfffd8d",
-      "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/00/0058fea7d825913ce676a6b286bf583376e4d567573f5a4360ed9ac61bfffd8d"
+      "hash": "654bbfa1b6f85b327a57bb70c7cde792ebcab6b76948375f36da36760aad27ed",
+      "content": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/65/654bbfa1b6f85b327a57bb70c7cde792ebcab6b76948375f36da36760aad27ed"
     },
     "assets/video/EP3-MOD.mp4": {
       "hash": "4498f2603af2e7278654c205631417b01f47f8d3bd0a21c9cd73fede52a4e174",
@@ -1193,6 +1193,25 @@
         "scripts/intro_template.html": {
           "before": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/f5/f533e28f632a6c3e3d6ecced167c5ed662c19209acaf83e05b5394111230259c",
           "after": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/86/861da40ae0b0eda7a02e6b3e074c8f47ab3b6fa4aa24641569be9318452410c2"
+        }
+      }
+    },
+    "5c04f24f-a004-409c-b6eb-b909edf9b18e": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792741094904,
+      "endedAt": 1792741095444,
+      "files": {
+        "assets/video/EP3-MOD-edit.mp4": {
+          "before": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/00/0058fea7d825913ce676a6b286bf583376e4d567573f5a4360ed9ac61bfffd8d",
+          "after": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/65/654bbfa1b6f85b327a57bb70c7cde792ebcab6b76948375f36da36760aad27ed"
+        },
+        "scripts/edit_clip.py": {
+          "before": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/0d/0d3359289dc8e878ae30e2b19b0636227a860487e8f9e701a0acf2e4eceda541",
+          "after": "/root/.cache/hyperframes/history/79d7ab17-6da0-4e82-90d8-2585fb2da119/blobs/76/7681cc9aae56c5d3b04498773a26963fee815c8ba2bcf56160a8cf4f3fe9f682"
         }
       }
     }
@@ -5749,15 +5768,15 @@
   },
   "renders": {
     "latest": {
-      "id": "0d0e7f67-a7cf-4c85-bbce-5455fdb0ddc8",
-      "completedAt": 1792723646433,
-      "output": "/home/user/bonny/videos/ep3-mm/renders/EP3-MOD-render.mp4",
+      "id": "3baa5e37-588c-42b2-ac20-21f0e299f837",
+      "completedAt": 1792740723042,
+      "output": "/home/user/bonny/videos/ep3-mm/renders/EP3-MOD-final-HQ.mp4",
       "status": "completed",
-      "revision": "cd1bb424-3f66-40ec-9f78-bb732539cc94"
+      "revision": "78c2e0d5-2044-451b-86a4-28cfd5cca497"
     },
     "retainedRevisions": [
-      "cd1bb424-3f66-40ec-9f78-bb732539cc94",
-      "0c6f68a4-3548-470e-bdfe-278fbca41cab"
+      "78c2e0d5-2044-451b-86a4-28cfd5cca497",
+      "cd1bb424-3f66-40ec-9f78-bb732539cc94"
     ]
   },
   "pendingArtifactCleanup": []

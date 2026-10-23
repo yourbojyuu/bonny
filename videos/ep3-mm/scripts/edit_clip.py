@@ -24,10 +24,10 @@ tmp = tempfile.mkdtemp(prefix='clipedit-', dir=tempfile.gettempdir())
 lst = []
 for i, (a, b, f) in enumerate(segs):
     o = f'{tmp}/s{i:03d}.mkv'
-    vf = f'setpts=(PTS-STARTPTS)/{f:.3f},fps=30,scale=1280:720'
+    vf = f'setpts=(PTS-STARTPTS)/{f:.3f},fps=30,scale=1920:1080:flags=lanczos'      # full HD: screen text stays sharp
     af = f'asetpts=PTS-STARTPTS,atempo={f:.3f},aresample=48000'
     subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',f'{a:.3f}','-to',f'{b:.3f}','-i',SRC,'-vf',vf,'-af',af,
-        '-c:v','libx264','-preset','veryfast','-crf','20','-pix_fmt','yuv420p','-c:a','pcm_s16le','-ar','48000','-shortest',o],check=True)  # PCM audio: no AAC priming drift across joins
+        '-c:v','libx264','-preset','medium','-crf','14','-pix_fmt','yuv420p','-c:a','pcm_s16le','-ar','48000','-shortest',o],check=True)  # PCM audio: no AAC priming drift across joins
     lst.append(f"file '{o}'")
 open(f'{tmp}/list.txt','w').write('\n'.join(lst))
 subprocess.run(['ffmpeg','-y','-loglevel','error','-f','concat','-safe','0','-i',f'{tmp}/list.txt','-c','copy',f'{tmp}/joined.mkv'],check=True)
