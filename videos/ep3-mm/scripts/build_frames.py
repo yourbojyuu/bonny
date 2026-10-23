@@ -20,6 +20,7 @@ CLIP_FILE = 'assets/video/EP3-MOD-edit.mp4'                                  # e
 HAS_CLIP = os.path.exists(CLIP_FILE)
 CLIP = probe(CLIP_FILE) if HAS_CLIP else 6.0                                 # placeholder card until the clip is in place
 LEAD, TAIL, XFADE = 0.4, 0.6, 0.6                # voice lead-in / tail inside a scene; scene overlap
+INTRO = 6.2                                      # animated cover card before page 36 (scripts/intro_template.html)
 END_HOLD = 4.5                                   # the last page holds a little longer so its report text can be read
 REVEAL_AT, MAX_SFX_PER_SCENE = 0.7, 7
 DRAG_GAP, DRAG_DUR = 1.8, 0.9                    # cursor drag-and-drop: min spacing, travel time
@@ -530,7 +531,7 @@ def convert(n, slide, A, D, t_click=None, t_play=None):
     fid = f'f{n}'
     fadeout = f'tl.to(shell, {{ opacity: 0, duration: 0.8, ease: "power1.inOut" }}, D - 0.8);' if n == LAST else ''
     demo_js = DEMO_JS.format(id=fid, t_click=t_click, t_play=t_play, clip=CLIP) if n == DEMO else ''
-    js = MOTION.format(id=fid, D=D, n=n, drag_dur=DRAG_DUR, variant=n % 3, fade_in='true' if n != FIRST else 'false', fadeout=fadeout,
+    js = MOTION.format(id=fid, D=D, n=n, drag_dur=DRAG_DUR, variant=n % 3, fade_in='true' if (n != FIRST or INTRO) else 'false', fadeout=fadeout,
                        zooms=json.dumps([{k: z[k] for k in ('z', 't', 'hold', 'back')} for z in zooms]), rings=json.dumps(rings),
                        draws=json.dumps(draws), zin=ZOOM_IN, demo='true' if n == DEMO else 'false', demo_js=demo_js)
     html = f'''<!doctype html>
@@ -568,7 +569,7 @@ def convert(n, slide, A, D, t_click=None, t_play=None):
 def scene_sfx(n, start, plan, zooms, rings, draws):
     """Sound design for one scene: transition swish, grab/drop for dragged cards, pops, punch-in whooshes,
     highlight dings and arrow scribbles — each picked from its shuffle bag so neighbours differ."""
-    ev = [(start + 0.55, 'impact', 0.3)] if n == FIRST else [(start, 'swish', 0.32)]
+    ev = [(start, 'swish', 0.32)]
     ev.append((start + 0.5, 'sparkle', 0.1))                       # stickers pop in
     count = 0
     for it in plan:
@@ -589,7 +590,15 @@ def scene_sfx(n, start, plan, zooms, rings, draws):
     return ev
 
 starts, durs, voices, sfx, silent = {}, {}, [], [], []
+def write_intro():
+    html = open('scripts/intro_template.html', encoding='utf8').read().replace('%FONTS%', FONTS).replace('%D%', str(INTRO))
+    open('compositions/frames/intro.html', 'w', encoding='utf8').write(html)
+    # cover sound: whoosh in, pops for the badge and nodes, a hit on the title, pen strokes for the arrows, chime
+    return [(0.1, 'swish', 0.3), (0.8, 'pop', 0.3), (1.05, 'impact', 0.32), (1.4, 'sparkle', 0.16), (1.0, 'drop', 0.22), (1.44, 'drop', 0.2),
+            (1.75, 'draw', 0.14), (2.1, 'draw', 0.12), (2.45, 'draw', 0.12), (2.7, 'pop', 0.2), (3.2, 'ping', 0.22), (3.4, 'chime', 0.22),
+            (INTRO - 0.7, 'zoomin', 0.2)]
 t = 0.0
+if INTRO: sfx += write_intro(); t = INTRO - XFADE
 for n, slide, a in FRAMES:
     vf = f'assets/audio/voice/{a}.m4a'
     if os.path.exists(vf):
@@ -612,7 +621,7 @@ for n, slide, a in FRAMES:
     starts[n], durs[n] = round(t, 3), round(d, 3)
     t += d - overlap
 total = round(starts[LAST] + durs[LAST], 3)
-hosts = [f'      <div id="f{n}" class="clip" data-composition-id="f{n}" data-composition-src="compositions/frames/{n}.html" data-start="{starts[n]}" data-duration="{durs[n]}" data-track-index="{1 + n % 2}" data-track-kind="graphics" data-width="1920" data-height="1080"></div>' for n, _, _ in FRAMES]
+hosts = ([f'      <div id="intro" class="clip" data-composition-id="intro" data-composition-src="compositions/frames/intro.html" data-start="0" data-duration="{INTRO}" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080"></div>'] if INTRO else []) + [f'      <div id="f{n}" class="clip" data-composition-id="f{n}" data-composition-src="compositions/frames/{n}.html" data-start="{starts[n]}" data-duration="{durs[n]}" data-track-index="{1 + n % 2}" data-track-kind="graphics" data-width="1920" data-height="1080"></div>' for n, _, _ in FRAMES]
 vo = [f'      <audio id="vo-{a}" src="assets/audio/voice/{a}.m4a" data-start="{st}" data-duration="{A}" data-track-index="4"></audio>' for a, st, A in voices]
 sfx.sort()
 fx, lane_free = [], [0.0] * 8                    # spread effects over tracks 6-13 so none overlap on a track
@@ -635,7 +644,7 @@ idx = f'''<!doctype html>
   </head>
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="{total}" data-width="1920" data-height="1080">
-      <!-- scenes (tracks 1-2): pages 36-49 -->
+      <!-- cover card, then scenes (tracks 1-2): pages 36-49 -->
 {chr(10).join(hosts)}
       <!-- voice (track 4): narration + demo-clip voice, one shared chain (scripts/process_voice.py) -->
 {chr(10).join(vo)}

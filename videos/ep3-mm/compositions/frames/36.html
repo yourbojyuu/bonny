@@ -84,7 +84,7 @@
   tl.set(cam, { transformOrigin: "0px 0px" }, 0);
   // scene entrance: zoom / slide / rise, then a slow camera push for the rest of the scene
   const enter = [{ scale: 1.07 }, { x: 160 }, { y: 110 }][V % 3];
-  if (false) tl.fromTo(shell, { opacity: 0, ...enter }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }, 0);
+  if (true) tl.fromTo(shell, { opacity: 0, ...enter }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.75, ease: "expo.out" }, 0);
   tl.fromTo(stage, { scale: 1 }, { scale: 1.03, duration: D, ease: "none" }, 0);
   // decorations drift in and float
   stage.querySelectorAll("[data-deco]").forEach((d, i) => {
