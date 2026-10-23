@@ -1,0 +1,4 @@
+.hyperframes/artifacts/
+renders/
+.hyperframes/render-outputs.json
+.hyperframes/video-state.json
