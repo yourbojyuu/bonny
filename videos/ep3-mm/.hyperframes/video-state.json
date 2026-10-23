@@ -5768,15 +5768,15 @@
   },
   "renders": {
     "latest": {
-      "id": "3baa5e37-588c-42b2-ac20-21f0e299f837",
-      "completedAt": 1792740723042,
+      "id": "fea5dd5b-ff68-4407-8eb0-f2036245197e",
+      "completedAt": 1792744669885,
       "output": "/home/user/bonny/videos/ep3-mm/renders/EP3-MOD-final-HQ.mp4",
       "status": "completed",
-      "revision": "78c2e0d5-2044-451b-86a4-28cfd5cca497"
+      "revision": "5c04f24f-a004-409c-b6eb-b909edf9b18e"
     },
     "retainedRevisions": [
-      "78c2e0d5-2044-451b-86a4-28cfd5cca497",
-      "cd1bb424-3f66-40ec-9f78-bb732539cc94"
+      "5c04f24f-a004-409c-b6eb-b909edf9b18e",
+      "78c2e0d5-2044-451b-86a4-28cfd5cca497"
     ]
   },
   "pendingArtifactCleanup": []
