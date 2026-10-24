@@ -2,442 +2,51 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ระบบการเงินโรงเรียน</title>
-<style>
-:root{
-  --blue:#1e88e5; --blue-bg:#e3f2fd; --grey:#607d8b; --grey-bg:#eceff1;
-  --red:#e53935; --green:#43a047; --ink:#1b2733; --muted:#78909c; --line:#cfd8dc; --bg:#f5f9fc;
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
-body{font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
-.wrap{max-width:420px;margin:12vh auto 0;padding:24px 16px;text-align:center}
-.wrap h1{margin:0 0 8px;font-size:22px}
-.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line)}
-.ttl{font-weight:700;font-size:18px}
-.who{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);min-width:0}
-.who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
-.tabs{display:flex;background:#fff;border-bottom:1px solid var(--line)}
-.tab{flex:1;padding:12px 8px;text-align:center;border:0;background:#fff;font:inherit;font-weight:700;color:var(--muted);border-bottom:4px solid transparent;cursor:pointer}
-.tab.on.blue{color:var(--blue);border-bottom-color:var(--blue)}
-.tab.on.grey{color:var(--grey);border-bottom-color:var(--grey)}
-main{padding:12px;max-width:1100px;margin:0 auto}
-.btn{font:inherit;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;background:var(--blue);color:#fff;font-weight:700}
-.btn.ghost{background:var(--grey-bg);color:var(--ink)}
-.btn.grey{background:var(--grey)}
-.btn.del{background:#ffebee;color:var(--red);padding:6px 10px}
-.btn:disabled{opacity:.5}
-.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
-.card h2{margin:0 0 10px;font-size:17px}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
-.bar label{font-weight:700}
-input,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);min-width:0;width:100%}
-.bar input{width:auto}
-.thai{color:var(--blue);font-weight:700}
-.kpi{background:var(--blue);color:#fff;border-radius:8px;padding:14px;margin-bottom:12px}
-.kpi-l{font-size:14px;opacity:.95}
-.kpi-v{font-size:28px;font-weight:700;word-break:break-word}
-.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.zero{color:#b0bec5}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{border-bottom:1px solid var(--line);padding:6px 8px}
-th{background:var(--blue-bg);color:var(--ink);text-align:left;position:sticky;top:0}
-th.num{text-align:right}
-tr.grp td{background:var(--blue-bg);font-weight:700;color:var(--blue)}
-tr.sum td{font-weight:700;background:var(--grey-bg)}
-.tablewrap{overflow-x:auto;display:none;border:1px solid var(--line);border-radius:8px;background:#fff}
-.cards{display:block}
-.tc{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px}
-.tc-h{display:flex;justify-content:space-between;gap:8px;font-weight:700}
-.tc-h span:first-child{min-width:0;word-break:break-word}
-.tc-g{font-size:12px;color:var(--blue);font-weight:700;margin:12px 0 4px}
-.tc-l{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);padding-top:2px}
-.tc-l span:first-child{min-width:0;word-break:break-word}
-.erow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:8px;background:#fafcfd}
-.erow label{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
-.erow .chk{display:flex;align-items:center;gap:6px;padding-bottom:8px}
-.erow .chk input{width:auto}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.hint{font-size:13px;color:var(--muted);margin:0 0 8px}
-.msg{position:fixed;left:12px;right:12px;bottom:12px;padding:12px;border-radius:8px;color:#fff;background:var(--grey);z-index:9;word-break:break-word}
-.msg.err{background:var(--red)} .msg.good{background:var(--green)}
-.err-box{background:#ffebee;border:1px solid var(--red);color:#b71c1c;border-radius:8px;padding:12px;margin-bottom:12px;word-break:break-word}
-.load{color:var(--muted);padding:16px 0}
-@media (min-width:760px){
-  .cards{display:none}
-  .tablewrap{display:block}
-}
-</style>
-</head>
-<body>
-
-<div id="login" class="wrap">
-  <h1>ระบบการเงินโรงเรียน</h1>
-  <p id="loginSub" style="color:var(--muted)">เข้าสู่ระบบด้วยบัญชี Google ที่ได้รับสิทธิ์</p>
-  <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
-  <p id="loginMsg" style="color:var(--red);word-break:break-word"></p>
-</div>
-
-<div id="app" hidden>
-  <header class="top">
-    <div class="ttl">ระบบการเงินโรงเรียน <span id="fyLabel" style="color:var(--blue)"></span></div>
-    <div class="who"><span id="who"></span><button class="btn ghost" id="btnOut" type="button">ออก</button></div>
-  </header>
-  <nav class="tabs" id="tabs"></nav>
-  <main id="view"></main>
-</div>
-<div id="msg" class="msg" hidden></div>
-
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
 <script>
 /* ===== แก้ 2 ค่านี้เอง ===== */
 var API_URL = 'ใส่ URL ของ Web App ที่นี่';
 var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
 /* ========================== */
-
-var S = { token: '', me: null, schema: null, st: null, tab: 'overview', date: '', data: null };
-var MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-
-function $(id) { return document.getElementById(id); }
-function esc(s) {
-  return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-function money(n) {
-  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-function moneyCell(n) { return '<span class="' + (Number(n) === 0 ? 'zero' : '') + '">' + money(n) + '</span>'; }
-function thaiDate(iso) {
-  var p = String(iso).split('-');
-  if (p.length !== 3) return iso;
-  return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + (Number(p[0]) + 543);
-}
-function todayISO() {
-  var d = new Date();
-  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-}
-
-var msgTimer = null;
-function toast(text, kind) {
-  var m = $('msg');
-  m.className = 'msg ' + (kind || '');
-  m.textContent = text;
-  m.hidden = false;
-  if (msgTimer) clearTimeout(msgTimer);
-  msgTimer = setTimeout(function () { m.hidden = true; }, kind === 'err' ? 8000 : 3000);
-}
-
-/* ---------- เรียก API ---------- */
-function api(action, payload) {
-  if (!API_URL || API_URL.indexOf('ใส่') === 0) {
-    return Promise.reject(new Error('ยังไม่ได้ใส่ API_URL ใน index.html'));
-  }
-  return fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: action, idToken: S.token, payload: payload || {} })
-  }).then(function (r) { return r.json(); }).then(function (res) {
-    if (!res.ok) {
-      var e = new Error(res.error || 'เกิดข้อผิดพลาด');
-      e.code = res.code;
-      throw e;
-    }
-    return res.data;
-  });
-}
-
-function handleError(e) {
-  if (e && e.code === 'AUTH') { signOut(e.message); return; }
-  toast(e && e.message ? e.message : String(e), 'err');
-}
-
-/* ---------- เข้าสู่ระบบ ---------- */
-function initGsi() {
-  if (!window.google || !google.accounts) return;
-  if (!CLIENT_ID || CLIENT_ID.indexOf('ใส่') === 0) {
-    $('loginMsg').textContent = 'ยังไม่ได้ใส่ CLIENT_ID ใน index.html';
-    return;
-  }
-  google.accounts.id.initialize({ client_id: CLIENT_ID, callback: function (resp) { startApp(resp.credential); } });
-  google.accounts.id.renderButton($('gbtn'), { theme: 'filled_blue', size: 'large', locale: 'th', text: 'signin_with' });
-}
-
-function signOut(message) {
-  S.token = '';
-  S.me = null;
-  try { sessionStorage.removeItem('tok'); } catch (e) {}
-  $('app').hidden = true;
-  $('login').hidden = false;
-  $('loginMsg').textContent = message || '';
-  if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
-}
-
-function startApp(token) {
-  S.token = token;
-  $('loginMsg').textContent = 'กำลังตรวจสิทธิ์...';
-  api('me').then(function (me) {
-    S.me = me;
-    return api('getSchema');
-  }).then(function (sc) {
-    S.schema = sc.schema;
-    return api('getSettings');
-  }).then(function (st) {
-    S.st = st;
-    try { sessionStorage.setItem('tok', token); } catch (e) {}
-    $('login').hidden = true;
-    $('app').hidden = false;
-    $('who').textContent = S.me.name + ' (' + S.me.role + ')';
-    $('fyLabel').textContent = 'ปีงบ ' + st.fy;
-    var t = todayISO();
-    S.date = (t >= st.fyStart && t <= st.fyEnd) ? t : st.fyStart;
-    renderTabs();
-    showTab('overview');
-  }).catch(function (e) {
-    signOut(e && e.message ? e.message : String(e));
-  });
-}
-
-/* ---------- แท็บ ---------- */
-function renderTabs() {
-  var h = '<button class="tab blue" data-tab="overview" type="button">ภาพรวม</button>';
-  if (S.me.role === 'admin') h += '<button class="tab grey" data-tab="settings" type="button">ตั้งค่า</button>';
-  $('tabs').innerHTML = h;
-}
-function showTab(name) {
-  S.tab = name;
-  var btns = $('tabs').getElementsByTagName('button');
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].className = 'tab ' + (btns[i].getAttribute('data-tab') === 'overview' ? 'blue' : 'grey') +
-      (btns[i].getAttribute('data-tab') === name ? ' on' : '');
-  }
-  if (name === 'overview') loadOverview(); else loadSettings();
-}
-
-/* ---------- ภาพรวม ---------- */
-function loadOverview() {
-  var v = $('view');
-  v.innerHTML = '<div class="bar"><label for="dt">ณ วันที่</label>' +
-    '<input type="date" id="dt" value="' + esc(S.date) + '" min="' + esc(S.st.fyStart) + '" max="' + esc(S.st.fyEnd) + '">' +
-    '<span class="thai" id="dtTh"></span></div><div id="ov" class="load">กำลังโหลด...</div>';
-  $('dt').onchange = function () { S.date = this.value; fetchBalances(); };
-  fetchBalances();
-}
-
-function fetchBalances() {
-  $('dtTh').textContent = S.date ? thaiDate(S.date) : '';
-  if (!S.date) return;
-  $('ov').className = 'load';
-  $('ov').textContent = 'กำลังโหลด...';
-  api('getBalances', { date: S.date }).then(function (d) {
-    S.data = d;
-    if (S.tab === 'overview' && $('ov')) renderOverview(d);
-  }).catch(function (e) {
-    if (e && e.code === 'AUTH') { handleError(e); return; }
-    if ($('ov')) { $('ov').className = ''; $('ov').innerHTML = '<div class="err-box"><b>แสดงยอดไม่ได้</b><br>' + esc(e.message) + '</div>'; }
-  });
-}
-
-function groupsOf(d) {
-  var order = [], map = {};
-  d.types.forEach(function (t, i) {
-    if (!map[t.group]) { map[t.group] = []; order.push(t.group); }
-    map[t.group].push(i);
-  });
-  return { order: order, map: map };
-}
-
-function renderOverview(d) {
-  var g = groupsOf(d), i, j, k, h = '';
-  h += '<div class="kpi"><div class="kpi-l">ยอดรวมทุกประเภทเงิน ทุกที่เก็บ ณ ' + esc(thaiDate(d.date)) +
-    '</div><div class="kpi-v">' + money(d.grand) + ' บาท</div></div>';
-
-  /* ตาราง (จอกว้าง) */
-  h += '<div class="tablewrap"><table><thead><tr><th>ประเภทเงิน</th>';
-  for (j = 0; j < d.stores.length; j++) h += '<th class="num">' + esc(d.stores[j].name) + '</th>';
-  h += '<th class="num">รวม</th></tr></thead><tbody>';
-  for (k = 0; k < g.order.length; k++) {
-    h += '<tr class="grp"><td colspan="' + (d.stores.length + 2) + '">' + esc(g.order[k]) + '</td></tr>';
-    var idx = g.map[g.order[k]];
-    for (i = 0; i < idx.length; i++) {
-      var r = idx[i];
-      h += '<tr><td>' + esc(d.types[r].name) + '</td>';
-      for (j = 0; j < d.stores.length; j++) h += '<td class="num">' + moneyCell(d.cells[r][j]) + '</td>';
-      h += '<td class="num"><b>' + money(d.rowTotals[r]) + '</b></td></tr>';
-    }
-  }
-  h += '<tr class="sum"><td>รวมทุกประเภท</td>';
-  for (j = 0; j < d.stores.length; j++) h += '<td class="num">' + money(d.colTotals[j]) + '</td>';
-  h += '<td class="num">' + money(d.grand) + '</td></tr></tbody></table></div>';
-
-  /* การ์ด (มือถือ) */
-  h += '<div class="cards">';
-  for (k = 0; k < g.order.length; k++) {
-    h += '<div class="tc-g">' + esc(g.order[k]) + '</div>';
-    var ix = g.map[g.order[k]];
-    for (i = 0; i < ix.length; i++) {
-      var q = ix[i], lines = '';
-      for (j = 0; j < d.stores.length; j++) {
-        if (d.cells[q][j] !== 0) lines += '<div class="tc-l"><span>' + esc(d.stores[j].name) + '</span><span class="num">' + money(d.cells[q][j]) + '</span></div>';
-      }
-      h += '<div class="tc"><div class="tc-h"><span>' + esc(d.types[q].name) + '</span><span class="num">' + money(d.rowTotals[q]) + '</span></div>' +
-        (lines || '<div class="tc-l"><span>ไม่มียอด</span></div>') + '</div>';
-    }
-  }
-  h += '<div class="tc-g">รวมตามที่เก็บ</div><div class="tc">';
-  for (j = 0; j < d.stores.length; j++) {
-    h += '<div class="tc-l"><span>' + esc(d.stores[j].name) + '</span><span class="num">' + money(d.colTotals[j]) + '</span></div>';
-  }
-  h += '<div class="tc-h" style="margin-top:6px"><span>รวมทุกประเภท</span><span class="num">' + money(d.grand) + '</span></div></div></div>';
-
-  $('ov').className = '';
-  $('ov').innerHTML = h;
-}
-
-/* ---------- ตั้งค่า (admin) ---------- */
-function loadSettings() {
-  $('view').innerHTML = '<div class="load">กำลังโหลด...</div>';
-  api('getSettings').then(function (st) {
-    S.st = st;
-    renderSettings();
-  }).catch(handleError);
-}
-
-function opts(list, sel, blank) {
-  var h = blank ? '<option value=""' + (sel === '' ? ' selected' : '') + '>(ไม่ระบุ)</option>' : '';
-  for (var i = 0; i < list.length; i++) {
-    h += '<option value="' + esc(list[i][0]) + '"' + (list[i][0] === sel ? ' selected' : '') + '>' + esc(list[i][1]) + '</option>';
-  }
-  return h;
-}
-function kindOpts(sel) {
-  var h = '';
-  for (var i = 0; i < S.st.kinds.length; i++) {
-    h += '<option' + (S.st.kinds[i] === sel ? ' selected' : '') + '>' + esc(S.st.kinds[i]) + '</option>';
-  }
-  return h;
-}
-
-function typeRow(r) {
-  var L = S.schema['ประเภทเงิน'];
-  return '<div class="erow" data-row="type">' +
-    '<div><label>' + esc(L[0]) + '</label><input data-k="0" value="' + esc(r[0]) + '"></div>' +
-    '<div><label>' + esc(L[1]) + '</label><input data-k="1" value="' + esc(r[1]) + '"></div>' +
-    '<div><label>' + esc(L[2]) + '</label><input data-k="2" list="groups" value="' + esc(r[2]) + '"></div>' +
-    '<div><label>' + esc(L[3]) + '</label><select data-k="3">' + opts(S.st.stores, r[3], true) + '</select></div>' +
-    '<div class="chk"><input type="checkbox" data-k="4"' + (r[4] === 'ใช่' ? ' checked' : '') + '><span>' + esc(L[4]) + '</span></div>' +
-    '<div><button class="btn del" type="button" data-act="delrow">ลบแถว</button></div></div>';
-}
-function storeRow(r) {
-  var L = S.schema['ที่เก็บเงิน'];
-  return '<div class="erow" data-row="store">' +
-    '<div><label>' + esc(L[0]) + '</label><input data-k="0" value="' + esc(r[0]) + '"></div>' +
-    '<div><label>' + esc(L[1]) + '</label><input data-k="1" value="' + esc(r[1]) + '"></div>' +
-    '<div><label>' + esc(L[2]) + '</label><select data-k="2">' + kindOpts(r[2]) + '</select></div>' +
-    '<div><button class="btn del" type="button" data-act="delrow">ลบแถว</button></div></div>';
-}
-function openRow(r) {
-  var L = S.schema['ยอดยกมา'];
-  return '<div class="erow" data-row="open">' +
-    '<div><label>' + esc(L[1]) + '</label><select data-k="0">' + opts(S.st.types, r[0], false) + '</select></div>' +
-    '<div><label>' + esc(L[2]) + '</label><select data-k="1">' + opts(S.st.stores, r[1], false) + '</select></div>' +
-    '<div><label>' + esc(L[3]) + ' (บาท)</label><input data-k="2" inputmode="decimal" value="' + esc(r[2]) + '"></div>' +
-    '<div><button class="btn del" type="button" data-act="delrow">ลบแถว</button></div></div>';
-}
-
-function renderSettings() {
-  var st = S.st, h = '', i, groups = {}, gl = '';
-  for (i = 0; i < st.types.length; i++) groups[st.types[i][2]] = true;
-  for (var g in groups) if (groups.hasOwnProperty(g)) gl += '<option value="' + esc(g) + '">';
-
-  h += '<div class="card"><h2>ที่เก็บเงิน</h2><div id="storeRows">';
-  for (i = 0; i < st.stores.length; i++) h += storeRow(st.stores[i]);
-  h += '</div><div class="actions"><button class="btn ghost" type="button" data-act="addstore">+ เพิ่มที่เก็บเงิน</button>' +
-    '<button class="btn grey" type="button" data-act="savestores">บันทึกที่เก็บเงิน</button></div></div>';
-
-  h += '<div class="card"><h2>ประเภทเงิน</h2><p class="hint">รหัสที่ถูกใช้ในบัญชีแล้วลบไม่ได้ ให้ปิดใช้งานแทน</p>' +
-    '<datalist id="groups">' + gl + '</datalist><div id="typeRows">';
-  for (i = 0; i < st.types.length; i++) h += typeRow(st.types[i]);
-  h += '</div><div class="actions"><button class="btn ghost" type="button" data-act="addtype">+ เพิ่มประเภทเงิน</button>' +
-    '<button class="btn grey" type="button" data-act="savetypes">บันทึกประเภทเงิน</button></div></div>';
-
-  var op = st.opening.length ? st.opening : st.types.filter(function (t) { return t[4] === 'ใช่'; })
-    .map(function (t) { return [t[0], t[3] || (st.stores[0] ? st.stores[0][0] : ''), '']; });
-  h += '<div class="card"><h2>ยอดยกมา ปีงบ ' + esc(st.fy) + ' (ณ ' + esc(thaiDate(st.fyStart)) + ')</h2>' +
-    '<p class="hint">เลือกที่เก็บให้ตรงกับที่เงินอยู่จริง แถวที่ไม่กรอกจำนวนจะถูกข้าม</p><div id="openRows">';
-  for (i = 0; i < op.length; i++) h += openRow(op[i]);
-  h += '</div><div class="hint" style="margin-top:8px">รวม: <b id="openSum">0.00</b> บาท</div>' +
-    '<div class="actions"><button class="btn ghost" type="button" data-act="addopen">+ เพิ่มแถว</button>' +
-    '<button class="btn grey" type="button" data-act="saveopen">บันทึกยอดยกมา</button></div></div>';
-
-  $('view').innerHTML = h;
-  updateOpenSum();
-}
-
-function readRows(boxId) {
-  var rows = [], boxes = $(boxId).children;
-  for (var i = 0; i < boxes.length; i++) {
-    var f = boxes[i].querySelectorAll('[data-k]'), row = [];
-    for (var j = 0; j < f.length; j++) {
-      row[Number(f[j].getAttribute('data-k'))] = f[j].type === 'checkbox' ? (f[j].checked ? 'ใช่' : 'ไม่') : f[j].value;
-    }
-    rows.push(row);
-  }
-  return rows;
-}
-
-function updateOpenSum() {
-  var el = $('openSum');
-  if (!el) return;
-  var rows = readRows('openRows'), sum = 0;
-  for (var i = 0; i < rows.length; i++) {
-    var n = Number(String(rows[i][2]).replace(/,|บาท|\s/g, ''));
-    if (isFinite(n)) sum += Math.round(n * 100);
-  }
-  el.textContent = money(sum / 100);
-}
-
-function saveAction(action, payload, okText) {
-  api(action, payload).then(function () {
-    toast(okText, 'good');
-    return api('getSettings');
-  }).then(function (st) {
-    S.st = st;
-    renderSettings();
-  }).catch(handleError);
-}
-
-function onViewClick(ev) {
-  var t = ev.target, act = t.getAttribute && t.getAttribute('data-act');
-  if (!act) return;
-  if (act === 'delrow') { var row = t.parentNode.parentNode; row.parentNode.removeChild(row); updateOpenSum(); return; }
-  var tmp = document.createElement('div');
-  if (act === 'addstore') { tmp.innerHTML = storeRow(['', '', S.st.kinds[0]]); $('storeRows').appendChild(tmp.firstChild); }
-  else if (act === 'addtype') { tmp.innerHTML = typeRow(['', '', '', '', 'ใช่']); $('typeRows').appendChild(tmp.firstChild); }
-  else if (act === 'addopen') { tmp.innerHTML = openRow([S.st.types[0] ? S.st.types[0][0] : '', S.st.stores[0] ? S.st.stores[0][0] : '', '']); $('openRows').appendChild(tmp.firstChild); }
-  else if (act === 'savestores') saveAction('saveStores', { rows: readRows('storeRows') }, 'บันทึกที่เก็บเงินแล้ว');
-  else if (act === 'savetypes') saveAction('saveTypes', { rows: readRows('typeRows') }, 'บันทึกประเภทเงินแล้ว');
-  else if (act === 'saveopen') {
-    var rows = readRows('openRows').filter(function (r) { return String(r[2]).replace(/\s/g, '') !== ''; });
-    saveAction('saveOpening', { rows: rows }, 'บันทึกยอดยกมาและสร้าง Ledger ใหม่แล้ว');
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  $('view').addEventListener('click', onViewClick);
-  $('view').addEventListener('input', function (ev) {
-    if (ev.target.getAttribute('data-k') === '2' && ev.target.parentNode.parentNode.getAttribute('data-row') === 'open') updateOpenSum();
-  });
-  $('tabs').addEventListener('click', function (ev) {
-    var n = ev.target.getAttribute && ev.target.getAttribute('data-tab');
-    if (n) showTab(n);
-  });
-  $('btnOut').addEventListener('click', function () { signOut(''); });
-  var saved = '';
-  try { saved = sessionStorage.getItem('tok') || ''; } catch (e) {}
-  if (saved) startApp(saved);
-});
 </script>
+</head>
+<body data-tab="overview">
+<div id="bg" aria-hidden="true"></div>
+<div id="prog" aria-hidden="true"></div>
+
+<section id="login" class="login">
+  <div class="box glass">
+    <span class="logo"><img src="logo.png" alt="ตราโรงเรียน"></span>
+    <h1>ระบบการเงินโรงเรียน</h1>
+    <p class="hint">เข้าสู่ระบบด้วยบัญชี Google ที่ได้รับสิทธิ์</p>
+    <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
+    <p id="loginMsg" style="color:var(--bad);overflow-wrap:anywhere"></p>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <span class="logo"><img src="logo.png" alt="ตราโรงเรียน"></span>
+        <div><h1>ระบบการเงิน<b>โรงเรียน</b></h1><small id="fyLabel"></small></div>
+      </div>
+      <div class="who"><span class="chip" id="who"></span><button class="btn ghost sm" id="btnOut" type="button">ออก</button></div>
+    </header>
+    <nav class="tabs glass" id="tabs" role="tablist" aria-label="เมนูหลัก"></nav>
+    <main id="view"></main>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+<script src="docs.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer onload="initGsi()"></script>
 </body>
 </html>
