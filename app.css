@@ -6,14 +6,14 @@
   --ink: #141b2d; --ink2: #3f4859; --muted: #646d7e; --line: rgba(20, 27, 45, .09);
   --bg: #f5f6fa; --glass: rgba(255, 255, 255, .74); --glass2: rgba(255, 255, 255, .52);
   --ok: #0f9466; --warn: #c26a00; --bad: #d01c3f;
-  --c1: #0f6fe8; --c2: #38a8ff; --c3: #bfe2ff; --c4: #08357f; /* สีประจำแท็บ (ตั้งใหม่ตาม data-tab) */
+  --c1: #1262f0; --c2: #3b9bff; --c3: #bfe0ff; --c4: #0a3cb0; /* สีประจำแท็บ (ตั้งใหม่ตาม data-tab) */
   --ease: cubic-bezier(.2, .8, .2, 1); --spring: cubic-bezier(.34, 1.36, .5, 1);
   --r: 22px; --font: "Sarabun", system-ui, sans-serif; --num: "Geist", "Sarabun", system-ui, sans-serif;
   color-scheme: light;
 }
-body[data-tab="income"] { --c1: #0b8a5f; --c2: #25c08a; --c3: #bff0dc; --c4: #05503a; }
-body[data-tab="expense"] { --c1: #d4173f; --c2: #fb5476; --c3: #ffc2cf; --c4: #6b0a24; }
-body[data-tab="settings"] { --c1: #d96a00; --c2: #ffb020; --c3: #ffe3a6; --c4: #6b3000; }
+body[data-tab="income"] { --c1: #079a55; --c2: #2edc86; --c3: #c2f5dc; --c4: #04703c; }
+body[data-tab="expense"] { --c1: #e8173f; --c2: #ff5c7c; --c3: #ffc6d1; --c4: #a50e2c; }
+body[data-tab="settings"] { --c1: #ee7000; --c2: #ffbf00; --c3: #ffe69a; --c4: #b04a00; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -575,7 +575,7 @@ html { scroll-behavior: smooth; }
 .side.mini .slb, .side.mini .stx, .side.mini .ssec { opacity: 0; pointer-events: none; }
 .side.mini .ssec { height: 0; margin: 6px 0; }
 .sopt[aria-current="page"] { background: color-mix(in srgb, var(--c2) 15%, #fff); color: var(--c1); box-shadow: inset 3px 0 0 var(--c1), 0 8px 18px -14px var(--c1); }
-.sopt[data-tab="overview"] { --t: #0f6fe8; } .sopt[data-tab="income"] { --t: #0b8a5f; } .sopt[data-tab="expense"] { --t: #d4173f; } .sopt[data-tab="settings"] { --t: #d96a00; }
+.sopt[data-tab="overview"] { --t: #1262f0; } .sopt[data-tab="income"] { --t: #079a55; } .sopt[data-tab="expense"] { --t: #e8173f; } .sopt[data-tab="settings"] { --t: #ee7000; }
 .sopt[data-tab] .sic { color: var(--t); }
 .sopt[data-tab][aria-current="page"] { background: color-mix(in srgb, var(--t) 12%, #fff); color: var(--t); box-shadow: inset 3px 0 0 var(--t); }
 .sopt.q .sic { color: var(--c1); }
@@ -644,3 +644,18 @@ html { scroll-behavior: smooth; }
 .btip .tr b { font-family: var(--num); font-weight: 500; }
 @media (max-width: 640px) { .bcard { padding: 18px 16px; border-radius: 24px; } .btree { min-height: 280px; } .bhead { min-width: 0; width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .bcard.enter { animation: none; } .btile { transition: none; } }
+
+/* ---------- ปรับให้กลมกล่อม: สดแต่ไม่แสบ ลดของตกแต่งที่ไม่ช่วยงาน ---------- */
+.hero { background: linear-gradient(120deg, color-mix(in srgb, var(--c1) 92%, var(--c4)) 0%, var(--c1) 45%, var(--c2) 130%); }
+#bg .aur i { opacity: .28; filter: blur(80px); }
+.hero .deco .o1 { opacity: .55; } .hero .deco .o3 { opacity: .5; }
+.hero::after { opacity: .6; }
+@media (min-width: 960px) { .quick { display: none; } }
+.bsum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 12px; }
+.bsum.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bnum2 { font-family: var(--num); font-size: clamp(20px, 2.6vw, 28px); letter-spacing: -.04em; margin-top: 6px; line-height: 1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bnum2.g { color: #079a55; } .bnum2.r { color: #e8173f; }
+.bsum .bd { margin: 6px 0 0; vertical-align: baseline; font-size: 12.5px; display: block; }
+.bpanel.tall { min-height: 210px; height: 210px; flex: none; }
+.blbl.now { fill: var(--c1); font-weight: 700; }
+@media (max-width: 640px) { .bsum { grid-template-columns: 1fr 1fr; } .bsum > :last-child { grid-column: 1 / -1; } }
