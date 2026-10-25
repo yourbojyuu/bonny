@@ -25,9 +25,9 @@ var Receipts = (function () {
       '<div class="tile"><div class="k">เงินโอน (ทั้งปี)</div><div class="v money">' + money(methodSum(lv, 'โอน')) + '</div><div class="s">เข้าบัญชีหลักของประเภทเงิน</div></div>' +
       '</div></section>' +
       '<div class="seg glass" role="group" aria-label="มุมมอง">' +
-      (can.fin() ? segBtn('grid', 'ตาราง Excel') + segBtn('enter', 'ฟอร์มทีละใบ') : '') + segBtn('sum', 'สรุปรายเดือน') + segBtn('list', 'รายการใบเสร็จ') + '</div>' +
+      (can.fin() && mode() === 'fin' ? segBtn('grid', 'ตาราง Excel') + segBtn('enter', 'ฟอร์มทีละใบ') : '') + segBtn('sum', 'สรุปรายเดือน') + segBtn('list', 'รายการใบเสร็จ') + '</div>' +
       '<div id="rv"></div>';
-    if ((seg === 'enter' || seg === 'grid') && !can.fin()) seg = 'sum';
+    if ((seg === 'enter' || seg === 'grid') && !(can.fin() && mode() === 'fin')) seg = 'sum';
     Array.prototype.forEach.call(v.querySelectorAll('[data-rseg]'), function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-rseg') === seg));
       b.onclick = function () { switchSeg(b.getAttribute('data-rseg')); };

@@ -56,15 +56,31 @@ function storeName(id) {
 function role() { return S.me ? S.me.role : ''; }
 var can = {
   khb: function () { return ['admin', 'การเงิน', 'พัสดุ'].indexOf(role()) >= 0; },
+  ask: function () { return ['admin', 'การเงิน', 'พัสดุ', 'ครู'].indexOf(role()) >= 0; },
   fin: function () { return ['admin', 'การเงิน'].indexOf(role()) >= 0; },
+  approve: function () { return ['admin', 'ผู้บริหาร'].indexOf(role()) >= 0; },
   admin: function () { return role() === 'admin'; }
 };
+/** สามโหมดตามบทบาท: ครู (ส่งคำขอ/ติดตาม) · การเงิน (ทำงานเต็ม) · ผู้บริหาร (อนุมัติ/ดูรายงาน) — admin สลับดูได้ */
+var MODES = { teacher: 'โหมดครู', fin: 'โหมดการเงิน', exec: 'โหมดผู้บริหาร' };
+function mode() {
+  var r = role();
+  if (r === 'ครู') return 'teacher';
+  if (r === 'ผู้บริหาร') return 'exec';
+  if (r === 'admin' && S.modeAs) return S.modeAs;
+  return 'fin';
+}
+function homeTab() { return { teacher: 'request', exec: 'approve', fin: 'overview' }[mode()]; }
+function myKhbs() { var me = S.me ? String(S.me.email).toLowerCase() : ''; return ((S.docs && S.docs.khbs) || []).filter(function (h) { return h.owner === me; }); }
+function personName(email) { return (S.docs && S.docs.names && S.docs.names[email]) || String(email || '').split('@')[0] || '—'; }
 var SI = {
   home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
   income: '<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
   expense: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
   settings: '<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  approve: '<path d="M9 12l2 2 4-4"/><path d="M12 3l2.4 1.8 3-.1.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.1L12 21l-2.4-1.8-3 .1-.9-2.9L3.3 14.6l1-2.8-1-2.8 2.4-1.8.9-2.9 3 .1z"/>',
+  request: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
   chev: '<path d="m6 17 5-5-5-5M13 17l5-5-5-5"/>',
   out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
 };
@@ -133,21 +149,23 @@ function startApp(token) {
   $('loginMsg').textContent = 'กำลังตรวจสิทธิ์…';
   api('me').then(function (me) {
     S.me = me;
-    return Promise.all([api('getSchema'), api('getSettings'), api('getDocs'), api('getReceipts')]);
+    try { S.modeAs = me.role === 'admin' ? (localStorage.getItem('fin-mode') || '') : ''; } catch (e) { S.modeAs = ''; }
+    return Promise.all([api('getSchema'), api('getSettings'), api('getDocs'), me.role === 'ครู' ? null : api('getReceipts')]);
   }).then(function (r) {
-    S.schema = r[0]; S.st = r[1]; S.docs = r[2]; S.rcv = r[3];
+    S.schema = r[0]; S.st = r[1]; S.docs = r[2]; S.rcv = r[3] || { rows: [] };
     try { sessionStorage.setItem('tok', token); } catch (e) {}
     $('login').hidden = true; $('app').hidden = false; document.body.classList.add('authed');
-    $('who').textContent = S.me.name + ' · ' + S.me.role;
+    renderWho();
     $('fyLabel').textContent = 'ปีงบประมาณ ' + S.st.fy;
     S.date = defaultDate();
     renderTabs();
-    go(S.tab || 'overview', null, true);
+    go(homeTab(), null, true);
   }).catch(function (e) { signOut(e && e.message ? e.message : String(e)); });
 }
 /** โหลดเอกสารใหม่ (หลังบันทึก) */
 function reloadDocs() {
   S.led = null;
+  if (window.Flow) Flow.resetBal();
   return api('getDocs').then(function (d) { S.docs = d; renderTabs(); return d; });
 }
 function reloadReceipts() {
@@ -158,23 +176,50 @@ function reloadSettings() {
   return api('getSettings').then(function (d) { S.st = d; return d; });
 }
 
+/** ชื่อผู้ใช้ + ตัวสลับโหมด (admin สลับดูหน้าของครู/ผู้บริหารได้) */
+function renderWho() {
+  var w = $('who');
+  w.textContent = S.me.name + ' · ' + MODES[mode()];
+  var old = $('modeSw'); if (old) old.parentNode.removeChild(old);
+  if (!can.admin()) return;
+  var sw = document.createElement('div'); sw.id = 'modeSw'; sw.className = 'modesw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'สลับโหมด');
+  sw.innerHTML = ['fin', 'teacher', 'exec'].map(function (m) { return '<button type="button" data-mode="' + m + '" aria-pressed="' + (mode() === m) + '">' + MODES[m].replace('โหมด', '') + '</button>'; }).join('');
+  w.parentNode.insertBefore(sw, w);
+  sw.onclick = function (e) {
+    var b = e.target.closest('[data-mode]'); if (!b) return;
+    S.modeAs = b.getAttribute('data-mode') === 'fin' ? '' : b.getAttribute('data-mode');
+    try { localStorage.setItem('fin-mode', S.modeAs); } catch (er) {}
+    renderWho(); renderTabs(); go(homeTab(), null);
+  };
+}
+
 /* ================= เมนูและการเปลี่ยนหน้า ================= */
-var TABS = [
-  { id: 'overview', label: 'ภาพรวม' },
-  { id: 'income', label: 'รายรับ' },
-  { id: 'expense', label: 'รายจ่าย' },
-  { id: 'settings', label: 'ตั้งค่า', admin: true }
-];
-function pendingCount() {
-  var n = 0;
-  ((S.docs && S.docs.khbs) || []).forEach(function (h) { n += (h.counts['รอจ่าย'] || 0) + (h.counts['อยู่ใน ขจ.'] || 0); });
+var TAB_SETS = {
+  fin: [{ id: 'overview', label: 'ภาพรวม' }, { id: 'income', label: 'รายรับ' }, { id: 'expense', label: 'รายจ่าย' }, { id: 'settings', label: 'ตั้งค่า', admin: true }],
+  teacher: [{ id: 'request', label: 'คำขอเบิกของฉัน' }],
+  exec: [{ id: 'approve', label: 'อนุมัติ' }, { id: 'overview', label: 'ภาพรวม' }, { id: 'expense', label: 'รายจ่าย' }, { id: 'income', label: 'รายรับ' }]
+};
+var TABS = TAB_SETS.fin;
+function tabsNow() { TABS = TAB_SETS[mode()]; return TABS; }
+function tabOk(id) { return tabsNow().some(function (t) { return t.id === id && (!t.admin || can.admin()); }); }
+/** ตัวเลขบนเมนู = งานที่รอเราทำ */
+function pendingCount(tab) {
+  var n = 0, ks = (S.docs && S.docs.khbs) || [];
+  if (tab === 'approve') ks.forEach(function (h) { if (h.status !== 'ยกเลิก' && h.flow === 'รออนุมัติ') n++; });
+  else if (tab === 'request') myKhbs().forEach(function (h) { if (h.status !== 'ยกเลิก' && h.flow === 'ส่งกลับแก้ไข') n++; });
+  else if (tab === 'expense' && mode() === 'fin') ks.forEach(function (h) {
+    if (h.status === 'ยกเลิก') return;
+    if (h.flow === 'อนุมัติแล้ว') n++;
+    else if (h.flow === 'รับเรื่องแล้ว') n += h.counts['รอจ่าย'] || 0;
+  });
   return n;
 }
 function renderTabs() {
+  tabsNow();
   var h = '<span class="pill" aria-hidden="true"></span>';
   TABS.forEach(function (t) {
     if (t.admin && !can.admin()) return;
-    var n = t.id === 'expense' ? pendingCount() : 0;
+    var n = pendingCount(t.id);
     h += '<button class="tab" role="tab" type="button" data-tab="' + t.id + '" aria-selected="' + (S.tab === t.id) + '">' + esc(t.label) +
       (n ? '<span class="n" title="รายการที่ยังไม่จ่าย">' + n + '</span>' : '') + '</button>';
   });
@@ -182,7 +227,7 @@ function renderTabs() {
   movePill();
   renderSide();
 }
-var SIDE_ICON = { overview: 'home', income: 'income', expense: 'expense', settings: 'settings' };
+var SIDE_ICON = { overview: 'home', income: 'income', expense: 'expense', settings: 'settings', request: 'request', approve: 'approve' };
 function sideOpen() { try { return localStorage.getItem('fin-side') !== '0'; } catch (e) { return true; } }
 /** แถบนำทางกระจกเหลว: อยู่ใต้ hero ของทุกหน้า (ย้ายตามเมื่อหน้าถูกวาดใหม่) แล้วค้างด้านบนเมื่อเลื่อน */
 var NAV = null;
@@ -197,10 +242,12 @@ function renderSide() {
   var bn = NAV;
   if (!bn) { bn = NAV = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); document.body.appendChild(bn);
     new MutationObserver(function () { placeNav(); moveDock(); }).observe($('view'), { childList: true }); }
-  var canAdd = can.khb() || can.fin();
+  var md = mode(), canAdd = md === 'teacher' ? can.ask() : md === 'fin' && (can.khb() || can.fin());
+  tabsNow();
+  bn.classList.toggle('one', TABS.length === 1);
   bn.innerHTML = '<span class="bpill" aria-hidden="true"></span>' + TABS.map(function (t) {
     if (t.admin && !can.admin()) return '';
-    var n = t.id === 'expense' ? pendingCount() : 0;
+    var n = pendingCount(t.id);
     return '<button type="button" class="bn" data-bn="' + t.id + '" data-tab="' + t.id + '" aria-current="' + (S.tab === t.id ? 'page' : 'false') + '">' + si(SIDE_ICON[t.id]) + '<span>' + esc(t.label) + '</span>' + (n ? '<em>' + n + '</em>' : '') + '</button>';
   }).join('') + (canAdd ? '<span class="bsep"></span><button type="button" class="bn add" id="bAdd" aria-haspopup="menu" aria-expanded="false" aria-label="เพิ่มรายการใหม่">' + si('plus') + '<span>เพิ่ม</span></button>' : '');
   Array.prototype.forEach.call(bn.querySelectorAll('[data-bn]'), function (b) { b.onclick = function () { closeAdd(); go(b.getAttribute('data-bn'), null); }; });
@@ -212,15 +259,16 @@ function renderSide() {
 function closeAdd() { var m = $('addMenu'); if (m) m.classList.remove('on'); var b = $('bAdd'); if (b) b.setAttribute('aria-expanded', 'false'); }
 function toggleAdd() {
   var m = $('addMenu');
+  if (mode() === 'teacher') { closeAdd(); go('request', { draft: 1 }); return; }
   if (!m) {
     m = document.createElement('div'); m.id = 'addMenu'; m.className = 'addmenu'; m.setAttribute('role', 'menu');
     m.innerHTML = (can.khb() ? '<button type="button" role="menuitem" data-a="khb"><i>' + si('expense') + '</i><span><b>ขบ. ใหม่</b><small>ขอเบิกเงิน · วางจาก Excel ได้</small></span></button>' : '') +
       (can.fin() ? '<button type="button" role="menuitem" data-a="rcv"><i>' + si('income') + '</i><span><b>บันทึกใบเสร็จ</b><small>รายรับ · ต่อเนื่องเลขที่ +1</small></span></button>' : '') +
-      (can.fin() ? '<button type="button" role="menuitem" data-a="khj"><i>' + si('settings') + '</i><span><b>ทำ ขจ.</b><small>เลือกจากรายการรอจ่าย</small></span></button>' : '');
+      (can.fin() ? '<button type="button" role="menuitem" data-a="khj"><i>' + si('settings') + '</i><span><b>รับเรื่อง / ทำ ขจ.</b><small>ขบ. ที่ผู้บริหารอนุมัติแล้ว</small></span></button>' : '');
     document.body.appendChild(m);
     m.addEventListener('click', function (e) {
       var b = e.target.closest('[data-a]'); if (!b) return; closeAdd(); var k = b.getAttribute('data-a');
-      if (k === 'khb') go('expense', { seg: 'khb', draft: 1 }); else if (k === 'rcv') go('income', { seg: 'enter' }); else go('expense', { seg: 'pending' });
+      if (k === 'khb') go('expense', { seg: 'khb', draft: 1 }); else if (k === 'rcv') go('income', { seg: 'enter' }); else go('expense', { seg: 'khj' });
     });
     document.addEventListener('pointerdown', function (e) { if (!e.target.closest('#addMenu') && !e.target.closest('#bAdd')) closeAdd(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAdd(); });
@@ -265,6 +313,8 @@ function go(tab, opt, instant) {
     if (tab === 'overview') renderOverview();
     else if (tab === 'income') Receipts.render(v, S.opt);
     else if (tab === 'expense') Docs.render(v, S.opt);
+    else if (tab === 'request') Flow.teacher(v, S.opt);
+    else if (tab === 'approve') Flow.exec(v, S.opt);
     else renderSettings();
     if (!document.startViewTransition || REDUCE) { void v.offsetWidth; v.className = 'view-in'; }
     observeReveal();
@@ -405,36 +455,16 @@ function countUp(el, to) {
 }
 
 /* ================= ภาพรวม ================= */
-/** ไอคอนเส้นบาง (กริด 24) สำหรับป้ายกระจกใน hero */
-var HI = {
-  wallet: 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2 M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4',
-  bank: 'M3 22h18 M6 18v-7 M10 18v-7 M14 18v-7 M18 18v-7 M12 2 3 7h18z',
-  chart: 'M3 3v18h18 M7 15l4-4 3 3 5-6',
-  coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v10 M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4',
-  receipt: 'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z M8 8h8 M8 12h8 M8 16h5',
-  tray: 'M12 3v12 M7 10l5 5 5-5 M4 20h16',
-  doc: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h6',
-  send: 'M7 17 17 7 M8 7h9v9',
-  check: 'M22 11.1V12a10 10 0 1 1-5.9-9.1 M22 4 12 14l-3-3',
-  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4',
-  key: 'M15.5 7.5 19 4 M18 5l2 2 M10.5 11.5a4.5 4.5 0 1 1-6.4 6.4 4.5 4.5 0 0 1 6.4-6.4z M10.5 11.5 15.5 7.5',
-  sliders: 'M21 4h-7 M10 4H3 M21 12h-9 M8 12H3 M21 20h-5 M12 20H3 M14 2v4 M8 10v4 M16 18v4',
-  trend: 'M22 7l-8.5 8.5-5-5L2 17 M16 7h6v6',
-  spark: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z'
-};
-/** ป้ายกระจกแบนบาง + ไอคอน: ชั้นนอกวางตำแหน่ง ชั้นในขยับ */
-function hbadge(x, y, size, icon, cls, f, delay) {
-  var k = size / 24 * 0.52, o = size * 0.24;
-  return '<g transform="translate(' + x + ' ' + y + ')"><g class="gbadge ' + (cls || '') + '"' + (delay ? ' style="animation-delay:' + delay + 's"' : '') + '><rect width="' + size + '" height="' + size + '" rx="' + (size * 0.3) + '" fill="' + f + '"/>' +
-    '<path class="hl" d="M' + (size * 0.2) + ' 3 H' + (size * 0.8) + '"/><g transform="translate(' + o + ' ' + o + ') scale(' + (size * 0.52 / 24) + ')"><path class="ic" d="' + HI[icon] + '"/></g></g></g>';
-}
-/** รูปทรงเรขาคณิตกระจกใส (ไม่มีไอคอน): t = วงกลม/วงแหวน/สี่เหลี่ยม/สามเหลี่ยม/ครึ่งวง/หกเหลี่ยม/แคปซูล/เสี้ยววง */
+/** รูปทรงเรขาคณิตกระจกใส: c วงกลม · ring/dash วงแหวน · thick วงหนา · arc เส้นโค้ง · sq สี่เหลี่ยมมน · tri สามเหลี่ยม · semi ครึ่งวง · quart เสี้ยววง · hex หกเหลี่ยม · pill แคปซูล · dia เพชร */
 function gshape(t, x, y, r, rot, fill, cls, delay) {
-  var p, st = '';
+  var p;
   if (t === 'c') p = '<circle r="' + r + '" fill="' + fill + '"/>';
   else if (t === 'ring') p = '<circle r="' + r + '" fill="none" class="ln"/>';
   else if (t === 'dash') p = '<circle r="' + r + '" fill="none" class="ln dash"/>';
+  else if (t === 'thick') p = '<circle r="' + r + '" fill="none" style="stroke:' + fill + ';stroke-width:' + (r * 0.26).toFixed(1) + 'px"/>';
+  else if (t === 'arc') p = '<path d="M' + (-r) + ' 0 A' + r + ' ' + r + ' 0 1 1 0 ' + r + '" fill="none" class="ln arc"/>';
   else if (t === 'sq') p = '<rect x="' + (-r) + '" y="' + (-r) + '" width="' + (2 * r) + '" height="' + (2 * r) + '" rx="' + (r * 0.34) + '" fill="' + fill + '"/>';
+  else if (t === 'doc') p = '<rect x="' + (-r * 0.78) + '" y="' + (-r) + '" width="' + (r * 1.56) + '" height="' + (2 * r) + '" rx="' + (r * 0.2) + '" fill="' + fill + '"/>';
   else if (t === 'tri') p = '<path d="M0 ' + (-r) + ' L' + (r * 0.95) + ' ' + (r * 0.7) + ' L' + (-r * 0.95) + ' ' + (r * 0.7) + 'Z" fill="' + fill + '" stroke-linejoin="round" style="stroke-width:' + (r * 0.16) + 'px"/>';
   else if (t === 'semi') p = '<path d="M' + (-r) + ' 0 A' + r + ' ' + r + ' 0 0 1 ' + r + ' 0Z" fill="' + fill + '"/>';
   else if (t === 'quart') p = '<path d="M' + (-r) + ' ' + r + ' L' + (-r) + ' ' + (-r) + ' A' + (2 * r) + ' ' + (2 * r) + ' 0 0 1 ' + r + ' ' + r + 'Z" fill="' + fill + '"/>';
@@ -444,28 +474,42 @@ function gshape(t, x, y, r, rot, fill, cls, delay) {
   else p = '<circle r="' + r + '" fill="' + fill + '"/>';
   return '<g transform="translate(' + x + ' ' + y + ') rotate(' + (rot || 0) + ')"><g class="gs ' + (cls || '') + '"' + (delay ? ' style="animation-delay:' + delay + 's"' : '') + '>' + p + '</g></g>';
 }
-/** ฉากตกแต่ง hero: เรขาคณิต abstract ผสมหลายรูปทรง · กระจกใสที่มีของเหลวไหลช้า ๆ อยู่ข้างใน (แต่ละแท็บจัดองค์ประกอบไม่เหมือนกัน) */
+/** ตารางจุดบาง ๆ เป็นพื้นผิว (ไม่ขยับ) */
+function gdots(kind, x, y, w, h) { return '<rect class="gdots" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#hd-' + kind + ')"/>'; }
+/** ฉากตกแต่ง hero: แก้วใสที่มีของเหลวไหลช้า ๆ ภายใน + เรขาคณิตแบบจัดองค์ประกอบ
+    ทุกแท็บใช้สูตรเดียวกัน (รูปหลักใหญ่ 1 · รูปสีเน้นซ้อน 1 · เส้นวง 1 · รูปเล็ก 2 · ตารางจุด) แต่รูปทรงและเรื่องต่างกัน ไม่รก ไม่โล่งเกิน */
 function heroDeco(kind) {
-  var G = '<defs><linearGradient id="hg-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".46"/><stop offset="1" stop-color="#fff" stop-opacity=".06"/></linearGradient>' +
-    '<linearGradient id="ha-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--h3)" stop-opacity=".85"/><stop offset="1" style="stop-color:var(--h2)" stop-opacity=".35"/></linearGradient>' +
-    '<linearGradient id="hb-' + kind + '" x1="1" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--h4)" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient></defs>';
-  var f = 'url(#hg-' + kind + ')', a = 'url(#ha-' + kind + ')', b = 'url(#hb-' + kind + ')', S = gshape, s = '', i;
-  if (kind === 'income') {            // ไล่ขึ้นเป็นขั้นบันได: ผสมสี่เหลี่ยม เสี้ยววง แคปซูล และเพชร
-    s += S('quart', 318, 258, 46, 0, a, 'g1', 0) + S('sq', 392, 222, 34, 12, f, 'g2', -2) + S('pill', 458, 190, 52, 0, b, 'g3', -4) +
-      S('dia', 520, 138, 40, 0, a, 'g1', -1) + S('c', 566, 80, 34, 0, f, 'g2', -3) + S('dash', 480, 120, 120, 0, 0, 'sp') +
-      S('tri', 350, 140, 30, -20, f, 'g3', -5) + S('ring', 420, 60, 26, 0, 0, 'g2') + S('semi', 560, 250, 38, 180, b, 'g1', -2) + S('c', 300, 70, 8, 0, f, 'g3');
-  } else if (kind === 'expense') {    // ตัดผ่านเป็นเส้นทแยง: สามเหลี่ยม ลิ่ม แท่งเอียง วงแหวน
-    for (i = 0; i < 4; i++) s += '<g transform="translate(' + (340 + i * 56) + ' 0) skewX(-18)"><rect class="gs slat" style="animation-delay:' + (i * -1.8) + 's" width="' + (22 + i * 6) + '" height="320" y="-10" rx="11" fill="' + (i % 2 ? b : f) + '"/></g>';
-    s += S('tri', 300, 90, 52, 15, a, 'g1', 0) + S('hex', 470, 120, 46, 0, a, 'g2', -3) + S('semi', 420, 252, 50, 0, f, 'g3', -1) +
-      S('ring', 540, 210, 40, 0, 0, 'g2') + S('dash', 470, 120, 92, 0, 0, 'sp') + S('dia', 566, 66, 28, 0, f, 'g1', -4) + S('c', 330, 240, 26, 0, b, 'g3', -2);
-  } else if (kind === 'settings') {   // วงซ้อนวง + เวนน์: หกเหลี่ยม วงกลมทับกัน เสี้ยววง
-    s += S('c', 430, 140, 78, 0, a, 'g1', 0) + S('c', 500, 170, 78, 0, b, 'g2', -3) + S('c', 466, 100, 40, 0, f, 'g3', -1) +
-      S('dash', 465, 150, 128, 0, 0, 'sp') + S('ring', 465, 150, 100, 0, 0, 'sp rev') + S('hex', 316, 82, 40, 0, f, 'g2', -2) + S('hex', 354, 222, 26, 0, a, 'g3', -4) +
-      S('quart', 562, 52, 34, 90, f, 'g1', -2) + S('pill', 270, 168, 34, 30, b, 'g3', -1) + S('dia', 566, 246, 24, 0, a, 'g2');
-  } else {                            // ภาพรวม: ดวงกลมใหญ่กลาง โคจรด้วยวง ล้อมรูปทรงต่าง ๆ
-    s += S('c', 440, 150, 96, 0, f, 'g1', 0) + S('c', 440, 150, 56, 0, a, 'g2', -2) + S('dash', 440, 150, 136, 0, 0, 'sp') + S('ring', 440, 150, 116, 0, 0, 'sp rev') +
-      '<g class="orbit"><circle class="dotw" cx="440" cy="14" r="6"/></g>' +
-      S('hex', 320, 72, 36, 0, b, 'g3', -1) + S('tri', 296, 226, 34, 10, a, 'g1', -3) + S('sq', 560, 70, 30, 18, f, 'g2', -2) + S('semi', 548, 236, 40, 180, b, 'g3', -4) + S('dia', 536, 150, 18, 0, f, 'g1');
+  var G = '<defs><linearGradient id="hg-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity=".07"/></linearGradient>' +
+    '<linearGradient id="ha-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--h3)" stop-opacity=".9"/><stop offset="1" style="stop-color:var(--h2)" stop-opacity=".4"/></linearGradient>' +
+    '<linearGradient id="hb-' + kind + '" x1="1" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--h4)" stop-opacity=".65"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>' +
+    '<pattern id="hd-' + kind + '" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" fill="#fff"/></pattern></defs>';
+  var f = 'url(#hg-' + kind + ')', a = 'url(#ha-' + kind + ')', b = 'url(#hb-' + kind + ')', S = gshape, s = '';
+  if (kind === 'income') {            // เงินเข้า: แท่งไล่ระดับขึ้น + เสี้ยววงสีเน้น
+    s += gdots(kind, 296, 180, 84, 70) +
+      '<g class="gs g1"><rect x="392" y="182" width="40" height="92" rx="20" fill="' + f + '"/><rect x="446" y="132" width="40" height="142" rx="20" fill="' + f + '"/><rect x="500" y="76" width="40" height="198" rx="20" fill="' + b + '"/></g>' +
+      S('quart', 556, 70, 46, 0, a, 'g2', -2) + S('ring', 352, 96, 34, 0, 0, 'g3') + S('c', 594, 210, 10, 0, f, 'g1', -3) + S('arc', 466, 160, 150, 200, 0, 'sp');
+  } else if (kind === 'expense') {    // เงินออก: เอกสารเอียงซ้อนสามเหลี่ยมสีเน้น
+    s += gdots(kind, 300, 40, 84, 70) +
+      S('sq', 468, 152, 70, 14, f, 'g1') + S('tri', 536, 96, 46, 12, a, 'g2', -2) + S('dash', 468, 152, 112, 0, 0, 'sp') +
+      S('dia', 330, 236, 20, 0, b, 'g3', -1) + S('semi', 576, 254, 22, 180, f, 'g1', -3);
+  } else if (kind === 'settings') {   // ปรับแต่ง: วงซ้อนแบบเวนน์ + หกเหลี่ยม
+    s += gdots(kind, 296, 196, 84, 70) +
+      S('c', 444, 146, 66, 0, f, 'g1') + S('c', 508, 168, 54, 0, a, 'g2', -3) + S('c', 478, 96, 26, 0, b, 'g3', -1) +
+      S('ring', 470, 146, 112, 0, 0, 'sp') + S('hex', 326, 90, 26, 0, f, 'g2', -2);
+  } else if (kind === 'request') {    // คำขอ: กระดาษลอยตามเส้นทางจุดไปหาวงกลม (ส่งออกไป)
+    s += gdots(kind, 520, 200, 84, 70) +
+      '<path class="ln trail" d="M296 262 C340 250 360 200 404 186" fill="none"/>' +
+      S('doc', 466, 146, 76, -10, f, 'g1') + S('c', 552, 74, 38, 0, a, 'g2', -2) + S('ring', 552, 74, 56, 0, 0, 'g2', -2) +
+      S('tri', 340, 104, 20, -16, b, 'g3', -1) + S('pill', 586, 210, 16, 30, f, 'g1', -3);
+  } else if (kind === 'approve') {    // อนุมัติ: วงแหวนหนาแบบตราประทับ + เพชรสีเน้น
+    s += gdots(kind, 298, 46, 84, 70) +
+      S('thick', 468, 150, 76, 0, f, 'g1') + S('c', 468, 150, 44, 0, a, 'g2', -2) + S('arc', 468, 150, 112, 120, 0, 'sp') +
+      S('dia', 566, 76, 24, 0, b, 'g3', -1) + S('sq', 340, 236, 18, 20, f, 'g1', -3);
+  } else {                            // ภาพรวม: ดวงกลมใหญ่ + ดวงสีเน้น + วงโคจร
+    s += gdots(kind, 296, 188, 84, 70) +
+      S('c', 466, 146, 82, 0, f, 'g1') + S('c', 524, 104, 42, 0, a, 'g2', -2) + S('dash', 466, 146, 118, 0, 0, 'sp') +
+      '<g class="orbit"><circle class="dotw" cx="466" cy="28" r="5"/></g>' +
+      S('sq', 336, 74, 20, 18, b, 'g3', -1) + S('semi', 568, 262, 22, 180, f, 'g1', -3);
   }
   var wv = function (ph, amp) { var d = 'M0 ' + (200 + ph); for (var x = 0; x < 2400; x += 600) d += 'C' + (x + 150) + ' ' + (200 + ph - amp) + ',' + (x + 450) + ' ' + (200 + ph + amp) + ',' + (x + 600) + ' ' + (200 + ph); return d + 'L2400 320L0 320Z'; };
   var lq = function (cls, id, ph, amp) { return '<svg class="wave ' + cls + '" viewBox="0 0 2400 300" preserveAspectRatio="none"><path d="' + wv(ph, amp) + '" fill="url(#' + id + '-' + kind + ')"/></svg>'; };
@@ -502,15 +546,22 @@ function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00') - new 
 
 /** แถบงานค้างบาง ๆ (กดแล้วไปทำต่อ) */
 function workChips() {
-  var d = S.docs, chips = [], wn = 0, jn = 0, dr = 0;
+  var d = S.docs, chips = [], wn = 0, jn = 0, dr = 0, ap = 0, rc = 0, ex = mode() === 'exec';
   var dk = Draft.get('khb'), dc = Draft.get('rcv');
   if (dk && dk.data && can.khb() && (dk.data.lines || []).some(function (l) { return l.payee || l.gross; })) dr++;
   if (dc && dc.data && can.fin() && (dc.data.lines || []).some(function (l) { return l.amount; })) dr++;
-  (d.khbs || []).forEach(function (h) { if (h.status !== 'ยกเลิก') h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') wn++; }); });
+  (d.khbs || []).forEach(function (h) {
+    if (h.status === 'ยกเลิก') return;
+    if (h.flow === 'รออนุมัติ') ap++; else if (h.flow === 'อนุมัติแล้ว') rc++;
+    else if (h.flow === 'รับเรื่องแล้ว') h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') wn++; });
+  });
   (d.khjs || []).forEach(function (j) { if (j.status !== 'ยกเลิก' && j.paid < j.count) jn++; });
+  if (ex) { if (ap) chips.push({ c: 'appr', t: 'รอท่านอนุมัติ ' + ap + ' ฉบับ', go: ['approve', null] }); return chips; }
   if (dr) chips.push({ c: 'draft', t: 'ฉบับร่างค้าง ' + dr, go: dk && can.khb() ? ['expense', { seg: 'khb', draft: 1 }] : ['income', { seg: 'enter' }] });
-  if (wn) chips.push({ c: 'wait', t: 'ขบ. รอทำ ขจ. ' + wn + ' รายการ', go: ['expense', { seg: 'pending' }] });
+  if (rc) chips.push({ c: 'cloud', t: 'อนุมัติแล้ว รอรับเรื่อง ' + rc + ' ฉบับ', go: ['expense', { seg: 'khj' }] });
+  if (wn) chips.push({ c: 'wait', t: 'รอทำ ขจ. ' + wn + ' รายการ', go: ['expense', { seg: 'khj' }] });
   if (jn) chips.push({ c: 'pay', t: 'ขจ. รอจ่ายเงิน ' + jn + ' ใบ', go: ['expense', { seg: 'khj' }] });
+  if (ap) chips.push({ c: 'appr', t: 'อยู่ที่ผู้บริหาร ' + ap + ' ฉบับ', go: ['expense', { seg: 'grid' }] });
   return chips;
 }
 function renderInbox() {
@@ -538,7 +589,7 @@ function renderOverview() {
   Array.prototype.forEach.call($('view').querySelectorAll('[data-go]'), function (b) {
     b.onclick = function () {
       var g = b.getAttribute('data-go');
-      if (g === 'pending') go('expense', { seg: 'pending' }); else go(g, null);
+      if (g === 'pending') go('expense', { seg: 'khj' }); else go(g, null);
     };
   });
   renderInbox();

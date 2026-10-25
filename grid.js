@@ -26,7 +26,8 @@ var Grid = (function () {
   /**
    * cfg = { cols:[{k,label,w,type:'text'|'date'|'money'|'chk',list:fn,ro,calc:fn(row),ph}],
    *         rows:[{...}] (แถวเดิมมี _old:true), blank:fn(prev), onRow:fn(row,k,api), onPaste:fn(text,api,r,c)->bool,
-   *         cellRo:fn(row,col)->bool, hide:fn(row)->bool, onChk:fn(row,on,api), rowCls:fn(row)->string, totals:fn(rows)->html, isEmpty:fn(row)->bool }
+   *         cellRo:fn(row,col)->bool, hide:fn(row)->bool, onChk:fn(row,on,api), rowCls:fn(row)->string, totals:fn(rows)->html, isEmpty:fn(row)->bool,
+   *         noNew:true = ไม่มีแถวใหม่ (ตารางทำงานกับแถวเดิมอย่างเดียว) }
    */
   function create(host, cfg) {
     var rows = (cfg.rows || []).slice(), bad = {}, api = {}, drawing = false;
@@ -34,7 +35,7 @@ var Grid = (function () {
     function blankRow(prev) { return cfg.blank ? cfg.blank(prev || null) : {}; }
     function empty(r) { return r._old ? false : cfg.isEmpty ? cfg.isEmpty(r) : cols.every(function (c) { return c.ro || c.calc || !r[c.k]; }); }
     function lastNew() { for (var i = rows.length - 1; i >= 0; i--) if (!rows[i]._old) return rows[i]; return null; }
-    function ensureTail() { var l = rows[rows.length - 1]; if (!l || l._old || !empty(l)) rows.push(blankRow(lastNew())); }
+    function ensureTail() { if (cfg.noNew) return; var l = rows[rows.length - 1]; if (!l || l._old || !empty(l)) rows.push(blankRow(lastNew())); }
     function ro(r, c) { if (c.calc || c.ro) return true; if (r._old) return cfg.cellRo ? cfg.cellRo(r, c) : true; return cfg.cellRo && c.nonew ? true : false; }
     ensureTail();
 
@@ -82,6 +83,7 @@ var Grid = (function () {
       if (cfg.totals) { var tf = host.querySelector('tfoot tr'); if (tf) tf.innerHTML = '<th class="rn">Σ</th>' + cfg.totals(rows); }
     }
     function addTail() {
+      if (cfg.noNew) return;
       var l = rows[rows.length - 1]; if (l && !l._old && empty(l)) return;
       rows.push(blankRow(lastNew()));
       var tb = host.querySelector('tbody'), t = document.createElement('tbody'); t.innerHTML = rowHtml(rows[rows.length - 1], rows.length - 1, host.querySelectorAll('tbody tr:not(.old):not(.sepr)').length + 1); tb.appendChild(t.firstChild);
@@ -101,10 +103,10 @@ var Grid = (function () {
       // ข้ามแถวที่ซ่อน/ช่องที่แก้ไม่ได้ (แถวเดิม) ไปยังช่องถัดไปที่แก้ได้ในคอลัมน์เดียวกัน
       var step = dir || 1;
       if (ri < 0) return;
-      if (ri >= rows.length) { addTail(); ri = rows.length - 1; }
+      if (ri >= rows.length) { addTail(); ri = rows.length - 1; if (cfg.noNew) return; }
       var guard = 0;
       while (guard++ < 5000 && ri >= 0 && ri < rows.length && !focusable(ri, ci) && rows[ri]._old) ri += step;
-      if (ri < 0) return; if (ri >= rows.length) { addTail(); ri = rows.length - 1; }
+      if (ri < 0 || (cfg.noNew && ri >= rows.length)) return; if (ri >= rows.length) { addTail(); ri = rows.length - 1; }
       var i = inp(ri, Math.max(0, Math.min(cols.length - 1, ci)));
       if (i) { i.focus(); i.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
     }
@@ -158,7 +160,7 @@ var Grid = (function () {
       if (!rows[ri]._old && cfg.onPaste && cfg.onPaste(text, api, ri, ci)) return;
       var grid = Paste.parseTSV(text);
       grid.forEach(function (line, a) {
-        var r = ri + a; while (r >= rows.length) rows.push(blankRow(lastNew()));
+        var r = ri + a; if (cfg.noNew && r >= rows.length) return; while (r >= rows.length) rows.push(blankRow(lastNew()));
         var cc = ci; line.forEach(function (cell) { while (cc < cols.length && (ro(rows[r], cols[cc]) || cols[cc].type === 'chk')) cc++; if (cc >= cols.length) return; setCell(r, cols[cc].k, cell); cc++; });
       });
       ensureTail(); draw();

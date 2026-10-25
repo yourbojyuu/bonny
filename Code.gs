@@ -16,13 +16,15 @@ var FISCAL_YEAR = 2570; // ปีงบประมาณ (พ.ศ.) เริ�
 
 /* ============ สิทธิ์ของแต่ละ action ============ */
 function actionRoles() {
-  var ALL = ROLES, FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
+  // ครู: ส่งคำขอเบิกและติดตามของตัวเองเท่านั้น · ผู้บริหาร: อนุมัติ/ส่งกลับ ขบ. · การเงิน: รับเรื่องแล้วทำ ขจ. ต่อ
+  var ALL = ROLES, STAFF = ['admin', 'การเงิน', 'พัสดุ', 'ผู้บริหาร'], FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
   return {
     ping: null,
-    getSchema: ALL, me: ALL, getSettings: ALL, getBalances: ALL, getLedger: ALL,
-    getDocs: ALL, khbDoc: ALL, khjDoc: ALL, getReceipts: ALL,
+    getSchema: ALL, me: ALL, getSettings: ALL, getBalances: STAFF, getLedger: STAFF,
+    getDocs: ALL, khbDoc: ALL, khjDoc: STAFF, getReceipts: STAFF,
     importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN,
-    saveKhb: KHB, cancelKhb: KHB,
+    saveKhb: KHB.concat(['ครู']), cancelKhb: KHB.concat(['ครู']),
+    approveKhb: ['admin', 'ผู้บริหาร'], receiveKhb: FIN,
     createKhj: FIN, savePayments: FIN, cancelKhj: FIN,
     saveTypes: ADMIN, saveStores: ADMIN, saveOpening: ADMIN, rebuildLedger: ADMIN, saveDocSettings: ADMIN
   };
@@ -33,7 +35,7 @@ function handlers() {
     getSchema: h_getSchema, me: h_me, getSettings: h_getSettings, getBalances: h_getBalances, getLedger: h_getLedger,
     saveStores: h_saveStores, saveTypes: h_saveTypes, saveOpening: h_saveOpening, rebuildLedger: h_rebuildLedger,
     saveDocSettings: h_saveDocSettings,
-    getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb,
+    getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb, approveKhb: h_approveKhb, receiveKhb: h_receiveKhb,
     createKhj: h_createKhj, savePayments: h_savePayments, cancelKhj: h_cancelKhj,
     khbDoc: h_khbDoc, khjDoc: h_khjDoc, getReceipts: h_getReceipts, importReceipts: h_importReceipts,
     cancelReceipt: h_cancelReceipt, savePayees: h_savePayees, saveAliases: h_saveAliases
@@ -42,7 +44,7 @@ function handlers() {
 
 function isWriteAction(a) {
   return ['saveTypes', 'saveStores', 'saveOpening', 'rebuildLedger', 'saveDocSettings',
-    'saveKhb', 'cancelKhb', 'createKhj', 'savePayments', 'cancelKhj', 'importReceipts', 'cancelReceipt', 'savePayees', 'saveAliases'].indexOf(a) >= 0;
+    'saveKhb', 'cancelKhb', 'approveKhb', 'receiveKhb', 'createKhj', 'savePayments', 'cancelKhj', 'importReceipts', 'cancelReceipt', 'savePayees', 'saveAliases'].indexOf(a) >= 0;
 }
 
 /* ============ ตรวจสิทธิ์ (pure) ============ */

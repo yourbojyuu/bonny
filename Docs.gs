@@ -9,9 +9,15 @@
  *
  * สถานะรายการ: รอจ่าย (ยังไม่อยู่ใน ขจ.) → อยู่ใน ขจ. (รอเลขเช็ค/วันที่จ่าย) → จ่ายแล้ว
  * การยกเลิกใช้ช่อง "สถานะ" ทางเดียว (กฎ 6)
+ *
+ * ขั้นอนุมัติของ ขบ. (ชีท ขบ_ขั้นตอน ต่อท้ายอย่างเดียว ขั้นล่าสุดคือสถานะ):
+ *   ส่ง (ครู/พัสดุ/การเงิน บันทึกหรือแก้ไข) → อนุมัติ หรือ ส่งกลับ (ผู้บริหาร) → รับเรื่อง (การเงิน) → ทำ ขจ. ได้
+ *   ขบ. ที่ไม่มีแถวขั้นตอนเลย (ข้อมูลเก่าก่อนมีขั้นอนุมัติ) ถือว่ารับเรื่องแล้ว
  */
 
 var LINE_STATE = { WAIT: 'รอจ่าย', IN_KHJ: 'อยู่ใน ขจ.', PAID: 'จ่ายแล้ว', CANCEL: 'ยกเลิก' };
+var FLOW = { WAIT: 'รออนุมัติ', BACK: 'ส่งกลับแก้ไข', OK: 'อนุมัติแล้ว', TAKEN: 'รับเรื่องแล้ว' };
+var FLOW_OF_STEP = { 'ส่ง': FLOW.WAIT, 'อนุมัติ': FLOW.OK, 'ส่งกลับ': FLOW.BACK, 'รับเรื่อง': FLOW.TAKEN };
 
 /* ============ pure ============ */
 
@@ -71,7 +77,7 @@ function calcWithholding(gross, ratePct, hasVat) {
 /** อ่านดิบทั้ง 4 ชีทเอกสาร */
 function loadDocs(io) {
   return {
-    khb: tableRows(io, 'ขบ'), lines: tableRows(io, 'ขบ_รายการ'),
+    khb: tableRows(io, 'ขบ'), lines: tableRows(io, 'ขบ_รายการ'), steps: tableRows(io, 'ขบ_ขั้นตอน'),
     khj: tableRows(io, 'ขจ'), pays: tableRows(io, 'การจ่าย')
   };
 }
@@ -85,8 +91,20 @@ function buildDocIndex(raw) {
     var k = docKey(fy, no);
     if (khbs[k]) throw new Error('ชีท ขบ: เลข ขบ.' + no + '/' + fy + ' ซ้ำ');
     khbs[k] = { fy: fy, no: no, date: parseDate(r[2]), note: normText(r[3]), by: normText(r[4]), at: normText(r[5]),
-      status: isCancelled(r[6]) ? 'ยกเลิก' : 'ปกติ', lines: [] };
+      status: isCancelled(r[6]) ? 'ยกเลิก' : 'ปกติ', lines: [], steps: [] };
     order.push(k);
+  });
+  (raw.steps || []).forEach(function (r, i) {
+    var h = khbs[docKey(toInt(r[0]), toInt(r[1]))], step = normText(r[2]);
+    if (!h) throw new Error('ชีท ขบ_ขั้นตอน แถวที่ ' + (i + 2) + ': ไม่พบ ขบ.' + normText(r[1]) + '/' + normText(r[0]));
+    if (FLOW_STEPS.indexOf(step) < 0) throw new Error('ชีท ขบ_ขั้นตอน แถวที่ ' + (i + 2) + ': ขั้น "' + step + '" ต้องเป็น ' + FLOW_STEPS.join(' / '));
+    h.steps.push({ step: step, by: normText(r[3]).toLowerCase(), at: normText(r[4]), note: normText(r[5]) });
+  });
+  order.forEach(function (k) {
+    var h = khbs[k], last = h.steps[h.steps.length - 1];
+    h.flow = last ? FLOW_OF_STEP[last.step] : FLOW.TAKEN;
+    var first = h.steps.filter(function (x) { return x.step === 'ส่ง'; })[0];
+    h.owner = first ? first.by : normText(h.by).toLowerCase();
   });
   raw.lines.forEach(function (r, i) {
     var fy = toInt(r[0]), no = toInt(r[1]), seq = toInt(r[2]);
@@ -270,7 +288,7 @@ function serializeDocs(idx) {
         khjFy: l.pay ? l.pay.fy : null, khjNo: l.pay ? l.pay.no : null, ref: l.pay ? l.pay.ref : '', paidDate: l.pay ? l.pay.date : '',
         payMethod: l.pay ? l.pay.method : '', store: l.pay ? l.pay.store : '' };
     });
-    return { fy: h.fy, no: h.no, date: h.date, note: h.note, by: h.by, status: h.status, lines: lines,
+    return { fy: h.fy, no: h.no, date: h.date, note: h.note, by: h.by, owner: h.owner, status: h.status, flow: h.flow, steps: h.steps, lines: lines,
       total: { gross: tot.gross / 100, tax: tot.tax / 100, net: tot.net / 100 }, counts: counts };
   });
   var khjs = idx.jorder.map(function (k) {
@@ -319,9 +337,24 @@ function getKhj(ctx, no) {
   return j;
 }
 
-function h_getDocs(p, io) {
+/** ครู เห็นเฉพาะ ขบ. ที่ตัวเองส่ง และ ขจ. ที่มีรายการของตัวเอง */
+function ownDocs(out, email) {
+  var mine = {};
+  out.khbs = out.khbs.filter(function (h) { if (h.owner !== email) return false; mine[docKey(h.fy, h.no)] = true; return true; });
+  out.khjs = out.khjs.filter(function (j) { return j.items.some(function (it) { return mine[docKey(it.khbFy, it.khbNo)]; }); });
+  return out;
+}
+
+function h_getDocs(p, io, user) {
   var ctx = docsContext(io);
   var out = serializeDocs(ctx.idx);
+  if (user && user.role === 'ครู') ownDocs(out, user.email);
+  var names = {};
+  tableRows(io, 'ผู้ใช้').forEach(function (r) { var e = normText(r[0]).toLowerCase(); if (e) names[e] = normText(r[1]); });
+  out.names = {};
+  out.khbs.forEach(function (h) {
+    [h.owner, h.by].concat(h.steps.map(function (x) { return x.by; })).forEach(function (e) { if (e && names[e]) out.names[e] = names[e]; });
+  });
   var payees = {};
   ctx.raw.lines.forEach(function (r) { var n = normText(r[4]); if (n) payees[n] = true; });
   tableRows(io, 'ผู้รับเงิน').forEach(function (r) { var n = normText(r[0]); if (n) payees[n] = true; });
@@ -336,10 +369,12 @@ function h_saveKhb(p, io, user) {
   assertOpenDay(ctx.closed, date);
   var registryRows = tableRows(io, 'ผู้รับเงิน');
   var lines = validateKhbLines(p.lines, ctx.set.types, payeeMap(registryRows));
+  if (p.paper && ['admin', 'การเงิน'].indexOf(user.role) < 0) throw fail('FORBIDDEN', 'บันทึกแบบ "อนุมัติบนกระดาษแล้ว" ใช้ได้เฉพาะการเงิน');
   var no, head = ctx.raw.khb;
   if (p.no) {
     var h = getKhb(ctx, p.no);
     if (h.status === 'ยกเลิก') throw new Error('ขบ.' + h.no + ' ถูกยกเลิกแล้ว แก้ไขไม่ได้');
+    assertTeacherCanChange(h, user, 'แก้ไข');
     var linked = h.lines.filter(function (l) { return l.pay; });
     if (linked.length) throw new Error('ขบ.' + h.no + ' มีรายการอยู่ใน ขจ. แล้ว ' + linked.length + ' รายการ แก้ไขไม่ได้ (ยกเลิก ขจ. นั้นก่อน)');
     assertOpenDay(ctx.closed, h.date);
@@ -361,14 +396,17 @@ function h_saveKhb(p, io, user) {
     known[k] = true;
     learn.push([l.payee, l.taxType, guessVat(l.taxType, l.gross, l.tax) ? 'ใช่' : 'ไม่', l.method, l.type]); // จำผู้รับใหม่ไว้ใช้ครั้งถัดไป
   });
-  commitChanges(io, { 'ขบ': head, 'ขบ_รายการ': rows, 'ผู้รับเงิน': learn });
-  return { fy: fy, no: no };
+  var t = stamp(), steps = ctx.raw.steps.concat([[fy, no, 'ส่ง', user.email, t, p.no ? 'แก้ไขแล้วส่งใหม่' : '']]);
+  if (p.paper) steps.push([fy, no, 'อนุมัติ', user.email, t, 'อนุมัติบนกระดาษแล้ว (การเงินบันทึกย้อนหลัง)'], [fy, no, 'รับเรื่อง', user.email, t, '']);
+  commitChanges(io, { 'ขบ': head, 'ขบ_รายการ': rows, 'ผู้รับเงิน': learn, 'ขบ_ขั้นตอน': steps });
+  return { fy: fy, no: no, flow: p.paper ? FLOW.TAKEN : FLOW.WAIT };
 }
 
 function h_cancelKhb(p, io, user) {
   var ctx = docsContext(io), h = getKhb(ctx, p.no), reason = normText(p.reason);
   if (!reason) throw new Error('กรุณาระบุเหตุผลที่ยกเลิก');
   if (h.status === 'ยกเลิก') throw new Error('ขบ.' + h.no + ' ถูกยกเลิกไปแล้ว');
+  assertTeacherCanChange(h, user, 'ยกเลิก');
   if (h.lines.some(function (l) { return l.pay; })) throw new Error('ขบ.' + h.no + ' มีรายการอยู่ใน ขจ. แล้ว ยกเลิกไม่ได้ (ยกเลิก ขจ. นั้นก่อน)');
   var head = ctx.raw.khb.map(function (r) {
     if (toInt(r[0]) !== h.fy || toInt(r[1]) !== h.no) return r;
@@ -393,6 +431,7 @@ function h_createKhj(p, io, user) {
     var h = ctx.idx.khbs[docKey(l.fy, l.no)];
     if (h.status === 'ยกเลิก') throw new Error(label + ': ขบ. ถูกยกเลิกแล้ว');
     if (l.pay) throw new Error(label + ' อยู่ใน ขจ.' + l.pay.no + ' แล้ว');
+    if (h.flow !== FLOW.TAKEN) throw new Error(label + ': ขบ. ' + (h.flow === FLOW.OK ? 'อนุมัติแล้วแต่การเงินยังไม่กดรับเรื่อง' : 'ยังไม่ผ่านการอนุมัติของผู้บริหาร (' + h.flow + ')'));
     if (h.date > date) throw new Error(label + ': วันที่ ขจ. ต้องไม่ก่อนวันที่ ขบ. (' + thaiShortDate(h.date) + ')');
     var t = findById(ctx.set.types, l.type);
     rows.push([fy, no, l.fy, l.no, l.seq, l.method, '', t ? normText(t[3]) : '', l.net, '', 'ปกติ']);
@@ -451,9 +490,48 @@ function h_cancelKhj(p, io, user) {
   return { no: j.no };
 }
 
-function h_khbDoc(p, io) {
-  var ctx = docsContext(io);
-  return buildKhbDoc(getKhb(ctx, p.no), readDocSettings(io), ctx.set.types);
+function h_khbDoc(p, io, user) {
+  var ctx = docsContext(io), h = getKhb(ctx, p.no);
+  if (user && user.role === 'ครู' && h.owner !== user.email) throw fail('FORBIDDEN', 'ดูได้เฉพาะ ขบ. ที่ตัวเองส่ง');
+  return buildKhbDoc(h, readDocSettings(io), ctx.set.types);
+}
+
+/** ครู แก้/ยกเลิกได้เฉพาะ ขบ. ของตัวเองที่ยังรออนุมัติหรือถูกส่งกลับ */
+function assertTeacherCanChange(h, user, what) {
+  if (user.role !== 'ครู') return;
+  if (h.owner !== user.email) throw fail('FORBIDDEN', what + 'ได้เฉพาะ ขบ. ที่ตัวเองส่ง');
+  if (h.flow !== FLOW.WAIT && h.flow !== FLOW.BACK) throw new Error('ขบ.' + h.no + ' อยู่ในขั้น "' + h.flow + '" ' + what + 'ไม่ได้ ติดต่องานการเงิน');
+}
+
+/** เลข ขบ. หลายใบจากหน้าเว็บ -> หัวเอกสาร (ตรวจสถานะที่ต้องเป็น) */
+function pickKhbs(ctx, nos, need, what) {
+  if (!Array.isArray(nos) || !nos.length) throw new Error('ยังไม่ได้เลือก ขบ.');
+  var seen = {};
+  return nos.map(function (n) {
+    var h = getKhb(ctx, n);
+    if (seen[h.no]) throw new Error('ขบ.' + h.no + ' ถูกเลือกซ้ำ');
+    seen[h.no] = true;
+    if (h.status === 'ยกเลิก') throw new Error('ขบ.' + h.no + ' ถูกยกเลิกแล้ว');
+    if (h.flow !== need) throw new Error('ขบ.' + h.no + ' อยู่ในขั้น "' + h.flow + '" ' + what + 'ไม่ได้');
+    return h;
+  });
+}
+
+/** ผู้บริหาร: อนุมัติ หรือ ส่งกลับให้แก้ (ต้องมีเหตุผล) */
+function h_approveKhb(p, io, user) {
+  var ctx = docsContext(io), decision = normText(p.decision), note = normText(p.note);
+  if (decision !== 'อนุมัติ' && decision !== 'ส่งกลับ') throw new Error('ผลการพิจารณาต้องเป็น อนุมัติ หรือ ส่งกลับ');
+  if (decision === 'ส่งกลับ' && !note) throw new Error('ส่งกลับต้องระบุเหตุผล เพื่อให้ผู้ขอแก้ไขได้ถูก');
+  var hs = pickKhbs(ctx, p.nos, FLOW.WAIT, decision), t = stamp();
+  io.write('ขบ_ขั้นตอน', ctx.raw.steps.concat(hs.map(function (h) { return [h.fy, h.no, decision, user.email, t, note]; })));
+  return { count: hs.length, decision: decision };
+}
+
+/** การเงิน: รับเรื่อง ขบ. ที่อนุมัติแล้ว เพื่อทำ ขจ. ต่อ */
+function h_receiveKhb(p, io, user) {
+  var ctx = docsContext(io), hs = pickKhbs(ctx, p.nos, FLOW.OK, 'รับเรื่อง'), t = stamp();
+  io.write('ขบ_ขั้นตอน', ctx.raw.steps.concat(hs.map(function (h) { return [h.fy, h.no, 'รับเรื่อง', user.email, t, normText(p.note)]; })));
+  return { count: hs.length };
 }
 
 function h_khjDoc(p, io) {

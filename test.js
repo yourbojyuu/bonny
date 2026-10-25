@@ -26,12 +26,15 @@ function makeMemIO() {
   sheets['ผู้ใช้'].push(['sup@example.com', 'พัสดุ', 'พัสดุ', 'ใช่']);
   sheets['ผู้ใช้'].push(['boss@example.com', 'ผอ.', 'ผู้บริหาร', 'ใช่']);
   sheets['ผู้ใช้'].push(['off@example.com', 'ปิดแล้ว', 'การเงิน', 'ไม่']);
+  sheets['ผู้ใช้'].push(['t1@example.com', 'ครูตัวอย่าง หนึ่ง', 'ครู', 'ใช่']);
+  sheets['ผู้ใช้'].push(['t2@example.com', 'ครูตัวอย่าง สอง', 'ครู', 'ใช่']);
   C.SEED_STORES.forEach(function (s) { sheets['ที่เก็บเงิน'].push(s.slice()); });
   C.ALIAS_SEED.forEach(function (a) { sheets['ชื่อย่อ'].push(a.slice()); });
   C.SEED_TYPES.forEach(function (t) { sheets['ประเภทเงิน'].push([t[0], t[1], C.SEED_GROUPS[t[2]], t[3], 'ใช่']); });
   var tokens = {
     'tok-admin': 'admin@example.com', 'tok-fin': 'fin@example.com', 'tok-sup': 'sup@example.com',
-    'tok-boss': 'boss@example.com', 'tok-off': 'off@example.com', 'tok-stranger': 'stranger@example.com'
+    'tok-boss': 'boss@example.com', 'tok-off': 'off@example.com', 'tok-stranger': 'stranger@example.com',
+    'tok-t1': 't1@example.com', 'tok-t2': 't2@example.com'
   };
   return {
     sheets: sheets,
@@ -122,6 +125,10 @@ if (require.main === module) {
 
   console.log('5) ขจ. — ดึงรายการรอจ่าย ผูกโยง และกันผูกซ้ำ');
   var items = [1, 2, 3, 4, 5].map(function (s) { return { fy: FY, no: 1, seq: s }; }).concat([{ fy: FY, no: 2, seq: 1 }]);
+  ok(/ยังไม่ผ่านการอนุมัติ/.test(call(io, 'tok-fin', 'createKhj', { date: '24/10/69', items: items }).error), 'ขบ. ที่ยังไม่อนุมัติ ทำ ขจ. ไม่ได้');
+  ok(call(io, 'tok-boss', 'approveKhb', { nos: [1, 2], decision: 'อนุมัติ' }).ok, 'ผู้บริหารอนุมัติ ขบ.1-2');
+  ok(/ยังไม่กดรับเรื่อง/.test(call(io, 'tok-fin', 'createKhj', { date: '24/10/69', items: items }).error), 'อนุมัติแล้วแต่ยังไม่รับเรื่อง ทำ ขจ. ไม่ได้');
+  ok(call(io, 'tok-fin', 'receiveKhb', { nos: [1, 2] }).ok, 'การเงินรับเรื่อง ขบ.1-2');
   ok(/ไม่ก่อนวันที่ ขบ/.test(call(io, 'tok-fin', 'createKhj', { date: '21/10/69', items: items }).error), 'วันที่ ขจ. ก่อน ขบ. ถูกปฏิเสธ');
   r = call(io, 'tok-fin', 'createKhj', { date: '24/10/69', items: items });
   ok(r.ok && r.data.no === 1 && r.data.count === 6, 'สร้าง ขจ.1 จาก 2 ขบ. ' + (r.ok ? '' : r.error));
@@ -305,6 +312,46 @@ if (require.main === module) {
   var tt2 = call(io, 'tok-admin', 'getSettings').data.types.filter(function (x) { return x[0] !== 'T10'; });
   ok(/T10/.test(call(io, 'tok-admin', 'saveTypes', { rows: tt2 }).error), 'ลบประเภทเงินที่ใช้ในใบเสร็จไม่ได้');
   ok(call(io, 'tok-admin', 'saveAliases', { rows: [['อน.รห.', 'T20'], ['ทดสอบ', 'T99']] }).error.indexOf('T99') > 0, 'ชื่อย่อชี้ประเภทเงินที่ไม่มี ถูกปฏิเสธ');
+
+  console.log('14) ขั้นอนุมัติ: ครู → ผู้บริหาร → การเงินรับเรื่อง → ขจ.');
+  var io3 = makeMemIO(), TL = [{ type: 'T20', payee: 'ร้านตัวอย่างเครื่องเขียน', kind: 'พัสดุ', method: 'เช็ค', gross: 1500, tax: '' }];
+  r = call(io3, 'tok-t1', 'saveKhb', { date: '2/11/69', note: 'ซื้อวัสดุวิชาคณิต', lines: TL });
+  ok(r.ok && r.data.no === 1 && r.data.flow === 'รออนุมัติ', 'ครูส่ง ขบ. ได้ สถานะ รออนุมัติ');
+  call(io3, 'tok-t2', 'saveKhb', { date: '2/11/69', lines: TL });
+  var t1d = call(io3, 'tok-t1', 'getDocs').data;
+  ok(t1d.khbs.length === 1 && t1d.khbs[0].owner === 't1@example.com', 'ครูเห็นเฉพาะ ขบ. ของตัวเอง');
+  ok(t1d.names['t1@example.com'] === 'ครูตัวอย่าง หนึ่ง', 'ส่งชื่อผู้ขอไปแสดง');
+  ok(call(io3, 'tok-t1', 'khbDoc', { no: 2 }).code === 'FORBIDDEN', 'ครูเปิด ขบ. ของคนอื่นไม่ได้');
+  ok(call(io3, 'tok-t1', 'getReceipts').code === 'FORBIDDEN' && call(io3, 'tok-t1', 'getBalances', { date: R.start }).code === 'FORBIDDEN', 'ครูดูรายรับ/ยอดเงินโรงเรียนไม่ได้');
+  ok(call(io3, 'tok-t1', 'approveKhb', { nos: [1], decision: 'อนุมัติ' }).code === 'FORBIDDEN' && call(io3, 'tok-fin', 'approveKhb', { nos: [1], decision: 'อนุมัติ' }).code === 'FORBIDDEN', 'ครูและการเงินอนุมัติแทนผู้บริหารไม่ได้');
+  ok(call(io3, 'tok-t2', 'cancelKhb', { no: 1, reason: 'x' }).code === 'FORBIDDEN', 'ครูยกเลิก ขบ. ของคนอื่นไม่ได้');
+  ok(/ระบุเหตุผล/.test(call(io3, 'tok-boss', 'approveKhb', { nos: [1], decision: 'ส่งกลับ' }).error), 'ส่งกลับต้องมีเหตุผล');
+  ok(/รับเรื่องไม่ได้/.test(call(io3, 'tok-fin', 'receiveKhb', { nos: [1] }).error), 'ยังไม่อนุมัติ การเงินรับเรื่องไม่ได้');
+  ok(call(io3, 'tok-boss', 'approveKhb', { nos: [1], decision: 'ส่งกลับ', note: 'แนบใบเสนอราคา 3 ร้าน' }).ok, 'ผู้บริหารส่งกลับพร้อมเหตุผล');
+  var k3 = call(io3, 'tok-t1', 'getDocs').data.khbs[0];
+  ok(k3.flow === 'ส่งกลับแก้ไข' && k3.steps[1].note === 'แนบใบเสนอราคา 3 ร้าน' && k3.steps[1].by === 'boss@example.com', 'ครูเห็นว่าถูกส่งกลับและเหตุผล');
+  r = call(io3, 'tok-t1', 'saveKhb', { no: 1, date: '3/11/69', note: 'แนบใบเสนอราคาแล้ว', lines: TL });
+  ok(r.ok && call(io3, 'tok-boss', 'getDocs').data.khbs.filter(function (h) { return h.no === 1; })[0].flow === 'รออนุมัติ', 'ครูแก้แล้วส่งใหม่ กลับไปรออนุมัติ');
+  ok(/ถูกเลือกซ้ำ/.test(call(io3, 'tok-boss', 'approveKhb', { nos: [1, 1], decision: 'อนุมัติ' }).error), 'เลือก ขบ. ซ้ำในการอนุมัติไม่ได้');
+  ok(call(io3, 'tok-boss', 'approveKhb', { nos: [1, 2], decision: 'อนุมัติ' }).ok, 'ผู้บริหารอนุมัติหลายใบพร้อมกัน');
+  ok(/อนุมัติไม่ได้/.test(call(io3, 'tok-boss', 'approveKhb', { nos: [1], decision: 'อนุมัติ' }).error), 'อนุมัติซ้ำไม่ได้');
+  ok(/ขั้น "อนุมัติแล้ว" แก้ไขไม่ได้/.test(call(io3, 'tok-t1', 'saveKhb', { no: 1, date: '3/11/69', lines: TL }).error), 'ครูแก้ ขบ. ที่อนุมัติแล้วไม่ได้');
+  ok(call(io3, 'tok-fin', 'receiveKhb', { nos: [1] }).ok, 'การเงินกดรับเรื่อง');
+  r = call(io3, 'tok-fin', 'createKhj', { date: '4/11/69', items: [{ fy: FY, no: 1, seq: 1 }] });
+  ok(r.ok && r.data.no === 1, 'รับเรื่องแล้วทำ ขจ. ต่อได้ ' + (r.ok ? '' : r.error));
+  var t1j = call(io3, 'tok-t1', 'getDocs').data;
+  ok(t1j.khjs.length === 1 && t1j.khbs[0].lines[0].khjNo === 1, 'ครูเห็นว่ารายการของตัวเองอยู่ใน ขจ.1 แล้ว');
+  ok(call(io3, 'tok-t2', 'getDocs').data.khjs.length === 0, 'ครูอีกคนไม่เห็น ขจ. ที่ไม่มีรายการของตัวเอง');
+  ok(call(io3, 'tok-t1', 'saveKhb', { date: '5/11/69', lines: TL, paper: true }).code === 'FORBIDDEN', 'ครูข้ามขั้นอนุมัติไม่ได้');
+  r = call(io3, 'tok-fin', 'saveKhb', { date: '5/11/69', lines: TL, paper: true });
+  ok(r.ok && r.data.flow === 'รับเรื่องแล้ว', 'การเงินบันทึกย้อนหลัง "อนุมัติบนกระดาษแล้ว" พร้อมทำ ขจ.');
+  r = call(io3, 'tok-fin', 'saveKhb', { no: r.data.no, date: '5/11/69', lines: TL });
+  ok(r.ok && r.data.flow === 'รออนุมัติ', 'แก้ ขบ. ที่อนุมัติแล้ว ต้องกลับไปขออนุมัติใหม่');
+  io3.sheets['ขบ'].push([FY, 9, '2026-11-06', 'ข้อมูลเก่า', 'fin@example.com', '', 'ปกติ']);
+  io3.sheets['ขบ_รายการ'].push([FY, 9, 1, 'T20', 'ร้านเก่า', 'พัสดุ', 'เช็ค', 100, 0, 'ไม่มีภาษี']);
+  ok(call(io3, 'tok-fin', 'getDocs').data.khbs.filter(function (h) { return h.no === 9; })[0].flow === 'รับเรื่องแล้ว', 'ขบ. เก่าที่ไม่มีขั้นตอน ถือว่ารับเรื่องแล้ว');
+  io3.sheets['ขบ_ขั้นตอน'].push([FY, 9, 'อนุมัติแล้ว', 'x', '', '']);
+  ok(/ขั้น "อนุมัติแล้ว" ต้องเป็น/.test(call(io3, 'tok-fin', 'getDocs').error), 'ขั้นตอนพิมพ์ผิดในชีท -> error ชัดเจน');
 
   console.log('11) บัญชีแยกประเภท (getLedger)');
   var lg = call(io, 'tok-boss', 'getLedger');

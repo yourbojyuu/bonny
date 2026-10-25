@@ -2,11 +2,11 @@
    ขบ. (ขอเบิก) → รอจ่าย → ขจ. (ขอจ่าย) → การจ่าย · สายโยง · พิมพ์เอกสาร A4 */
 
 var Docs = (function () {
-  var seg = 'grid', q = '', filt = 'all', sel = {}, linkHover = null, resizeT = 0;
+  var seg = 'grid', q = '', filt = 'all', linkHover = null, resizeT = 0;
 
   var TAX_QUICK = [['', 'คิด'], ['1v', '1% มี VAT'], ['1', '1% ไม่มี VAT'], ['3v', '3% มี VAT'], ['3', '3% ไม่มี VAT']];
   var METHOD_BY_KIND = { 'พัสดุ': 'เช็ค', 'เบิก': 'KTB', 'ค่าจ้าง': 'KTB', 'เงินยืม': 'KTB', 'ถอน': 'ถอน' };
-  var STATE_CLS = { 'รอจ่าย': 'wait', 'อยู่ใน ขจ.': 'in', 'รอจ่ายเงิน': 'in', 'จ่ายแล้ว': 'paid', 'ยกเลิก': 'cancel' };
+  var STATE_CLS = { 'รอจ่าย': 'wait', 'รอทำ ขจ.': 'wait', 'อยู่ใน ขจ.': 'in', 'รอจ่ายเงิน': 'in', 'จ่ายแล้ว': 'paid', 'ยกเลิก': 'cancel', 'รออนุมัติ': 'appr', 'ส่งกลับแก้ไข': 'back', 'อนุมัติแล้ว': 'ok', 'รอรับเรื่อง': 'ok' };
 
   function fy() { return S.docs.fy; }
   function khbs() { return S.docs.khbs; }
@@ -17,61 +17,89 @@ var Docs = (function () {
   function badge(state) { return '<span class="badge ' + (STATE_CLS[state] || '') + '">' + esc(state) + '</span>'; }
   function isCompany(name) { return /บริษัท|บจก|หจก|ห้างหุ้นส่วน|จำกัด|มหาชน|การไฟฟ้า|การประปา|รัฐวิสาหกิจ/.test(name || ''); }
 
-  /** สรุปสถานะทั้งระบบ */
+  /* สถานะของแถวรายการตลอดสาย: ขั้นอนุมัติของ ขบ. ก่อน (รออนุมัติ → อนุมัติแล้ว รอรับเรื่อง) แล้วจึงสถานะการจ่าย */
+  var ST_TXT = { appr: 'รออนุมัติ', back: 'ส่งกลับแก้ไข', ok: 'รอรับเรื่อง', wait: 'รอทำ ขจ.', 'in': 'รอจ่ายเงิน', paid: 'จ่ายแล้ว', cancel: 'ยกเลิก' };
+  var FLOW_ST = { 'รออนุมัติ': 'appr', 'ส่งกลับแก้ไข': 'back', 'อนุมัติแล้ว': 'ok' };
+  function lineSt(h, l) {
+    if (h.status === 'ยกเลิก') return 'cancel';
+    if (FLOW_ST[h.flow]) return FLOW_ST[h.flow];
+    return l.state === 'จ่ายแล้ว' ? 'paid' : l.state === 'อยู่ใน ขจ.' ? 'in' : 'wait';
+  }
+  /** สรุปสถานะทั้งระบบ (n = รายการ, d = จำนวน ขบ., a = ยอดหลังหักภาษี) */
   function stats() {
-    var s = { wait: { n: 0, a: 0 }, in: { n: 0, a: 0 }, paid: { n: 0, a: 0 } };
+    var s = {};
+    Object.keys(ST_TXT).forEach(function (k) { s[k] = { n: 0, a: 0, d: 0 }; });
     khbs().forEach(function (h) {
+      var seen = {};
       h.lines.forEach(function (l) {
-        var k = l.state === 'รอจ่าย' ? 'wait' : l.state === 'อยู่ใน ขจ.' ? 'in' : l.state === 'จ่ายแล้ว' ? 'paid' : '';
-        if (!k) return;
+        var k = lineSt(h, l);
         s[k].n++; s[k].a += Math.round(l.net * 100);
+        if (!seen[k]) { seen[k] = true; s[k].d++; }
       });
     });
-    ['wait', 'in', 'paid'].forEach(function (k) { s[k].a /= 100; });
+    Object.keys(s).forEach(function (k) { s[k].a /= 100; });
     return s;
   }
 
-  /* ================= หน้าหลักรายจ่าย ================= */
+  /* ================= หน้าหลักรายจ่าย: แถบย่อย ขบ. | ขจ. | สายโยง ================= */
+  var GROUPS = { khb: ['grid', 'khb'], khj: ['khj', 'khjdoc'], links: ['links'] };
+  var SEG_LABEL = { grid: 'ตารางกรอก', khb: 'เอกสาร ขบ.', khj: 'รับเรื่อง · ทำ ขจ. · จ่ายเงิน', khjdoc: 'เอกสาร ขจ.', links: 'สายโยง' };
+  function segOk(id) {
+    if (id === 'grid') return can.khb() && mode() === 'fin';
+    if (id === 'khj') return can.fin() && mode() === 'fin';
+    return !!SEG_LABEL[id];
+  }
+  function groupOf(id) { for (var g in GROUPS) if (GROUPS[g].indexOf(id) >= 0) return g; return 'khb'; }
   function render(v, opt) {
-    if (opt && opt.seg) seg = opt.seg;
-    if (seg === 'grid' && !can.khb()) seg = 'khb';
-    var s = stats();
+    if (opt && opt.seg) seg = opt.seg === 'pending' ? 'khj' : opt.seg;
+    if (!segOk(seg)) seg = GROUPS[groupOf(seg)].filter(segOk)[0] || 'khb';
+    var s = stats(), open = s.appr.a + s.ok.a + s.wait.a + s['in'].a;
     v.innerHTML =
       '<section class="hero">' + heroDeco('expense') +
-      '<div class="lbl">ขอเบิก → ขอจ่าย → จ่ายเงิน</div>' +
-      '<div class="big money">' + money(s.wait.a + s.in.a) + '</div><div class="sub">ยอดที่ยังไม่ได้จ่าย (หลังหักภาษี ณ ที่จ่าย)</div>' +
-      '<div class="flow">' +
-      flowTile('pending', 'ขบ. รอทำ ขจ.', s.wait) + '<span class="arrow" aria-hidden="true">' + ICON.arrow + '</span>' +
-      flowTile('khj', 'อยู่ใน ขจ. รอจ่ายเงิน', s.in) + '<span class="arrow" aria-hidden="true">' + ICON.arrow + '</span>' +
-      flowTile('khj', 'จ่ายแล้ว', s.paid) +
+      '<div class="lbl">ขอเบิก → ผู้บริหารอนุมัติ → รับเรื่อง → ขอจ่าย → จ่ายเงิน</div>' +
+      '<div class="big money">' + money(open) + '</div><div class="sub">ยอดที่ยังไม่ได้จ่าย (หลังหักภาษี ณ ที่จ่าย) รวมเรื่องที่รออนุมัติ</div>' +
+      '<div class="flow f4">' +
+      flowTile(segOk('grid') ? 'grid' : 'khb', 'รอผู้บริหารอนุมัติ', s.appr.a, s.appr.d + ' ฉบับ' + (s.back.d ? ' · ส่งกลับ ' + s.back.d : '')) + arrow() +
+      flowTile(segOk('khj') ? 'khj' : 'khb', 'อนุมัติแล้ว รอรับเรื่อง', s.ok.a, s.ok.d + ' ฉบับ') + arrow() +
+      flowTile(segOk('khj') ? 'khj' : 'khjdoc', 'รอทำ ขจ. / รอจ่าย', s.wait.a + s['in'].a, s.wait.n + ' + ' + s['in'].n + ' รายการ') + arrow() +
+      flowTile('khjdoc', 'จ่ายแล้ว', s.paid.a, s.paid.n + ' รายการ') +
       '</div></section>' +
-      '<div class="seg glass" role="group" aria-label="มุมมอง">' +
-      (can.khb() ? segBtn('grid', 'ตาราง Excel') : '') + segBtn('khb', 'ขบ. ขอเบิก') + segBtn('pending', 'รอจ่าย' + (s.wait.n ? ' (' + s.wait.n + ')' : '')) +
-      segBtn('khj', 'ขจ. ขอจ่าย') + segBtn('links', 'สายโยง') + '</div>' +
+      '<div class="seg2" role="tablist" aria-label="ขบ. หรือ ขจ." id="seg1"></div><div class="subseg" id="seg2"></div>' +
       '<div id="dv"></div>';
-    Array.prototype.forEach.call(v.querySelectorAll('[data-seg]'), function (b) {
-      b.onclick = function () { switchSeg(b.getAttribute('data-seg')); };
-    });
+    drawSegs(s);
+    Array.prototype.forEach.call(v.querySelectorAll('.hero [data-seg]'), function (b) { b.onclick = function () { switchSeg(b.getAttribute('data-seg')); }; });
     renderSeg();
     if (opt && opt.draft) openKhb(null);
     if (opt && opt.openKhj) openKhj(opt.openKhj);
   }
-  function flowTile(target, label, x) {
+  function arrow() { return '<span class="arrow" aria-hidden="true">' + ICON.arrow + '</span>'; }
+  function flowTile(target, label, a, sub) {
     return '<button class="tile" type="button" data-seg="' + target + '"><div class="k">' + esc(label) + '</div>' +
-      '<div class="v money">' + money(x.a) + '</div><div class="s">' + x.n + ' รายการ</div></button>';
+      '<div class="v money">' + money(a) + '</div><div class="s">' + esc(sub) + '</div></button>';
   }
-  function segBtn(id, label) {
-    return '<button type="button" data-seg="' + id + '" aria-pressed="' + (seg === id) + '">' + esc(label) + '</button>';
+  /** แถบย่อยสองชั้น: ชั้นแรก ขบ./ขจ./สายโยง ชั้นสองมุมมองในกลุ่มนั้น */
+  function drawSegs(s) {
+    s = s || stats();
+    var g = groupOf(seg), fin = mode() === 'fin';
+    var L1 = [
+      ['khb', 'ขบ. ขอเบิก', fin ? 'กรอก · ส่งผู้บริหาร' : 'เอกสารขอเบิก', fin ? s.back.d : 0],
+      ['khj', 'ขจ. ขอจ่าย', fin ? 'รับเรื่อง · ทำ ขจ. · จ่าย' : 'เอกสารขอจ่าย', fin ? s.ok.d + s.wait.n : 0],
+      ['links', 'สายโยง', 'ขบ. ↔ ขจ.', 0]
+    ];
+    $('seg1').innerHTML = L1.map(function (x) {
+      return '<button type="button" role="tab" data-g="' + x[0] + '" aria-selected="' + (g === x[0]) + '"><b>' + esc(x[1]) + '</b><small>' + esc(x[2]) + '</small>' + (x[3] ? '<em>' + x[3] + '</em>' : '') + '</button>';
+    }).join('');
+    var subs = GROUPS[g].filter(segOk);
+    $('seg2').innerHTML = subs.length > 1 ? subs.map(function (id) { return '<button type="button" class="fchip" data-seg="' + id + '" aria-pressed="' + (seg === id) + '">' + esc(SEG_LABEL[id]) + '</button>'; }).join('') : '';
+    $('seg2').hidden = subs.length < 2;
+    Array.prototype.forEach.call($('seg1').querySelectorAll('[data-g]'), function (b) {
+      b.onclick = function () { var to = GROUPS[b.getAttribute('data-g')].filter(segOk)[0]; if (to) switchSeg(to); };
+    });
+    Array.prototype.forEach.call($('seg2').querySelectorAll('[data-seg]'), function (b) { b.onclick = function () { switchSeg(b.getAttribute('data-seg')); }; });
   }
   function switchSeg(id) {
-    if (id === seg) return;
-    var run = function () {
-      seg = id;
-      Array.prototype.forEach.call(document.querySelectorAll('.seg [data-seg]'), function (b) {
-        b.setAttribute('aria-pressed', String(b.getAttribute('data-seg') === seg));
-      });
-      renderSeg();
-    };
+    if (id === seg || !segOk(id)) return;
+    var run = function () { seg = id; drawSegs(); renderSeg(); };
     if (document.startViewTransition && !REDUCE) { try { document.startViewTransition(run); return; } catch (e) {} }
     run();
   }
@@ -79,23 +107,68 @@ var Docs = (function () {
     leave();
     var dv = $('dv'); if (!dv) return;
     dv.className = ''; void dv.offsetWidth; dv.className = 'view-in';
-    if (seg === 'grid') renderGrid(dv);
+    if (seg === 'grid') renderGrid(dv, 'khb');
     else if (seg === 'khb') renderKhbList(dv);
-    else if (seg === 'pending') renderPending(dv);
-    else if (seg === 'khj') renderKhjList(dv);
+    else if (seg === 'khj') renderKhjWork(dv);
+    else if (seg === 'khjdoc') renderKhjList(dv);
     else renderLinks(dv);
     observeReveal();
   }
   function rerender() {
     if (S.tab === 'expense') render($('view'), null);
+    else if (S.tab === 'request' && window.Flow) Flow.teacher($('view'), null);
+    else if (S.tab === 'approve' && window.Flow) Flow.exec($('view'), null);
     else renderTabs();
   }
   /** ออกจากหน้า: เก็บแถบล่าง */
   function leave() { var d = $('dock'); if (d) d.parentNode.removeChild(d); }
 
+  /* ================= ขจ.: เรื่องที่อนุมัติแล้วลอยรอบนคลาวด์ → กดรับเรื่อง → ตารางทำ ขจ./จ่ายเงิน ================= */
+  var justTaken = [];
+  function renderKhjWork(dv) {
+    dv.innerHTML = '<section class="cloud reveal" id="cloud" aria-label="เรื่องที่อนุมัติแล้ว รอรับเรื่อง"></section><div id="kjGrid"></div>';
+    drawCloud($('cloud'));
+    renderGrid($('kjGrid'), 'khj');
+  }
+  function lastStep(h, step) { var x = null; (h.steps || []).forEach(function (s) { if (s.step === step) x = s; }); return x; }
+  function stampText(at) { var p = String(at || '').split(' '); return p.length === 2 ? thaiDate(p[0]) + ' ' + p[1] + ' น.' : at || ''; }
+  function drawCloud(box) {
+    var list = khbs().filter(function (h) { return h.status !== 'ยกเลิก' && h.flow === 'อนุมัติแล้ว'; });
+    var waiting = khbs().filter(function (h) { return h.status !== 'ยกเลิก' && h.flow === 'รออนุมัติ'; }).length;
+    var sum = sumSat(list, function (h) { return h.total.net; });
+    var h = '<div class="cl-sky" aria-hidden="true"><i></i><i></i><i></i></div><div class="cl-head"><span class="cl-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1.6-9.7A6 6 0 0 1 21 11.5 3.8 3.8 0 0 1 17.5 19z"/><path d="M12 12v6M9.5 15.5 12 18l2.5-2.5"/></svg></span>' +
+      '<div class="cl-t"><h2>อนุมัติแล้ว รอรับเรื่อง</h2><p>' + (list.length ? list.length + ' ฉบับ · ' + money(sum) + ' บาท — กดรับเรื่องแล้วรายการจะลงตารางด้านล่างให้ทำ ขจ. ต่อทันที' : 'ไม่มีเรื่องค้าง' + (waiting ? ' · อยู่ที่ผู้บริหาร ' + waiting + ' ฉบับ' : '')) + '</p></div>' +
+      (list.length > 1 ? '<button class="btn" type="button" id="takeAll">รับทั้งหมด ' + list.length + ' ฉบับ</button>' : '') + '</div>';
+    if (list.length) {
+      h += '<div class="cl-cards">' + list.map(function (x, i) {
+        var ap = lastStep(x, 'อนุมัติ');
+        return '<article class="cl-card" style="--i:' + i + '" data-no="' + x.no + '"><button type="button" class="cl-open" data-open="' + x.no + '" aria-label="ดู ขบ.' + x.no + '"></button>' +
+          '<div class="cl-row"><b class="no">ขบ.' + x.no + '/' + x.fy + '</b><span class="badge ok">อนุมัติแล้ว</span></div>' +
+          '<div class="cl-who">' + esc(personName(x.owner)) + ' · ' + esc(thaiDate(x.date)) + '</div>' +
+          '<div class="cl-sum">' + esc(x.note || x.lines.map(function (l) { return l.payee; }).slice(0, 2).join(', ')) + '</div>' +
+          '<div class="cl-row"><span class="money cl-amt">' + money(x.total.net) + '</span><span class="meta">' + x.lines.length + ' รายการ</span></div>' +
+          (ap ? '<div class="cl-ap">อนุมัติโดย ' + esc(personName(ap.by)) + ' · ' + esc(stampText(ap.at)) + (ap.note ? ' · ' + esc(ap.note) : '') + '</div>' : '') +
+          '<button class="btn sm cl-take" type="button" data-take="' + x.no + '">รับเรื่อง ' + ICON.arrow + '</button></article>';
+      }).join('') + '</div>';
+    }
+    box.innerHTML = h;
+    box.classList.toggle('empty', !list.length);
+    Array.prototype.forEach.call(box.querySelectorAll('[data-take]'), function (b) { b.onclick = function () { take([Number(b.getAttribute('data-take'))], b); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-open]'), function (b) { b.onclick = function () { openKhb(Number(b.getAttribute('data-open'))); }; });
+    if ($('takeAll')) $('takeAll').onclick = function () { take(list.map(function (x) { return x.no; }), this); };
+  }
+  function take(nos, btn) {
+    busy(btn, api('receiveKhb', { nos: nos })).then(function () {
+      nos.forEach(function (n) { var c = document.querySelector('.cl-card[data-no="' + n + '"]'); if (c) c.classList.add('gone'); });
+      justTaken = nos; gridFilter.khj = 'wait';
+      return reloadDocs().then(function () {
+        setTimeout(function () { rerender(); toast('รับเรื่อง ' + nos.map(function (n) { return 'ขบ.' + n; }).join(', ') + ' แล้ว — ติ๊กแถวสีส้มในตารางเพื่อสร้าง ขจ.', 'good'); }, REDUCE ? 0 : 420);
+      });
+    }).catch(handleError);
+  }
 
   /* ================= ตาราง Excel เดียวครบวงจร: ขบ. → ขจ. → จ่ายเงิน (แถวเดียวกันตลอดทาง) ================= */
-  var gridRows = null, gridMonth = '', gridFilter = 'all';
+  var gridRows = null, gridMonth = '', gridFilter = { khb: 'all', khj: 'all' };
   var KIND_METHOD = { 'พัสดุ': 'เช็ค', 'เบิก': 'KTB', 'ค่าจ้าง': 'KTB', 'เงินยืม': 'KTB', 'ถอน': 'ถอน' };
   function typeIdOf(name) { return name ? Paste.matchType(name, pasteCtx(), true) || '' : ''; }
   function storeNameOf(id) { var s = S.st.stores.filter(function (x) { return x[0] === id; })[0]; return s ? s[1] : id || ''; }
@@ -118,37 +191,40 @@ var Docs = (function () {
     else if (k === 'tax') r.auto = false;
     else if (k === 'kind' && KIND_METHOD[r.kind]) r.method = KIND_METHOD[r.kind];
   }
-  function gridCols() {
-    return [
-      { k: 'chk', label: '', w: 40, type: 'chk' },
-      { k: 'date', label: 'วันที่เบิก', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
-      { k: 'grp', label: 'ขบ.', w: 84, ph: 'อัตโนมัติ' },
-      { k: 'khj', label: 'ขจ.', w: 66, ro: true },
-      { k: 'kind', label: 'ชนิด', w: 88, list: function () { return S.schema.lineKinds; } },
-      { k: 'payee', label: 'รายชื่อผู้รับ', w: 250, list: function () { return S.docs.payees || []; } },
-      { k: 'gross', label: 'จำนวนที่ขอเบิก', w: 120, type: 'money' },
-      { k: 'tax', label: 'ภาษี', w: 96, type: 'money' },
-      { k: 'net', label: 'จำนวนเงินที่จ่าย', w: 124, type: 'money', calc: function (r) { return (Number(r.gross) || 0) - (Number(r.tax) || 0); } },
-      { k: 'type', label: 'ประเภทเงิน', w: 160, list: function () { return S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่'; }).map(function (t) { return t[1]; }); } },
-      { k: 'group', label: 'รายการเงิน', w: 92, calc: function (r) { var id = typeIdOf(r.type); return id ? typeGroup(id) : ''; } },
-      { k: 'taxType', label: 'ประเภทภาษี', w: 108, list: function () { return S.schema.taxTypes; } },
-      { k: 'method', label: 'วิธีจ่าย', w: 80, list: function () { return S.schema.payMethods; } },
-      { k: 'ref', label: 'เลขเช็ค / อ้างอิง', w: 124, ph: 'หลัง ขจ.' },
-      { k: 'store', label: 'จ่ายจากที่เก็บ', w: 168, list: function () { return S.st.stores.map(function (s) { return s[1]; }); } },
-      { k: 'paid', label: 'วันที่จ่ายจริง', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
-      { k: 'status', label: 'สถานะ', w: 96, ro: true, tag: true }
-    ];
+  function gridCols(md) {
+    var C = {
+      chk: { k: 'chk', label: '', w: 40, type: 'chk' },
+      date: { k: 'date', label: 'วันที่เบิก', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
+      grp: { k: 'grp', label: 'ขบ.', w: 84, ph: 'อัตโนมัติ' },
+      khj: { k: 'khj', label: 'ขจ.', w: 66, ro: true },
+      kind: { k: 'kind', label: 'ชนิด', w: 88, list: function () { return S.schema.lineKinds; } },
+      payee: { k: 'payee', label: 'รายชื่อผู้รับ', w: 250, list: function () { return S.docs.payees || []; } },
+      gross: { k: 'gross', label: 'จำนวนที่ขอเบิก', w: 120, type: 'money' },
+      tax: { k: 'tax', label: 'ภาษี', w: 96, type: 'money' },
+      net: { k: 'net', label: 'จำนวนเงินที่จ่าย', w: 124, type: 'money', calc: function (r) { return (Number(r.gross) || 0) - (Number(r.tax) || 0); } },
+      type: { k: 'type', label: 'ประเภทเงิน', w: 160, list: function () { return S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่'; }).map(function (t) { return t[1]; }); } },
+      group: { k: 'group', label: 'รายการเงิน', w: 92, calc: function (r) { var id = typeIdOf(r.type); return id ? typeGroup(id) : ''; } },
+      taxType: { k: 'taxType', label: 'ประเภทภาษี', w: 108, list: function () { return S.schema.taxTypes; } },
+      method: { k: 'method', label: 'วิธีจ่าย', w: 80, list: function () { return S.schema.payMethods; } },
+      ref: { k: 'ref', label: 'เลขเช็ค / อ้างอิง', w: 124, ph: 'กรอกได้เมื่ออยู่ใน ขจ.' },
+      store: { k: 'store', label: 'จ่ายจากที่เก็บ', w: 168, list: function () { return S.st.stores.map(function (s) { return s[1]; }); } },
+      paid: { k: 'paid', label: 'วันที่จ่ายจริง', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
+      status: { k: 'status', label: 'สถานะ', w: 112, ro: true, tag: true }
+    };
+    var keys = md === 'khb' ? ['date', 'grp', 'kind', 'payee', 'gross', 'tax', 'net', 'type', 'group', 'taxType', 'method', 'status']
+      : ['chk', 'date', 'grp', 'khj', 'payee', 'net', 'type', 'method', 'ref', 'store', 'paid', 'status'];
+    return keys.map(function (k) { return C[k]; });
   }
   var PAYCOLS = { method: 1, ref: 1, store: 1, paid: 1 };
-  var ST_TXT = { wait: 'รอทำ ขจ.', 'in': 'รอจ่ายเงิน', paid: 'จ่ายแล้ว', cancel: 'ยกเลิก' };
-  /** แถวเดิมจาก ขบ. ทั้งปีงบ (แถวเดียวกันตลอดสาย ขบ. → ขจ. → จ่ายเงิน) */
-  function oldRows() {
+  /** แถวเดิมจาก ขบ. ทั้งปีงบ · ขบ.: ทุกแถว (เห็นขั้นอนุมัติ) · ขจ.: เฉพาะแถวที่การเงินรับเรื่องแล้ว */
+  function oldRows(md) {
     var out = [];
     khbs().forEach(function (h) {
       h.lines.forEach(function (l) {
-        var st = h.status === 'ยกเลิก' ? 'cancel' : l.state === 'จ่ายแล้ว' ? 'paid' : l.state === 'อยู่ใน ขจ.' ? 'in' : 'wait';
+        var st = lineSt(h, l);
+        if (md === 'khj' && !/^(wait|in|paid)$/.test(st)) return;
         var mainStore = mainStoreOfType(l.type);
-        out.push({ _old: true, _st: st, _fy: h.fy, _no: h.no, _seq: l.seq, _khj: l.khjNo || 0, date: h.date, grp: 'ขบ.' + h.no, khj: l.khjNo ? 'ขจ.' + l.khjNo : '', kind: l.kind, payee: l.payee, gross: l.gross, tax: l.tax, type: typeName(l.type), taxType: l.taxType,
+        out.push({ _old: true, _st: st, _fy: h.fy, _no: h.no, _seq: l.seq, _khj: l.khjNo || 0, _fresh: justTaken.indexOf(h.no) >= 0, date: h.date, grp: 'ขบ.' + h.no, khj: l.khjNo ? 'ขจ.' + l.khjNo : '', kind: l.kind, payee: l.payee, gross: l.gross, tax: l.tax, type: typeName(l.type), taxType: l.taxType,
           method: l.payMethod || l.method, ref: l.ref || '', store: l.store ? storeNameOf(l.store) : (st === 'in' ? storeNameOf(mainStore) : ''), paid: l.paidDate || '', status: ST_TXT[st] });
       });
     });
@@ -181,62 +257,78 @@ var Docs = (function () {
     });
     return out.length ? out : null;
   }
-  function renderGrid(dv) {
+  var CHIPS = {
+    khb: [['all', 'ทั้งหมด'], ['appr', 'รออนุมัติ'], ['back', 'ส่งกลับแก้ไข'], ['ok', 'รอรับเรื่อง'], ['taken', 'รับเรื่องแล้ว']],
+    khj: [['all', 'ทั้งหมด'], ['wait', 'รอทำ ขจ.'], ['in', 'รอจ่ายเงิน'], ['paid', 'จ่ายแล้ว']]
+  };
+  /** md = 'khb' (กรอก ขบ. แบบ Excel แล้วส่งผู้บริหาร) หรือ 'khj' (ติ๊กทำ ขจ. แล้วกรอกเลขเช็ค/วันที่จ่ายในแถวเดียวกัน) */
+  function renderGrid(dv, md) {
     if (!gridMonth) gridMonth = (S.date || defaultDate()).slice(0, 7);
-    var fin = can.fin(), mons = [];
+    var fin = can.fin(), mons = [], khb = md === 'khb';
     for (var i = 0; i < 12; i++) { var d0 = new Date(S.st.fyStart + 'T00:00:00'), x = new Date(d0.getFullYear(), d0.getMonth() + i, 1); mons.push([x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2), MONTHS_L[x.getMonth()] + ' ' + (x.getFullYear() + 543)]); }
-    var olds = oldRows(), cnt = { wait: 0, 'in': 0, paid: 0 };
-    olds.forEach(function (r) { if (cnt[r._st] !== undefined) cnt[r._st]++; });
-    function chip(id, label, n) { return '<button type="button" class="fchip" data-f="' + id + '" aria-pressed="' + (gridFilter === id) + '">' + label + (n === undefined ? '' : ' <b>' + n + '</b>') + '</button>'; }
-    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางเดียว ครบวงจร ขบ. → ขจ. → จ่ายเงิน</h2>' +
-      '<p class="hint" style="margin:4px 0 0">① พิมพ์/วางแถวใหม่ท้ายตาราง แล้วบันทึกแถวใหม่ → ② ติ๊กแถวที่ "รอทำ ขจ." แล้วกดสร้าง ขจ. → ③ กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดียวกัน (Ctrl+D คัดลอกลงล่าง) แล้วกดบันทึกการจ่าย · แถวที่อยู่ใน ขจ. แล้วจะไม่ถูกเลือกซ้ำ</p></div>' +
+    var olds = oldRows(md), cnt = {};
+    olds.forEach(function (r) { cnt[r._st] = (cnt[r._st] || 0) + 1; });
+    cnt.taken = (cnt.wait || 0) + (cnt['in'] || 0) + (cnt.paid || 0);
+    function chip(c) { return '<button type="button" class="fchip" data-f="' + c[0] + '" aria-pressed="' + (gridFilter[md] === c[0]) + '">' + c[1] + (c[0] === 'all' ? '' : ' <b>' + (cnt[c[0]] || 0) + '</b>') + '</button>'; }
+    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">' + (khb ? 'ขบ. ขอเบิก — กรอกแบบ Excel แล้วส่งผู้บริหาร' : 'ทำ ขจ. และบันทึกการจ่าย') + '</h2>' +
+      '<ol class="steps3">' + (khb ? '<li>พิมพ์หรือวางแถวจาก Excel ท้ายตาราง</li><li>กด "บันทึก · ส่งผู้บริหาร" ระบบออกเลข ขบ. ให้</li><li>ผู้บริหารอนุมัติแล้ว เรื่องจะไปรอที่แท็บ ขจ.</li>'
+        : '<li>ติ๊กแถว "รอทำ ขจ." แล้วกดสร้าง ขจ.</li><li>กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดิม (Ctrl+D คัดลอกลงล่าง)</li><li>กดบันทึกการจ่าย ยอดเข้า Ledger ตามวันที่จ่ายจริง</li>') + '</ol></div>' +
       '<div class="xtools"><label class="f inl">เดือน<select id="xMon"><option value="">ทั้งปีงบ</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gridMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '</select></label>' +
-      '<button class="btn ghost sm" type="button" id="xReg">ทะเบียนผู้รับ / ภาษี</button><button class="btn ghost sm" type="button" id="xXls">ส่งออก Excel</button></div></div>' +
-      '<div class="xflow"><div class="fchips" role="group" aria-label="กรองสถานะ">' + chip('all', 'ทั้งหมด') + chip('wait', 'รอทำ ขจ.', cnt.wait) + chip('in', 'รอจ่ายเงิน', cnt['in']) + chip('paid', 'จ่ายแล้ว', cnt.paid) + '</div>' +
-      '<div class="fact"><span class="fstep" id="fSel"></span>' + (fin ? '<label class="f inl">วันที่ ขจ.<input type="date" id="xKhjDate" value="' + esc(defaultDate()) + '" min="' + esc(S.st.fyStart) + '" max="' + esc(S.st.fyEnd) + '"></label><button class="btn soft sm" type="button" id="xAllWait">ติ๊กทั้งหมดที่รอ</button><button class="btn sm" type="button" id="xMake" disabled>สร้าง ขจ.</button><button class="btn sm" type="button" id="xPay" disabled>บันทึกการจ่าย</button>' : '') +
-      '<button class="btn ghost sm" type="button" id="xClear">ล้างแถวใหม่</button><button class="btn" type="button" id="xSave">บันทึกแถวใหม่</button></div></div>' +
-      '<div id="xHost"></div><div class="xstat" id="xStat"></div></section>';
+      (khb ? '<button class="btn ghost sm" type="button" id="xReg">ทะเบียนผู้รับ / ภาษี</button>' : '') + '<button class="btn ghost sm" type="button" id="xXls">ส่งออก Excel</button></div></div>' +
+      '<div class="xflow"><div class="fchips" role="group" aria-label="กรองสถานะ">' + CHIPS[md].map(chip).join('') + '</div>' +
+      '<div class="fact"><span class="fstep" id="fSel"></span>' +
+      (khb ? (fin ? '<label class="chkline" title="ใช้กับข้อมูลย้อนหลังที่ผู้บริหารเซ็นอนุมัติบนกระดาษแล้ว"><input type="checkbox" id="xPaper"> อนุมัติบนกระดาษแล้ว</label>' : '') +
+          '<button class="btn ghost sm" type="button" id="xClear">ล้างแถวใหม่</button><button class="btn" type="button" id="xSave">บันทึก · ส่งผู้บริหาร</button>'
+        : '<label class="f inl">วันที่ ขจ.<input type="date" id="xKhjDate" value="' + esc(defaultDate()) + '" min="' + esc(S.st.fyStart) + '" max="' + esc(S.st.fyEnd) + '"></label><button class="btn soft sm" type="button" id="xAllWait">ติ๊กทั้งหมดที่รอ</button><button class="btn sm" type="button" id="xMake" disabled>สร้าง ขจ.</button><button class="btn sm" type="button" id="xPay" disabled>บันทึกการจ่าย</button>') +
+      '</div></div><div id="xHost"></div><div class="xstat" id="xStat"></div></section>';
     function hide(r) {
-      if (gridFilter !== 'all' && r._st !== gridFilter) return true;
-      if (gridMonth && r.date.slice(0, 7) !== gridMonth && !(gridFilter !== 'all' && (r._st === 'wait' || r._st === 'in') && gridFilter !== 'paid')) return true;
+      var f = gridFilter[md];
+      if (f !== 'all' && !(f === 'taken' ? /^(wait|in|paid)$/.test(r._st) : r._st === f)) return true;
+      var active = /^(appr|back|ok|wait|in)$/.test(r._st);
+      if (gridMonth && r.date.slice(0, 7) !== gridMonth && !(f !== 'all' && f !== 'taken' && f !== 'paid' && active)) return true;
       return false;
     }
     var g = Grid.create($('xHost'), {
-      cols: gridCols(), rows: olds.concat(gridRows || []), blank: gridBlank, hide: hide,
-      chkOk: function (r) { return fin && r._st === 'wait'; },
-      cellRo: function (r, c) { return !(r._st === 'in' && fin && PAYCOLS[c.k]); },
-      rowCls: function (r) { return (r._old ? 'st-' + r._st : '') + (r._on ? ' sel' : ''); },
+      cols: gridCols(md), rows: khb ? olds.concat(gridRows || []) : olds, blank: gridBlank, hide: hide, noNew: !khb,
+      chkOk: function (r) { return !khb && fin && r._st === 'wait'; },
+      cellRo: function (r, c) { return !(!khb && r._st === 'in' && fin && PAYCOLS[c.k]); },
+      rowCls: function (r) { return (r._old ? 'st-' + r._st : '') + (r._on ? ' sel' : '') + (r._fresh ? ' fresh' : ''); },
       onRow: function (r, k) { gridOnRow(r, k); if (!r._old) { var ri = g.rows().indexOf(r); g.set(ri, 'gross', r.gross); } bar(); },
       onChk: function () { bar(); },
       isEmpty: function (r) { return !r.payee && !r.gross; },
-      onPaste: function (text, api) {
+      onPaste: khb ? function (text, api) {
         var list = gridFromSheet(text, g.filled().slice(-1)[0]);
         if (!list) return false;
         api.append(list); bar(); toast('วางแล้ว ' + list.length + ' แถว — ตรวจวันที่และประเภทเงินก่อนบันทึก', 'good');
         return true;
-      },
+      } : null,
       totals: function (rows) {
+        if (!khb) {
+          var ns = 0, nn = 0; rows.forEach(function (r) { if (hide(r)) return; nn++; ns += Math.round(((Number(r.gross) || 0) - (Number(r.tax) || 0)) * 100); });
+          return '<td colspan="5" class="tl">รวมที่แสดง ' + nn + ' รายการ</td><td class="mn">' + Grid.fmtN(ns / 100) + '</td><td colspan="6"></td>';
+        }
         var gs = 0, ts = 0, n = 0; rows.forEach(function (r) { if (r._old) return; if (r.payee || r.gross) n++; gs += Math.round((Number(r.gross) || 0) * 100); ts += Math.round((Number(r.tax) || 0) * 100); });
-        return '<td colspan="6" class="tl">รวมแถวใหม่ ' + n + ' แถว</td><td class="mn">' + Grid.fmtN(gs / 100) + '</td><td class="mn">' + Grid.fmtN(ts / 100) + '</td><td class="mn">' + Grid.fmtN((gs - ts) / 100) + '</td><td colspan="8"></td>';
+        return '<td colspan="4" class="tl">รวมแถวใหม่ ' + n + ' แถว</td><td class="mn">' + Grid.fmtN(gs / 100) + '</td><td class="mn">' + Grid.fmtN(ts / 100) + '</td><td class="mn">' + Grid.fmtN((gs - ts) / 100) + '</td><td colspan="5"></td>';
       }
     });
     function bar() {
       var sel = g.selected(), sum = 0; sel.forEach(function (r) { sum += Math.round(((Number(r.gross) || 0) - (Number(r.tax) || 0)) * 100); });
-      var dr = g.dirty().filter(function (r) { return r._st === 'in'; }), nw = g.filled().length;
-      var kd = $('xKhjDate'); if (kd && sel.length && !kd.getAttribute('data-u')) { var md = defaultDate(); sel.forEach(function (r) { if (r.date > md) md = r.date; }); kd.value = md; }
-      if ($('fSel')) $('fSel').textContent = sel.length ? 'เลือก ' + sel.length + ' รายการ · ' + money(sum / 100) + ' บาท' : '';
+      var dr = g.dirty().filter(function (r) { return r._st === 'in'; }), nw = khb ? g.filled().length : 0;
+      var kd = $('xKhjDate'); if (kd && sel.length && !kd.getAttribute('data-u')) { var md0 = defaultDate(); sel.forEach(function (r) { if (r.date > md0) md0 = r.date; }); kd.value = md0; }
+      $('fSel').textContent = sel.length ? 'เลือก ' + sel.length + ' รายการ · ' + money(sum / 100) + ' บาท' : '';
       if ($('xMake')) { $('xMake').disabled = !sel.length; $('xMake').textContent = sel.length ? 'สร้าง ขจ. จาก ' + sel.length + ' รายการ' : 'สร้าง ขจ.'; }
       if ($('xPay')) { $('xPay').disabled = !dr.length; $('xPay').textContent = dr.length ? 'บันทึกการจ่าย ' + dr.length + ' แถว' : 'บันทึกการจ่าย'; }
-      $('xSave').textContent = nw ? 'บันทึกแถวใหม่ ' + nw + ' แถว' : 'บันทึกแถวใหม่';
+      if ($('xSave')) $('xSave').textContent = nw ? 'บันทึก · ส่งผู้บริหาร ' + nw + ' แถว' : 'บันทึก · ส่งผู้บริหาร';
       $('xStat').textContent = nw ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + nw + ' แถว' : '';
-      gridRows = g.rows().filter(function (r) { return !r._old; });
+      if (khb) gridRows = g.rows().filter(function (r) { return !r._old; });
     }
     bar();
-    Array.prototype.forEach.call(dv.querySelectorAll('[data-f]'), function (b) { b.onclick = function () { gridFilter = b.getAttribute('data-f'); gridRows = g.rows().filter(function (r) { return !r._old; }); renderGrid(dv); }; });
-    $('xMon').onchange = function () { gridMonth = this.value; gridRows = g.rows().filter(function (r) { return !r._old; }); renderGrid(dv); };
-    $('xReg').onclick = function () { openPayees(); };
+    function redraw() { if (khb) gridRows = g.rows().filter(function (r) { return !r._old; }); renderGrid(dv, md); }
+    Array.prototype.forEach.call(dv.querySelectorAll('[data-f]'), function (b) { b.onclick = function () { gridFilter[md] = b.getAttribute('data-f'); redraw(); }; });
+    $('xMon').onchange = function () { gridMonth = this.value; redraw(); };
+    if ($('xReg')) $('xReg').onclick = function () { openPayees(); };
     $('xXls').onclick = function () {
-      if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริงที่วางบน Netlify', 'err'); return; }
+      if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริง (หน้าตัวอย่างนี้ปิดการดาวน์โหลด)', 'err'); return; }
       var all = [];
       g.rows().forEach(function (r) {
         if (r._old ? hide(r) : !(r.payee || r.gross)) return;
@@ -246,51 +338,57 @@ var Docs = (function () {
       var cols = [{ label: 'วันที่เบิก', w: 14, type: 'center' }, { label: 'ขบ.', w: 10, type: 'center' }, { label: 'ขจ.', w: 8, type: 'center' }, { label: 'ชนิด', w: 10, type: 'center' }, { label: 'รายชื่อผู้รับ', w: 38 }, { label: 'จำนวนที่ขอเบิก', w: 16, type: 'money', sum: true }, { label: 'ภาษี', w: 12, type: 'money', sum: true }, { label: 'จำนวนเงินที่จ่าย', w: 16, type: 'money', sum: true }, { label: 'ประเภทเงิน', w: 22 }, { label: 'รายการเงิน', w: 12, type: 'center' }, { label: 'ประเภทภาษี', w: 13, type: 'center' }, { label: 'วิธีจ่าย', w: 9, type: 'center' }, { label: 'เลขเช็ค/อ้างอิง', w: 15, type: 'center' }, { label: 'จ่ายจากที่เก็บ', w: 24 }, { label: 'วันที่จ่ายจริง', w: 14, type: 'center' }, { label: 'สถานะ', w: 12, type: 'center' }];
       busy(this, XlsxExport.sheet('ทะเบียนรายการ ขบ.-ขจ. ปีงบ ' + S.st.fy, cols, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ทะเบียน-ขบ-ขจ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
     };
-    $('xClear').onclick = function () { gridRows = null; g.replace(g.rows().filter(function (r) { return r._old; })); bar(); toast('ล้างแถวใหม่แล้ว'); };
     function afterSave(toastText, kind) {
-      return Promise.all([reloadDocs(), reloadSettings()]).then(function () { toast(toastText, kind || 'good'); if (S.tab === 'expense' && seg === 'grid' && $('dv')) renderGrid($('dv')); });
+      return Promise.all([reloadDocs(), reloadSettings()]).then(function () { rerender(); toast(toastText, kind || 'good'); });
     }
-    /* ① บันทึกแถวใหม่ -> ขบ. */
-    $('xSave').onclick = function () {
-      var rows = g.rows(), groups = {}, order = [], bad = 0, errMsg = '';
-      rows.forEach(function (r, ri) {
-        if (r._old || (!r.payee && !r.gross)) return;
-        var id = typeIdOf(r.type), iso = /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') ? r.date : '', gv = Number(r.gross) || 0;
-        function m(k) { g.mark(ri, k); bad++; }
-        if (!iso) m('date'); if (!r.payee) m('payee'); if (!(gv > 0)) m('gross'); if (!id) m('type');
-        if (S.schema.lineKinds.indexOf(r.kind) < 0) m('kind'); if (S.schema.payMethods.indexOf(r.method) < 0) m('method');
-        if (S.schema.taxTypes.indexOf(r.taxType) < 0) r.taxType = 'ไม่มีภาษี';
-        var key = (r.grp && r.grp.trim()) ? 'g:' + r.grp.trim() : 'd:' + iso;
-        if (!groups[key]) { groups[key] = { date: iso, rows: [], idx: [] }; order.push(key); }
-        if (groups[key].date !== iso && iso) { errMsg = 'ขบ. กลุ่ม "' + (r.grp || '') + '" มีหลายวันที่ — แยกกลุ่มหรือใช้วันที่เดียวกัน'; m('date'); }
-        groups[key].rows.push(r); groups[key].idx.push(ri);
-      });
-      if (!order.length) { toast('ยังไม่มีแถวใหม่ให้บันทึก', 'err'); return; }
-      if (bad || errMsg) { toast(errMsg || 'มี ' + bad + ' ช่องที่ยังไม่ครบ (ช่องสีแดง) — วันที่ ผู้รับ จำนวนเงิน ประเภทเงิน ชนิด วิธีจ่าย', 'err'); return; }
-      var done = [], keep = rows.filter(function (r) { return !r._old; }), p = Promise.resolve();
-      order.forEach(function (key) {
-        p = p.then(function () {
-          var gp = groups[key];
-          return api('saveKhb', { no: null, date: gp.date, note: '', lines: gp.rows.map(function (r) { return { type: typeIdOf(r.type), payee: r.payee, kind: r.kind, method: r.method, gross: String(r.gross), tax: String(r.tax || ''), taxType: r.taxType, taxAuto: !!r.auto }; }) })
-            .then(function (res) { done.push('ขบ.' + res.no); keep = keep.filter(function (r) { return gp.rows.indexOf(r) < 0; }); })
-            .catch(function (e) { gp.idx.forEach(function (ri) { g.markRow(ri); }); throw e; });
+    if (khb) {
+      $('xClear').onclick = function () { gridRows = null; g.replace(g.rows().filter(function (r) { return r._old; })); bar(); toast('ล้างแถวใหม่แล้ว'); };
+      /* บันทึกแถวใหม่ -> ขบ. (ส่งผู้บริหารอนุมัติทันที) */
+      $('xSave').onclick = function () {
+        var rows = g.rows(), groups = {}, order = [], bad = 0, errMsg = '', paper = !!($('xPaper') && $('xPaper').checked);
+        rows.forEach(function (r, ri) {
+          if (r._old || (!r.payee && !r.gross)) return;
+          var id = typeIdOf(r.type), iso = /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') ? r.date : '', gv = Number(r.gross) || 0;
+          function m(k) { g.mark(ri, k); bad++; }
+          if (!iso) m('date'); if (!r.payee) m('payee'); if (!(gv > 0)) m('gross'); if (!id) m('type');
+          if (S.schema.lineKinds.indexOf(r.kind) < 0) m('kind'); if (S.schema.payMethods.indexOf(r.method) < 0) m('method');
+          if (S.schema.taxTypes.indexOf(r.taxType) < 0) r.taxType = 'ไม่มีภาษี';
+          var key = (r.grp && r.grp.trim()) ? 'g:' + r.grp.trim() : 'd:' + iso;
+          if (!groups[key]) { groups[key] = { date: iso, rows: [], idx: [] }; order.push(key); }
+          if (groups[key].date !== iso && iso) { errMsg = 'ขบ. กลุ่ม "' + (r.grp || '') + '" มีหลายวันที่ — แยกกลุ่มหรือใช้วันที่เดียวกัน'; m('date'); }
+          groups[key].rows.push(r); groups[key].idx.push(ri);
         });
-      });
-      busy(this, p).then(function () { gridRows = keep; return afterSave('บันทึก ' + done.join(', ') + ' แล้ว — ติ๊กแถวที่ "รอทำ ขจ." เพื่อทำ ขจ. ต่อได้เลย'); })
-        .catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
-    };
+        if (!order.length) { toast('ยังไม่มีแถวใหม่ให้บันทึก', 'err'); return; }
+        if (bad || errMsg) { toast(errMsg || 'มี ' + bad + ' ช่องที่ยังไม่ครบ (ช่องสีแดง) — วันที่ ผู้รับ จำนวนเงิน ประเภทเงิน ชนิด วิธีจ่าย', 'err'); return; }
+        var done = [], keep = rows.filter(function (r) { return !r._old; }), p = Promise.resolve();
+        order.forEach(function (key) {
+          p = p.then(function () {
+            var gp = groups[key];
+            return api('saveKhb', { no: null, date: gp.date, note: '', paper: paper, lines: gp.rows.map(function (r) { return { type: typeIdOf(r.type), payee: r.payee, kind: r.kind, method: r.method, gross: String(r.gross), tax: String(r.tax || ''), taxType: r.taxType, taxAuto: !!r.auto }; }) })
+              .then(function (res) { done.push('ขบ.' + res.no); keep = keep.filter(function (r) { return gp.rows.indexOf(r) < 0; }); })
+              .catch(function (e) { gp.idx.forEach(function (ri) { g.markRow(ri); }); throw e; });
+          });
+        });
+        busy(this, p).then(function () {
+          gridRows = keep;
+          return afterSave(paper ? 'บันทึก ' + done.join(', ') + ' แล้ว (อนุมัติบนกระดาษ) — ไปทำ ขจ. ที่แท็บ ขจ. ได้เลย' : 'ส่ง ' + done.join(', ') + ' ให้ผู้บริหารแล้ว — อนุมัติเมื่อไรจะไปรอที่แท็บ ขจ.');
+        }).catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
+      };
+      return;
+    }
     if (!fin) return;
     $('xKhjDate').onchange = function () { this.setAttribute('data-u', '1'); };
     $('xAllWait').onclick = function () { var all = dv.querySelector('#xAll'); if (all) { all.checked = true; all.dispatchEvent(new Event('change', { bubbles: true })); } };
-    /* ② ติ๊กแถว -> สร้าง ขจ. */
+    /* ติ๊กแถว -> สร้าง ขจ. */
     $('xMake').onclick = function () {
       var sel = g.selected(); if (!sel.length) return;
-      var items = sel.map(function (r) { return { fy: r._fy, no: r._no, seq: r._seq }; }), keep = g.rows().filter(function (r) { return !r._old; });
+      var items = sel.map(function (r) { return { fy: r._fy, no: r._no, seq: r._seq }; });
       busy(this, api('createKhj', { date: $('xKhjDate').value, note: '', items: items })).then(function (res) {
-        gridRows = keep; return afterSave('สร้าง ขจ.' + res.no + ' แล้ว (' + items.length + ' รายการ) — กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดียวกัน แล้วกด "บันทึกการจ่าย"');
-      }).then(function () { gridFilter = 'in'; if ($('dv')) renderGrid($('dv')); }).catch(handleError);
+        justTaken = []; gridFilter.khj = 'in';
+        return afterSave('สร้าง ขจ.' + res.no + ' แล้ว (' + items.length + ' รายการ) — กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดียวกัน แล้วกด "บันทึกการจ่าย"');
+      }).catch(handleError);
     };
-    /* ③ กรอกเลขเช็ค/ที่เก็บ/วันที่จ่ายในแถว -> บันทึกการจ่าย */
+    /* กรอกเลขเช็ค/ที่เก็บ/วันที่จ่ายในแถว -> บันทึกการจ่าย */
     $('xPay').onclick = function () {
       var drows = g.dirty().filter(function (r) { return r._st === 'in'; }), byKhj = {}, order = [], bad = 0, rowsAll = g.rows();
       drows.forEach(function (r) {
@@ -303,9 +401,9 @@ var Docs = (function () {
         byKhj[r._khj].push({ khbFy: r._fy, khbNo: r._no, seq: r._seq, method: r.method, ref: String(r.ref || '').trim(), store: sid, date: iso });
       });
       if (bad) { toast('มี ' + bad + ' ช่องที่ยังไม่ครบ (สีแดง) — จ่ายด้วยเช็ค/KTB ต้องมีเลขอ้างอิง และต้องเลือกที่เก็บเมื่อใส่วันที่จ่าย', 'err'); return; }
-      var done = [], p = Promise.resolve(), keep = g.rows().filter(function (r) { return !r._old; });
+      var done = [], p = Promise.resolve();
       order.forEach(function (n) { p = p.then(function () { return api('savePayments', { no: n, rows: byKhj[n] }).then(function () { done.push('ขจ.' + n); }); }); });
-      busy(this, p).then(function () { gridRows = keep; return afterSave('บันทึกการจ่าย ' + done.join(', ') + ' แล้ว'); }).catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
+      busy(this, p).then(function () { return afterSave('บันทึกการจ่าย ' + done.join(', ') + ' แล้ว'); }).catch(function (e) { return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
     };
   }
 
@@ -340,8 +438,10 @@ var Docs = (function () {
 
   function renderKhbList(dv) {
     var list = khbs().filter(function (h) {
-      if (filt === 'open' && !(h.status !== 'ยกเลิก' && (h.counts['รอจ่าย'] || h.counts['อยู่ใน ขจ.']))) return false;
-      if (filt === 'done' && !(h.status !== 'ยกเลิก' && !h.counts['รอจ่าย'] && !h.counts['อยู่ใน ขจ.'])) return false;
+      var taken = h.status !== 'ยกเลิก' && h.flow === 'รับเรื่องแล้ว';
+      if (FLOW_ST[filt] && !(h.status !== 'ยกเลิก' && FLOW_ST[h.flow] === FLOW_ST[filt])) return false;
+      if (filt === 'open' && !(taken && (h.counts['รอจ่าย'] || h.counts['อยู่ใน ขจ.']))) return false;
+      if (filt === 'done' && !(taken && !h.counts['รอจ่าย'] && !h.counts['อยู่ใน ขจ.'])) return false;
       if (filt === 'cancel' && h.status !== 'ยกเลิก') return false;
       if (!q) return true;
       var t = ('ขบ.' + h.no + ' ' + h.note + ' ' + h.lines.map(function (l) { return l.payee + ' ' + typeName(l.type); }).join(' ')).toLowerCase();
@@ -349,22 +449,22 @@ var Docs = (function () {
     });
     var h = '<div class="toolbar"><input class="grow" type="search" id="q" placeholder="ค้นหา เลข ขบ. / ผู้รับ / ประเภทเงิน" value="' + esc(q) + '" aria-label="ค้นหา">' +
       '<select id="filt" style="width:auto" aria-label="กรอง">' +
-      [['all', 'ทั้งหมด'], ['open', 'ยังจ่ายไม่ครบ'], ['done', 'จ่ายครบแล้ว'], ['cancel', 'ยกเลิก']].map(function (o) {
+      [['all', 'ทั้งหมด'], ['รออนุมัติ', 'รออนุมัติ'], ['ส่งกลับแก้ไข', 'ส่งกลับแก้ไข'], ['อนุมัติแล้ว', 'อนุมัติแล้ว รอรับเรื่อง'], ['open', 'รับเรื่องแล้ว ยังจ่ายไม่ครบ'], ['done', 'จ่ายครบแล้ว'], ['cancel', 'ยกเลิก']].map(function (o) {
         return '<option value="' + o[0] + '"' + (filt === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
       }).join('') + '</select>' +
-      (can.khb() ? '<button class="btn" type="button" id="newKhb">' + ICON.plus + ' สร้าง ขบ.</button>' : '') + '</div>';
+      (can.khb() && mode() === 'fin' ? '<button class="btn" type="button" id="newKhb">' + ICON.plus + ' สร้าง ขบ.</button>' : '') + '</div>';
     if (!list.length) {
       h += '<div class="empty"><b>' + (khbs().length ? 'ไม่พบ ขบ. ที่ตรงเงื่อนไข' : 'ยังไม่มี ขบ. ในปีงบนี้') + '</b>' +
-        (can.khb() && !khbs().length ? 'กด "สร้าง ขบ." เพื่อเริ่มกรอกรายการขอเบิกใบแรก' : 'ลองเปลี่ยนคำค้นหรือตัวกรอง') + '</div>';
+        (can.khb() && mode() === 'fin' && !khbs().length ? 'กด "สร้าง ขบ." เพื่อเริ่มกรอกรายการขอเบิกใบแรก' : 'ลองเปลี่ยนคำค้นหรือตัวกรอง') + '</div>';
     } else {
       h += months(list, 'khb', function (x) { return x.date; }, function (x) { return x.status === 'ยกเลิก' ? 0 : x.total.gross; }, function (x, i) {
         var n = x.lines.length;
         return '<button class="doc glass' + (x.status === 'ยกเลิก' ? ' cancel' : '') + '" type="button" data-khb="' + x.no + '" style="--i:' + Math.min(i, 12) + '">' +
           '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="no">ขบ.' + x.no + '/' + x.fy + '</span>' +
-          (x.status === 'ยกเลิก' ? badge('ยกเลิก') : (x.counts['รอจ่าย'] ? badge('รอจ่าย') : x.counts['อยู่ใน ขจ.'] ? badge('อยู่ใน ขจ.') : badge('จ่ายแล้ว'))) + '</div>' +
-          '<div class="meta">' + esc(thaiDate(x.date)) + ' · ' + n + ' รายการ' + (x.note ? ' · ' + esc(x.note) : '') + '</div>' +
+          (x.status === 'ยกเลิก' ? badge('ยกเลิก') : FLOW_ST[x.flow] ? badge(x.flow) : (x.counts['รอจ่าย'] ? badge('รอทำ ขจ.') : x.counts['อยู่ใน ขจ.'] ? badge('อยู่ใน ขจ.') : badge('จ่ายแล้ว'))) + '</div>' +
+          '<div class="meta">' + esc(thaiDate(x.date)) + ' · ' + esc(personName(x.owner)) + ' · ' + n + ' รายการ' + (x.note ? ' · ' + esc(x.note) : '') + '</div>' +
           '<div class="amt">' + money(x.total.gross) + ' <small class="meta">บาท</small></div>' +
-          (x.status === 'ยกเลิก' ? '' : bar(x.counts, n)) + '</button>';
+          (x.status === 'ยกเลิก' || FLOW_ST[x.flow] ? '' : bar(x.counts, n)) + '</button>';
       });
     }
     dv.innerHTML = h; wireMonths(dv);
@@ -470,22 +570,26 @@ var Docs = (function () {
   function openKhb(no) {
     var h = no ? findKhb(no) : null;
     var linked = h ? h.lines.filter(function (l) { return l.khjNo; }).length : 0;
-    var locked = !!h && (h.status === 'ยกเลิก' || linked > 0) || !can.khb();
-    var draft = !h && can.khb() ? Draft.get('khb') : null;
+    var me = String(S.me.email).toLowerCase(), teacher = role() === 'ครู' || mode() === 'teacher';
+    var mayEdit = can.ask() && mode() !== 'exec' && (!h || !teacher || (h.owner === me && (h.flow === 'รออนุมัติ' || h.flow === 'ส่งกลับแก้ไข')));
+    var locked = !!h && (h.status === 'ยกเลิก' || linked > 0) || !mayEdit;
+    var draft = !h && mayEdit ? Draft.get('khb') : null;
     if (draft && !(draft.data.lines || []).some(function (l) { return l.payee || l.gross; })) draft = null;
     var data = h || (draft ? { date: draft.data.date, note: draft.data.note, lines: draft.data.lines } : { date: defaultDate(), note: '', lines: [blankLine(null)] });
     var payees = (S.docs.payees || []).map(function (p) { return '<option value="' + esc(p) + '">'; }).join('');
     var info = '';
     if (h && h.status === 'ยกเลิก') info = '<div class="err-box" style="margin-bottom:12px">ขบ. นี้ถูกยกเลิกแล้ว · ' + esc(h.note) + '</div>';
     else if (linked) info = '<p class="hint">มีรายการอยู่ใน ขจ. แล้ว ' + linked + ' รายการ จึงแก้ไขไม่ได้ ถ้าต้องแก้ ให้ยกเลิก ขจ. นั้นก่อน (รายการจะกลับมาเป็น "รอจ่าย")</p>';
+    if (h && h.status !== 'ยกเลิก' && window.Flow) info = Flow.stepper(h) + info;
+    if (h && !locked && !teacher && h.flow !== 'รออนุมัติ' && h.flow !== 'ส่งกลับแก้ไข') info += '<p class="hint warnline">ขบ. นี้ผ่านการอนุมัติแล้ว ถ้าแก้ไข ต้องส่งให้ผู้บริหารอนุมัติใหม่</p>';
     var m = openModal({
-      title: h ? 'ขบ.' + h.no + '/' + h.fy : 'สร้าง ขบ. ใหม่',
-      headExtra: h ? (h.status === 'ยกเลิก' ? badge('ยกเลิก') : '') : '',
+      title: h ? 'ขบ.' + h.no + '/' + h.fy : teacher ? 'ขอเบิกเงิน (ขบ.) ใหม่' : 'สร้าง ขบ. ใหม่',
+      headExtra: h ? (h.status === 'ยกเลิก' ? badge('ยกเลิก') : badge(h.flow === 'รับเรื่องแล้ว' ? 'รับเรื่องแล้ว' : h.flow)) : '',
       body: info +
         (draft ? '<div class="draftbar" id="kDraft"><span>กู้ฉบับร่างที่ค้างไว้เมื่อ ' + esc(clockText(draft.at)) + ' กลับมาแล้ว</span><button class="link" type="button" id="kDraftDel">ทิ้งฉบับร่าง เริ่มใหม่</button></div>' : '') +
         '<div class="form-head"><label class="f">' + esc(L('ขบ', 2)) + '<input type="date" id="kDate" value="' + esc(data.date) + '" min="' + S.st.fyStart + '" max="' + S.st.fyEnd + '"' + (locked ? ' disabled' : '') + '></label>' +
         '<label class="f">' + esc(L('ขบ', 3)) + '<input id="kNote" value="' + esc(h ? h.note : (data.note || '')) + '" placeholder="เช่น ชุดพัสดุ ต.ค. / เงินเดือนลูกจ้าง"' + (locked ? ' disabled' : '') + '></label></div>' +
-        (locked ? '' : '<div class="toolbar"><button class="btn soft sm" type="button" id="kPasteBtn">วางจาก Excel</button><button class="btn ghost sm" type="button" id="kReg">ทะเบียนผู้รับ / ภาษี</button>' +
+        (locked ? '' : '<div class="toolbar"><button class="btn soft sm" type="button" id="kPasteBtn">วางจาก Excel</button>' + (can.khb() ? '<button class="btn ghost sm" type="button" id="kReg">ทะเบียนผู้รับ / ภาษี</button>' : '') +
           '<span class="hint" style="margin:0">คัดลอกแถวจากไฟล์เดิมแล้วกด Ctrl+V ได้เลย — วางกี่ครั้งก็เพิ่มต่อท้าย</span></div>' +
           '<div class="paste" id="kPaste" hidden><textarea id="kPasteTa" rows="3" placeholder="วางแถวจาก Excel ที่นี่ (ตามแบบ ขบ. เดิม: ที่ | ประเภทเงิน | รายการ-ชื่อ | ขอเบิก | ภาษี | รวมเป็นเงิน หรือมีหัวตาราง: ประเภทเงิน | ผู้รับ | ชนิด | วิธีจ่าย | ยอดรวม | ภาษี)"></textarea>' +
           '<div class="actions"><button class="btn sm" type="button" id="kPasteGo">เพิ่มลงใน ขบ.</button><button class="link" type="button" id="kPasteCopy">คัดลอกหัวตาราง</button></div></div>') +
@@ -493,11 +597,12 @@ var Docs = (function () {
         '<div id="kLines">' + data.lines.map(function (l, i) { return lineHtml(l, i, locked); }).join('') + '</div>' +
         (locked ? '' : '<button class="btn soft" type="button" id="kAdd">' + ICON.plus + ' เพิ่มรายการ</button>') +
         '<div class="totals" data-tot></div>',
-      footer: (h && !locked ? '<button class="btn danger" type="button" id="kCancel">ยกเลิก ขบ.</button>' : '') +
+      footer: (h && !locked ? '<button class="btn danger" type="button" id="kCancel">' + (teacher ? 'ยกเลิกคำขอ' : 'ยกเลิก ขบ.') + '</button>' : '') +
         (h ? '<button class="btn ghost" type="button" id="kPrint">' + ICON.print + ' พิมพ์</button>' : '') +
         (!h && !locked ? '<span class="hint" style="margin:0">ฉบับร่างบันทึกอัตโนมัติ ปิดหน้าไปแล้วกลับมาทำต่อได้</span>' : '') +
         '<span class="sp"></span><button class="btn ghost" type="button" data-close>ปิด</button>' +
-        (locked ? '' : '<button class="btn" type="button" id="kSave">บันทึก ขบ.</button>'),
+        (locked || !can.fin() || teacher ? '' : '<label class="chkline" title="ใช้กับข้อมูลย้อนหลังที่ผู้บริหารเซ็นอนุมัติบนกระดาษแล้ว"><input type="checkbox" id="kPaper"> อนุมัติบนกระดาษแล้ว</label>') +
+        (locked ? '' : '<button class="btn" type="button" id="kSave">' + (h && h.flow === 'ส่งกลับแก้ไข' ? 'แก้แล้ว ส่งใหม่' : 'บันทึก · ส่งผู้บริหาร') + '</button>'),
       onClose: function () { document.removeEventListener('paste', onDocPaste); clearTimeout(saveT); }
     });
     var el = m.el, box = el.querySelector('#kLines'), saveT = 0;
@@ -601,92 +706,26 @@ var Docs = (function () {
       e.preventDefault(); addPasted(txt);
     };
     document.addEventListener('paste', onDocPaste);
-    el.querySelector('#kReg').onclick = function () { openPayees(); };
+    if (el.querySelector('#kReg')) el.querySelector('#kReg').onclick = function () { openPayees(); };
     el.querySelector('#kSave').onclick = function () {
       var btn = this;
-      busy(btn, api('saveKhb', { no: h ? h.no : null, date: el.querySelector('#kDate').value, note: el.querySelector('#kNote').value, lines: readLines(box) }))
+      var paper = !!(el.querySelector('#kPaper') && el.querySelector('#kPaper').checked);
+      busy(btn, api('saveKhb', { no: h ? h.no : null, date: el.querySelector('#kDate').value, note: el.querySelector('#kNote').value, paper: paper, lines: readLines(box) }))
         .then(function (r) {
           Draft.del('khb'); clearTimeout(saveT);
-          toast('บันทึก ขบ.' + r.no + '/' + r.fy + ' แล้ว', 'good');
+          toast(paper ? 'บันทึก ขบ.' + r.no + '/' + r.fy + ' แล้ว (อนุมัติบนกระดาษ) — ทำ ขจ. ต่อได้' : 'ส่ง ขบ.' + r.no + '/' + r.fy + ' ให้ผู้บริหารอนุมัติแล้ว', 'good');
           m.close();
-          return Promise.all([reloadDocs(), reloadSettings()]).then(function () { seg = 'khb'; rerender(); });
+          return Promise.all([reloadDocs(), reloadSettings()]).then(function () { if (S.tab === 'expense') seg = segOk('grid') ? 'grid' : 'khb'; rerender(); });
         }).catch(handleError);
     };
     if (el.querySelector('#kPrint')) el.querySelector('#kPrint').onclick = function () { openPaper('khb', h.no); };
     if (el.querySelector('#kCancel')) el.querySelector('#kCancel').onclick = function () {
-      askReason('ยกเลิก ขบ.' + h.no + '/' + h.fy, 'ยืนยันยกเลิก ขบ.', function (reason, am, btn) {
+      askReason('ยกเลิก ขบ.' + h.no + '/' + h.fy, teacher ? 'ยืนยันยกเลิกคำขอ' : 'ยืนยันยกเลิก ขบ.', function (reason, am, btn) {
         busy(btn, api('cancelKhb', { no: h.no, reason: reason })).then(function () {
           am.close(); m.close(); toast('ยกเลิก ขบ.' + h.no + ' แล้ว', 'good');
           return reloadDocs().then(rerender);
         }).catch(handleError);
       });
-    };
-  }
-
-  /* ================= รอจ่าย → สร้าง ขจ. ================= */
-  function pendingLines() {
-    var out = [];
-    khbs().forEach(function (h) {
-      if (h.status === 'ยกเลิก') return;
-      h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') out.push({ h: h, l: l, key: h.fy + '/' + h.no + '/' + l.seq }); });
-    });
-    return out;
-  }
-  function renderPending(dv) {
-    var list = pendingLines(), byG = {}, order = [];
-    var keys = {}; list.forEach(function (x) { keys[x.key] = true; });
-    Object.keys(sel).forEach(function (k) { if (!keys[k]) delete sel[k]; });
-    list.forEach(function (x) {
-      var g = typeGroup(x.l.type);
-      if (!byG[g]) { byG[g] = []; order.push(g); }
-      byG[g].push(x);
-    });
-    if (!list.length) {
-      dv.innerHTML = '<div class="empty"><b>ไม่มีรายการรอจ่าย</b>ทุกรายการใน ขบ. ถูกนำไปทำ ขจ. แล้ว</div>';
-      return;
-    }
-    var h = '<p class="hint">เลือกรายการที่จะจ่ายรอบนี้ แล้วกด "สร้าง ขจ." ระบบจะแยกตามกลุ่มเงินในเอกสารให้เอง</p>';
-    order.forEach(function (g) {
-      var items = byG[g], all = items.every(function (x) { return sel[x.key]; });
-      h += '<div class="grp"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-gall="' + esc(g) + '"' + (all ? ' checked' : '') + '> ' + esc(g) + '</label>' +
-        '<span class="sum money">' + money(sumSat(items, function (x) { return x.l.net; })) + '</span></div><div class="rows stagger">';
-      items.forEach(function (x, i) {
-        h += '<label class="row' + (sel[x.key] ? ' sel' : '') + '" style="--i:' + Math.min(i, 12) + '"><input type="checkbox" data-k="' + x.key + '"' + (sel[x.key] ? ' checked' : '') + '>' +
-          '<span><span class="who2">' + esc(x.l.payee) + '</span><br><span class="tag">ขบ.' + x.h.no + '-' + x.l.seq + ' · ' + esc(thaiDate(x.h.date)) + '</span></span>' +
-          '<span class="tag hide-sm">' + esc(typeName(x.l.type)) + '<br>' + esc(x.l.method) + ' · ' + esc(x.l.kind) + '</span>' +
-          '<span class="amt">' + money(x.l.net) + (x.l.tax ? '<br><span class="tag">ภาษี ' + money(x.l.tax) + '</span>' : '') + '</span></label>';
-      });
-      h += '</div>';
-    });
-    dv.innerHTML = h;
-    dv.onchange = function (e) {
-      var t = e.target;
-      if (t.hasAttribute('data-k')) { if (t.checked) sel[t.getAttribute('data-k')] = true; else delete sel[t.getAttribute('data-k')]; }
-      if (t.hasAttribute('data-gall')) byG[t.getAttribute('data-gall')].forEach(function (x) { if (t.checked) sel[x.key] = true; else delete sel[x.key]; });
-      renderPending(dv);
-    };
-    drawDock(list);
-  }
-  function drawDock(list) {
-    leave();
-    var chosen = list.filter(function (x) { return sel[x.key]; });
-    var d = document.createElement('div');
-    d.id = 'dock'; d.className = 'dock';
-    d.innerHTML = '<div class="in glass"><div class="tot">เลือก ' + chosen.length + ' รายการ · <span class="money">' + money(sumSat(chosen, function (x) { return x.l.net; })) + '</span> บาท</div>' +
-      (can.fin()
-        ? '<input type="date" id="jDate" value="' + esc(defaultDate()) + '" min="' + S.st.fyStart + '" max="' + S.st.fyEnd + '" aria-label="วันที่ ขจ.">' +
-          '<input id="jNote" placeholder="หมายเหตุ (ถ้ามี)" aria-label="หมายเหตุ"><button class="btn" type="button" id="jMake">สร้าง ขจ. ' + ICON.arrow + '</button>'
-        : '<span class="hint" style="margin:0">เฉพาะการเงินสร้าง ขจ. ได้</span>') + '</div>';
-    document.body.appendChild(d);
-    requestAnimationFrame(function () { if (chosen.length) d.classList.add('on'); });
-    var mk = $('jMake');
-    if (mk) mk.onclick = function () {
-      var items = chosen.map(function (x) { return { fy: x.h.fy, no: x.h.no, seq: x.l.seq }; });
-      busy(mk, api('createKhj', { date: $('jDate').value, note: $('jNote').value, items: items })).then(function (r) {
-        sel = {};
-        toast('สร้าง ขจ.' + r.no + '/' + r.fy + ' แล้ว (' + r.count + ' รายการ) — บันทึกเลขเช็ค/วันที่จ่ายต่อได้เลย', 'good');
-        return reloadDocs().then(function () { seg = 'khj'; rerender(); openKhj(r.no); });
-      }).catch(handleError);
     };
   }
 
@@ -697,8 +736,8 @@ var Docs = (function () {
       return ('ขจ.' + j.no + ' ' + j.note + ' ' + j.items.map(function (i) { return i.payee + ' ' + i.ref; }).join(' ')).toLowerCase().indexOf(q.toLowerCase()) >= 0;
     });
     var h = '<div class="toolbar"><input class="grow" type="search" id="q" placeholder="ค้นหา เลข ขจ. / ผู้รับ / เลขเช็ค" value="' + esc(q) + '" aria-label="ค้นหา">' +
-      '<button class="btn soft" type="button" data-to="pending">' + ICON.plus + ' สร้างจากรายการรอจ่าย</button></div>';
-    if (!list.length) h += '<div class="empty"><b>' + (khjs().length ? 'ไม่พบ ขจ. ที่ตรงคำค้น' : 'ยังไม่มี ขจ.') + '</b>สร้าง ขจ. ได้จากแท็บ "รอจ่าย"</div>';
+      (segOk('khj') ? '<button class="btn soft" type="button" data-to="khj">' + ICON.plus + ' ไปตารางทำ ขจ.</button>' : '') + '</div>';
+    if (!list.length) h += '<div class="empty"><b>' + (khjs().length ? 'ไม่พบ ขจ. ที่ตรงคำค้น' : 'ยังไม่มี ขจ.') + '</b>สร้าง ขจ. ได้จาก "รับเรื่อง · ทำ ขจ."</div>';
     else h += months(list, 'khj', function (j) { return j.date; }, function (j) { return j.status === 'ยกเลิก' ? 0 : j.total; }, function (j, i) {
       var st = j.status === 'ยกเลิก' ? 'ยกเลิก' : j.paid === j.count ? 'จ่ายแล้ว' : 'อยู่ใน ขจ.';
       return '<button class="doc glass' + (j.status === 'ยกเลิก' ? ' cancel' : '') + '" type="button" data-khj="' + j.no + '" style="--i:' + Math.min(i, 12) + '">' +
@@ -711,7 +750,7 @@ var Docs = (function () {
     });
     dv.innerHTML = h; wireMonths(dv);
     $('q').oninput = function () { q = this.value; var pos = this.selectionStart; renderKhjList(dv); var qq = $('q'); qq.focus(); qq.setSelectionRange(pos, pos); };
-    dv.querySelector('[data-to]').onclick = function () { switchSeg('pending'); };
+    if (dv.querySelector('[data-to]')) dv.querySelector('[data-to]').onclick = function () { switchSeg('khj'); };
     Array.prototype.forEach.call(dv.querySelectorAll('[data-khj]'), function (b) {
       b.onclick = function () { openKhj(Number(b.getAttribute('data-khj'))); };
     });
@@ -848,7 +887,7 @@ var Docs = (function () {
     box.addEventListener('click', function (e) {
       var n = e.target.closest('[data-node]'); if (!n) return;
       var id = n.getAttribute('data-node');
-      if (id === 'wait') switchSeg('pending');
+      if (id === 'wait') { if (segOk('khj')) switchSeg('khj'); }
       else if (id.charAt(0) === 'b') openKhb(Number(id.slice(1)));
       else openKhj(Number(id.slice(1)));
     });
@@ -921,5 +960,5 @@ var Docs = (function () {
     }).catch(function (e) { m.close(); handleError(e); });
   }
 
-  return { render: render, leave: leave, openKhb: openKhb, openKhj: openKhj };
+  return { render: render, leave: leave, openKhb: openKhb, openKhj: openKhj, openPaper: openPaper, lineSt: lineSt, ST_TXT: ST_TXT, stampText: stampText, lastStep: lastStep };
 })();
