@@ -184,38 +184,46 @@ function renderTabs() {
 }
 var SIDE_ICON = { overview: 'home', income: 'income', expense: 'expense', settings: 'settings' };
 function sideOpen() { try { return localStorage.getItem('fin-side') !== '0'; } catch (e) { return true; } }
+/** แถบนำทางล่างแบบกระจกเหลว (ใช้ทุกขนาดจอ) */
 function renderSide() {
-  var nav = $('side'); if (!nav) return;
-  var open = sideOpen(), h = '';
-  nav.className = 'side' + (open ? '' : ' mini');
-  h += '<div class="stitle"><span class="logo"><img src="logo.png" alt="ตราโรงเรียน"></span><span class="stx"><b>การเงินโรงเรียน</b><small>ปีงบประมาณ ' + esc(S.st ? S.st.fy : '') + '</small></span></div><div class="sopts">';
-  TABS.forEach(function (t) {
-    if (t.admin && !can.admin()) return;
-    var n = t.id === 'expense' ? pendingCount() : 0;
-    h += '<button type="button" class="sopt" data-sg="' + t.id + '" data-tab="' + t.id + '" title="' + esc(t.label) + '" aria-current="' + (S.tab === t.id ? 'page' : 'false') + '"><span class="sic">' + si(SIDE_ICON[t.id]) + '</span><span class="slb">' + esc(t.label) + '</span>' + (n ? '<span class="sn">' + n + '</span>' : '') + '</button>';
-  });
-  h += '</div>';
-  if (can.khb() || can.fin()) {
-    h += '<div class="ssec">ทางลัด</div><div class="sopts">' +
-      (can.khb() ? '<button type="button" class="sopt q" data-sq="khb" title="ขบ. ใหม่"><span class="sic">' + si('plus') + '</span><span class="slb">ขบ. ใหม่</span></button>' : '') +
-      (can.fin() ? '<button type="button" class="sopt q" data-sq="rcv" title="บันทึกใบเสร็จ"><span class="sic">' + si('plus') + '</span><span class="slb">บันทึกใบเสร็จ</span></button>' : '') + '</div>';
-  }
-  h += '<div class="sfoot"><button type="button" class="sopt" id="sOut" title="ออกจากระบบ"><span class="sic">' + si('out') + '</span><span class="slb">ออกจากระบบ</span></button>' +
-    '<button type="button" class="sopt" id="sTog" title="' + (open ? 'ย่อเมนู' : 'ขยายเมนู') + '" aria-expanded="' + open + '"><span class="sic chv">' + si('chev') + '</span><span class="slb">ซ่อนเมนู</span></button></div>';
-  nav.innerHTML = h;
-  Array.prototype.forEach.call(nav.querySelectorAll('[data-sg]'), function (b) { b.onclick = function () { go(b.getAttribute('data-sg'), null); }; });
-  Array.prototype.forEach.call(nav.querySelectorAll('[data-sq]'), function (b) { b.onclick = function () { if (b.getAttribute('data-sq') === 'khb') go('expense', { seg: 'khb', draft: 1 }); else go('income', { seg: 'enter' }); }; });
-  $('sTog').onclick = function () { try { localStorage.setItem('fin-side', sideOpen() ? '0' : '1'); } catch (e) {} renderSide(); document.body.classList.toggle('side-mini', !sideOpen()); };
-  $('sOut').onclick = function () { signOut(''); };
-  document.body.classList.toggle('side-mini', !open);
+  var old = $('side'); if (old) old.parentNode.removeChild(old);
   var bn = $('bnav');
   if (!bn) { bn = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); document.body.appendChild(bn); }
-  bn.innerHTML = TABS.map(function (t) {
+  var canAdd = can.khb() || can.fin();
+  bn.innerHTML = '<span class="bpill" aria-hidden="true"></span>' + TABS.map(function (t) {
     if (t.admin && !can.admin()) return '';
     var n = t.id === 'expense' ? pendingCount() : 0;
     return '<button type="button" class="bn" data-bn="' + t.id + '" data-tab="' + t.id + '" aria-current="' + (S.tab === t.id ? 'page' : 'false') + '">' + si(SIDE_ICON[t.id]) + '<span>' + esc(t.label) + '</span>' + (n ? '<em>' + n + '</em>' : '') + '</button>';
-  }).join('');
-  Array.prototype.forEach.call(bn.querySelectorAll('[data-bn]'), function (b) { b.onclick = function () { go(b.getAttribute('data-bn'), null); }; });
+  }).join('') + (canAdd ? '<span class="bsep"></span><button type="button" class="bn add" id="bAdd" aria-haspopup="menu" aria-expanded="false" aria-label="เพิ่มรายการใหม่">' + si('plus') + '<span>เพิ่ม</span></button>' : '');
+  Array.prototype.forEach.call(bn.querySelectorAll('[data-bn]'), function (b) { b.onclick = function () { closeAdd(); go(b.getAttribute('data-bn'), null); }; });
+  if (canAdd) $('bAdd').onclick = function (e) { e.stopPropagation(); toggleAdd(); };
+  document.body.classList.add('has-dock');
+  requestAnimationFrame(moveDock);
+}
+function closeAdd() { var m = $('addMenu'); if (m) m.classList.remove('on'); var b = $('bAdd'); if (b) b.setAttribute('aria-expanded', 'false'); }
+function toggleAdd() {
+  var m = $('addMenu');
+  if (!m) {
+    m = document.createElement('div'); m.id = 'addMenu'; m.className = 'addmenu'; m.setAttribute('role', 'menu');
+    m.innerHTML = (can.khb() ? '<button type="button" role="menuitem" data-a="khb"><i>' + si('expense') + '</i><span><b>ขบ. ใหม่</b><small>ขอเบิกเงิน · วางจาก Excel ได้</small></span></button>' : '') +
+      (can.fin() ? '<button type="button" role="menuitem" data-a="rcv"><i>' + si('income') + '</i><span><b>บันทึกใบเสร็จ</b><small>รายรับ · ต่อเนื่องเลขที่ +1</small></span></button>' : '') +
+      (can.fin() ? '<button type="button" role="menuitem" data-a="khj"><i>' + si('settings') + '</i><span><b>ทำ ขจ.</b><small>เลือกจากรายการรอจ่าย</small></span></button>' : '');
+    document.body.appendChild(m);
+    m.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-a]'); if (!b) return; closeAdd(); var k = b.getAttribute('data-a');
+      if (k === 'khb') go('expense', { seg: 'khb', draft: 1 }); else if (k === 'rcv') go('income', { seg: 'enter' }); else go('expense', { seg: 'pending' });
+    });
+    document.addEventListener('pointerdown', function (e) { if (!e.target.closest('#addMenu') && !e.target.closest('#bAdd')) closeAdd(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAdd(); });
+  }
+  var on = !m.classList.contains('on'); m.classList.toggle('on', on); $('bAdd').setAttribute('aria-expanded', String(on));
+}
+/** แถบสีเลื่อนไปอยู่หลังแท็บที่เลือก */
+function moveDock() {
+  var bn = $('bnav'); if (!bn) return;
+  var a = bn.querySelector('.bn[aria-current="page"]'), p = bn.querySelector('.bpill');
+  if (!a || !p) return;
+  p.style.width = a.offsetWidth + 'px'; p.style.transform = 'translateX(' + a.offsetLeft + 'px)';
 }
 function movePill() {
   var nav = $('tabs'), a = nav.querySelector('.tab[aria-selected="true"]'), pill = nav.querySelector('.pill');
@@ -239,6 +247,7 @@ function go(tab, opt, instant) {
     if (window.Bento) Bento.unmount();
     Array.prototype.forEach.call(document.querySelectorAll('#side [data-sg]'), function (b) { b.setAttribute('aria-current', b.getAttribute('data-sg') === tab ? 'page' : 'false'); });
     Array.prototype.forEach.call(document.querySelectorAll('#bnav [data-bn]'), function (b) { b.setAttribute('aria-current', b.getAttribute('data-bn') === tab ? 'page' : 'false'); });
+    moveDock();
     var v = $('view');
     v.className = '';
     if (tab === 'overview') renderOverview();
@@ -313,7 +322,7 @@ function observeReveal() {
     document.body.style.setProperty('--sy', cur.toFixed(2));
   }
   window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
-  window.addEventListener('resize', movePill);
+  window.addEventListener('resize', function () { movePill(); moveDock(); });
 })();
 
 /* ================= โมดัล ================= */

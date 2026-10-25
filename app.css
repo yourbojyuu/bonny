@@ -747,9 +747,9 @@ html { scroll-behavior: smooth; }
 /* รายรับ */
 .k-income .gbar { transform-origin: 50% 100%; animation: barGrow 4.4s ease-in-out infinite alternate; }
 .k-income .trend { stroke-dasharray: 1; stroke: #fff; stroke-width: 2.6; animation: draw 5s ease-in-out infinite alternate; }
-.k-income .drop { animation: rise 6s ease-in infinite; } .k-income .d2 { animation-delay: -2s; } .k-income .d3 { animation-delay: -4s; animation-duration: 8s; } .k-income .d4 { animation-delay: -1s; animation-duration: 7s; }
+.k-income .drop { animation: dropUp 6s ease-in infinite; } .k-income .d2 { animation-delay: -2s; } .k-income .d3 { animation-delay: -4s; animation-duration: 8s; } .k-income .d4 { animation-delay: -1s; animation-duration: 7s; }
 @keyframes barGrow { from { transform: scaleY(.55); } to { transform: scaleY(1); } }
-@keyframes rise { 0% { transform: translateY(40px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-90px); opacity: 0; } }
+@keyframes dropUp { 0% { transform: translateY(40px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-90px); opacity: 0; } }
 /* รายจ่าย */
 .k-expense .slat { animation: slide 9s ease-in-out infinite alternate; }
 .k-expense .gflow { stroke-dasharray: 3 11; stroke: #fff; stroke-width: 2.4; animation: flow 3.2s linear infinite; } .k-expense .gf2 { stroke-width: 1.5; stroke-opacity: .6; animation-duration: 4.5s; }
@@ -833,3 +833,39 @@ label.f { font-weight: 600; }
 @media (max-width: 640px) { .hero .deco svg.scene { opacity: .4; width: 96%; top: -20%; height: 140%; } }
 body[data-tab="settings"] .hero { min-height: 190px; display: flex; flex-direction: column; justify-content: center; }
 body[data-tab="settings"] .hero .deco svg.scene { right: 2%; }
+
+/* ================= แถบนำทางล่าง: กระจกเหลวแบบแบน (ทุกขนาดจอ) ================= */
+.side { display: none !important; }
+.shell, .shell > .wrap { display: block; }
+.shell > .wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.shell > .wrap > .tabs { display: none !important; }
+.shell > .wrap > .top .brand { display: flex !important; }
+.shell > .wrap > .top { justify-content: flex-start !important; }
+.shell > .wrap > main, .shell > .wrap > .top { max-width: none; width: auto; }
+main { padding-bottom: calc(128px + env(safe-area-inset-bottom, 0px)) !important; }
+body.authed .bnav { position: fixed; left: 50%; translate: -50% 0; width: min(560px, calc(100% - 20px)); right: auto; bottom: max(12px, env(safe-area-inset-bottom, 0px)); z-index: 70; display: flex; align-items: stretch; gap: 2px; padding: 6px; border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.34)); -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.04); backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+  border: 1px solid transparent; background-clip: padding-box; box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 0 1px rgba(255,255,255,.55), 0 14px 34px -20px rgba(20,27,45,.5); animation: dockIn .9s cubic-bezier(.22,1,.36,1) both; }
+body.authed .bnav::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(255,255,255,.1) 40%, rgba(255,255,255,.7) 100%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+@keyframes dockIn { from { opacity: 0; transform: translateY(24px) scale(.96); } }
+.bnav .bpill { position: absolute; top: 6px; bottom: 6px; left: 6px; width: 0; border-radius: 20px; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c2) 88%, #fff), var(--c1)); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 18px -10px var(--c1); transition: transform .6s var(--spring), width .6s var(--spring), background .6s; }
+.bnav .bn { position: relative; z-index: 1; flex: 1; min-width: 0; min-height: 54px; border: 0; background: none; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer;
+  font-size: 12.5px; font-weight: 700; color: var(--ink2); padding: 6px 4px; transition: color .35s, transform .35s var(--spring); }
+.bnav .bn svg { width: 22px; height: 22px; } .bnav .bn:hover { color: var(--ink); } .bnav .bn:active { transform: scale(.94); }
+.bnav .bn[aria-current="page"] { color: #fff; background: none; text-shadow: 0 1px 2px rgba(0,0,0,.18); }
+.bnav .bn em { position: absolute; top: 4px; right: calc(50% - 24px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e8173f; color: #fff; font-style: normal; font-size: 11px; display: grid; place-items: center; box-shadow: 0 0 0 2px rgba(255,255,255,.85); }
+.bnav .bsep { width: 1px; margin: 10px 4px; background: rgba(20,27,45,.12); flex: none; }
+.bnav .bn.add { flex: 0 0 64px; color: var(--c1); } .bnav .bn.add svg { width: 24px; height: 24px; transition: transform .45s var(--spring); } .bnav .bn.add[aria-expanded="true"] svg { transform: rotate(135deg); }
+.addmenu { position: fixed; z-index: 75; left: 50%; translate: -50% 0; bottom: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 82px); width: min(330px, calc(100% - 28px)); padding: 8px; border-radius: 24px; display: flex; flex-direction: column; gap: 4px;
+  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.58)); -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(255,255,255,.6), 0 22px 44px -22px rgba(20,27,45,.55); opacity: 0; visibility: hidden; transform: translateY(14px) scale(.96); transform-origin: 50% 100%; transition: opacity .25s, transform .45s var(--spring), visibility 0s .45s; }
+.addmenu.on { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.addmenu button { display: flex; align-items: center; gap: 12px; border: 0; background: none; text-align: left; padding: 10px 12px; border-radius: 16px; cursor: pointer; transition: background .25s; }
+.addmenu button:hover, .addmenu button:focus-visible { background: color-mix(in srgb, var(--c2) 12%, transparent); outline: none; }
+.addmenu i { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(180deg, var(--c2), var(--c1)); } .addmenu i svg { width: 20px; height: 20px; }
+.addmenu b { display: block; font-size: 15px; } .addmenu small { color: var(--muted); font-size: 12.5px; }
+#toast { bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+@media (max-width: 420px) { .bnav .bn { font-size: 11.5px; } .bnav .bn.add { flex-basis: 52px; } }
+@media (prefers-reduced-motion: reduce) { body.authed .bnav { animation: none; } }
