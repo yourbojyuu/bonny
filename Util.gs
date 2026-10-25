@@ -46,9 +46,22 @@ function makeISO(y, m, d) {
 }
 
 function normYear(y) {
-  if (y < 100) return y + 2500 - 543; // 69 -> 2569 พ.ศ.
-  if (y >= 2400) return y - 543;      // พ.ศ. -> ค.ศ.
+  if (y < 100) return y >= 50 ? y + 1957 : y + 2000; // 69 -> 2026 (พ.ศ. 2569) · 25 -> 2025 (ค.ศ.)
+  if (y >= 2400) return y - 543;                      // พ.ศ. -> ค.ศ.
   return y;
+}
+
+/** ชื่อเดือนไทย/อังกฤษ (ย่อหรือเต็ม มีจุดหรือไม่ก็ได้) -> 1..12 หรือ 0 */
+function monthIndex(name) {
+  var k = normText(name).replace(/\./g, '').toLowerCase();
+  if (!k) return 0;
+  var i;
+  for (i = 0; i < 12; i++) {
+    if (k === TH_MONTHS_LONG[i].toLowerCase() || k === TH_MONTHS_SHORT[i].replace(/\./g, '')) return i + 1;
+  }
+  var en = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  for (i = 0; i < 12; i++) if (k.slice(0, 3) === en[i]) return i + 1;
+  return 0;
 }
 
 /** รับ Date, เลข serial ของ Excel, "1/10/2569", "1/10/69", "2026-10-01" -> "YYYY-MM-DD" (ค.ศ.) */
@@ -68,6 +81,8 @@ function parseDate(v) {
   if (m) return makeISO(normYear(+m[1]), +m[2], +m[3]);
   m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s);
   if (m) return makeISO(normYear(+m[3]), +m[2], +m[1]);
+  m = /^(\d{1,2})\s*[\-\/ ]\s*([^\d\s\/\-]+\.?)\s*[\-\/ ]?\s*(\d{2,4})$/.exec(s) || /^(\d{1,2})\s*([^\d\s\/\-]+\.?)\s*(\d{2,4})$/.exec(s);
+  if (m && monthIndex(m[2])) return makeISO(normYear(+m[3]), monthIndex(m[2]), +m[1]); // 8 ต.ค. 25 · 8 ตุลาคม 2569 · 8-Oct-25
   throw new Error('วันที่ "' + s + '" อ่านไม่ได้');
 }
 
@@ -245,4 +260,57 @@ function bahtText(n) {
 function fmtMoney(n) {
   var s = round2(n).toFixed(2).split('.');
   return s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + s[1];
+}
+
+
+/* ============ ภาษีหัก ณ ที่จ่าย และการจับคู่ชื่อ ============ */
+
+/** ตัดช่องว่าง จุด ขีด แล้วเป็นตัวพิมพ์เล็ก ใช้เทียบชื่อผู้รับ/ชื่อย่อ */
+function normKey(v) {
+  return normText(v).replace(/[\s.\-_,]/g, '').toLowerCase();
+}
+
+/**
+ * ภาษีหัก ณ ที่จ่าย ตามประเภทของผู้รับ (ต้องตรงกับ paste.js — มีเทสต์เทียบ)
+ *   ภ.ง.ด.53 หัก 1% ทุกยอด · ภ.ง.ด.3 หัก 1% เมื่อฐานตั้งแต่ 10,000 บาท · ไม่มีภาษี = 0
+ *   ฐานภาษี = ยอดรวม (ถ้าผู้รับจด VAT ใช้ยอดรวม ÷ 1.07 ปัดเป็นสตางค์ก่อนคูณ)
+ */
+function calcTax(taxType, gross, vat) {
+  var g = Number(gross);
+  if (!isFinite(g) || g <= 0) return 0;
+  var base = vat ? round2(g / 1.07) : round2(g);
+  if (taxType === 'ภ.ง.ด.53') return round2(base * 0.01);
+  if (taxType === 'ภ.ง.ด.3') return base >= 10000 ? round2(base * 0.01) : 0;
+  return 0;
+}
+
+/** ข้อความ -> รหัสประเภทเงิน จาก รหัส / ชื่อ / ชื่อย่อ (เทียบแบบ normKey) ไม่พบ = '' */
+function resolveTypeAlias(types, aliases, text) {
+  var k = normKey(text), i;
+  if (!k) return '';
+  for (i = 0; i < types.length; i++) if (normKey(types[i][0]) === k) return normText(types[i][0]);
+  for (i = 0; i < types.length; i++) if (normKey(types[i][1]) === k) return normText(types[i][0]);
+  for (i = 0; i < aliases.length; i++) {
+    if (normKey(aliases[i][0]) === k && findById(types, normText(aliases[i][1]))) return normText(aliases[i][1]);
+  }
+  return '';
+}
+
+/** ทะเบียนผู้รับเงิน -> แผนที่ normKey(ชื่อ) -> ข้อมูล */
+function payeeMap(rows) {
+  var m = {};
+  rows.forEach(function (r) {
+    var k = normKey(r[0]);
+    if (!k) return;
+    m[k] = { name: normText(r[0]), taxType: normText(r[1]) || 'ไม่มีภาษี', vat: normText(r[2]) === 'ใช่',
+      method: normText(r[3]), type: normText(r[4]) };
+  });
+  return m;
+}
+
+/** เดาว่าผู้รับจด VAT หรือไม่ จากภาษีที่เคยหักจริง */
+function guessVat(taxType, gross, tax) {
+  if (!(tax > 0)) return false;
+  var withVat = calcTax(taxType, gross, true), noVat = calcTax(taxType, gross, false);
+  return Math.abs(withVat - tax) < Math.abs(noVat - tax);
 }

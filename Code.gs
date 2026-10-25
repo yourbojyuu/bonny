@@ -7,6 +7,7 @@
  *   Util.gs   กติกาข้อมูล (วันที่ / จำนวนเงิน / หัวคอลัมน์ / ตัวอักษรไทย)
  *   Ledger.gs ตั้งค่า ยอดยกมา Ledger ยอดคงเหลือ
  *   Docs.gs   ขบ. → ขจ. → การจ่าย และข้อมูลพิมพ์เอกสาร
+ *   Receipts.gs ใบเสร็จ (รายรับ) นำเข้าแบบวาง · ทะเบียนผู้รับเงิน · ชื่อย่อ
  */
 
 /* ============ ค่าคงที่ที่ผู้ใช้แก้เอง ============ */
@@ -19,7 +20,8 @@ function actionRoles() {
   return {
     ping: null,
     getSchema: ALL, me: ALL, getSettings: ALL, getBalances: ALL,
-    getDocs: ALL, khbDoc: ALL, khjDoc: ALL,
+    getDocs: ALL, khbDoc: ALL, khjDoc: ALL, getReceipts: ALL,
+    importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN,
     saveKhb: KHB, cancelKhb: KHB,
     createKhj: FIN, savePayments: FIN, cancelKhj: FIN,
     saveTypes: ADMIN, saveStores: ADMIN, saveOpening: ADMIN, rebuildLedger: ADMIN, saveDocSettings: ADMIN
@@ -33,13 +35,14 @@ function handlers() {
     saveDocSettings: h_saveDocSettings,
     getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb,
     createKhj: h_createKhj, savePayments: h_savePayments, cancelKhj: h_cancelKhj,
-    khbDoc: h_khbDoc, khjDoc: h_khjDoc
+    khbDoc: h_khbDoc, khjDoc: h_khjDoc, getReceipts: h_getReceipts, importReceipts: h_importReceipts,
+    cancelReceipt: h_cancelReceipt, savePayees: h_savePayees, saveAliases: h_saveAliases
   };
 }
 
 function isWriteAction(a) {
   return ['saveTypes', 'saveStores', 'saveOpening', 'rebuildLedger', 'saveDocSettings',
-    'saveKhb', 'cancelKhb', 'createKhj', 'savePayments', 'cancelKhj'].indexOf(a) >= 0;
+    'saveKhb', 'cancelKhb', 'createKhj', 'savePayments', 'cancelKhj', 'importReceipts', 'cancelReceipt', 'savePayees', 'saveAliases'].indexOf(a) >= 0;
 }
 
 /* ============ ตรวจสิทธิ์ (pure) ============ */
@@ -192,5 +195,6 @@ function setupSheets() {
   seed('ที่เก็บเงิน', SEED_STORES);
   seed('ประเภทเงิน', SEED_TYPES.map(function (t) { return [t[0], t[1], SEED_GROUPS[t[2]], t[3], 'ใช่']; }));
   seed('ตั้งค่าเอกสาร', DOC_SETTING_SEED);
+  seed('ชื่อย่อ', ALIAS_SEED);
   Logger.log('setupSheets เสร็จแล้ว — ตรวจชีท "ผู้ใช้" ว่ามีอีเมลของคุณ และกรอกชื่อผู้ลงนามในหน้า ตั้งค่า');
 }

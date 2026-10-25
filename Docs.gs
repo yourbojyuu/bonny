@@ -29,7 +29,7 @@ function nextNo(rows, fy) {
 }
 
 /** ตรวจรายการใน ขบ. -> แถวมาตรฐาน (ลำดับ 1..n) */
-function validateKhbLines(lines, types) {
+function validateKhbLines(lines, types, registry) {
   if (!Array.isArray(lines) || !lines.length) throw new Error('ขบ. ต้องมีอย่างน้อย 1 รายการ');
   var out = [];
   lines.forEach(function (l, i) {
@@ -44,12 +44,16 @@ function validateKhbLines(lines, types) {
       var method = normText(l.method);
       if (PAY_METHODS.indexOf(method) < 0) throw new Error('วิธีจ่าย "' + method + '" ต้องเป็น ' + PAY_METHODS.join(' / '));
       var gross = parseAmount(l.gross);
-      var tax = parseMoney0(l.tax);
       var taxType = normText(l.taxType) || 'ไม่มีภาษี';
+      var tax;
+      var reg = registry ? registry[normKey(payee)] : null;
+      if (l.taxAuto && reg) { taxType = reg.taxType; tax = calcTax(taxType, gross, reg.vat); } // ภาษีตามประเภทผู้รับในทะเบียน
+      else tax = parseMoney0(l.tax);
       if (TAX_TYPES.indexOf(taxType) < 0) throw new Error('ประเภทภาษี "' + taxType + '" ต้องเป็น ' + TAX_TYPES.join(' / '));
+      var auto = !!(l.taxAuto && reg);
       if (tax >= gross) throw new Error('ภาษีต้องน้อยกว่ายอดรวม');
       if (tax > 0 && taxType === 'ไม่มีภาษี') throw new Error('มีภาษีหัก ต้องเลือกประเภทภาษี (ภ.ง.ด.3 หรือ ภ.ง.ด.53)');
-      if (tax === 0 && taxType !== 'ไม่มีภาษี') throw new Error('เลือก ' + taxType + ' แต่ภาษีเป็น 0');
+      if (tax === 0 && taxType !== 'ไม่มีภาษี' && !auto) throw new Error('เลือก ' + taxType + ' แต่ภาษีเป็น 0'); // อัตโนมัติ: ภ.ง.ด.3 ต่ำกว่า 10,000 ภาษี 0 ได้
       out.push({ seq: n, type: t, payee: payee, kind: kind, method: method, gross: gross, tax: tax, taxType: taxType });
     } catch (e) {
       throw new Error('รายการที่ ' + n + ': ' + e.message);
@@ -319,6 +323,7 @@ function h_getDocs(p, io) {
   var out = serializeDocs(ctx.idx);
   var payees = {};
   ctx.raw.lines.forEach(function (r) { var n = normText(r[4]); if (n) payees[n] = true; });
+  tableRows(io, 'ผู้รับเงิน').forEach(function (r) { var n = normText(r[0]); if (n) payees[n] = true; });
   out.payees = Object.keys(payees).sort(function (a, b) { return a.localeCompare(b, 'th'); });
   out.fy = FISCAL_YEAR;
   return out;
@@ -328,7 +333,8 @@ function h_saveKhb(p, io, user) {
   var fy = FISCAL_YEAR, ctx = docsContext(io);
   var date = parseFyDate(p.date, fy, 'วันที่ ขบ.');
   assertOpenDay(ctx.closed, date);
-  var lines = validateKhbLines(p.lines, ctx.set.types);
+  var registryRows = tableRows(io, 'ผู้รับเงิน');
+  var lines = validateKhbLines(p.lines, ctx.set.types, payeeMap(registryRows));
   var no, head = ctx.raw.khb;
   if (p.no) {
     var h = getKhb(ctx, p.no);
@@ -347,7 +353,14 @@ function h_saveKhb(p, io, user) {
   }
   var rows = ctx.raw.lines.filter(function (r) { return !(toInt(r[0]) === fy && toInt(r[1]) === no); })
     .concat(lines.map(function (l) { return [fy, no, l.seq, l.type, l.payee, l.kind, l.method, l.gross, l.tax, l.taxType]; }));
-  commitChanges(io, { 'ขบ': head, 'ขบ_รายการ': rows });
+  var known = payeeMap(registryRows), learn = registryRows.slice();
+  lines.forEach(function (l) {
+    var k = normKey(l.payee);
+    if (known[k]) return;
+    known[k] = true;
+    learn.push([l.payee, l.taxType, guessVat(l.taxType, l.gross, l.tax) ? 'ใช่' : 'ไม่', l.method, l.type]); // จำผู้รับใหม่ไว้ใช้ครั้งถัดไป
+  });
+  commitChanges(io, { 'ขบ': head, 'ขบ_รายการ': rows, 'ผู้รับเงิน': learn });
   return { fy: fy, no: no };
 }
 

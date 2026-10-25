@@ -73,6 +73,7 @@ function buildOpeningLedger(openingRows, types, stores, fy) {
 /** Ledger ทั้งหมดจากเอกสารต้นทาง (ยอดยกมา + การจ่ายที่จ่ายแล้ว) */
 function buildAllLedger(src, fy) {
   var ledger = buildOpeningLedger(src.opening, src.types, src.stores, fy);
+  if (src.receipts) ledger = ledger.concat(buildReceiptLedger(src.receipts, src.types, src.stores));
   if (src.docs) ledger = ledger.concat(buildPaymentLedger(src.docs, src.types, src.stores));
   ledger.sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; });
   return ledger;
@@ -133,6 +134,7 @@ function computeBalances(ledger, types, stores, dateISO) {
       var v = Math.round(a * 100);
       sat[t][s] += v;
       if (normText(r[2]) === 'จ่าย') flow.outSat -= v;
+      else if (normText(r[2]) === 'รับ') flow.inSat += v;
     }
   });
 
@@ -154,7 +156,8 @@ function computeBalances(ledger, types, stores, dateISO) {
     rowTotals: rowSat,
     colTotals: colSat.map(function (v) { return v / 100; }),
     grand: grandSat / 100,
-    paidOut: flow.outSat / 100
+    paidOut: flow.outSat / 100,
+    receivedIn: flow.inSat / 100
   };
 }
 
@@ -183,7 +186,7 @@ function commitChanges(io, changes) {
   var view = overlayIO(io, changes);
   var set = readSettings(view);
   var docs = loadDocs(view);
-  var newLedger = buildAllLedger({ opening: set.opening, types: set.types, stores: set.stores, docs: docs }, fy);
+  var newLedger = buildAllLedger({ opening: set.opening, types: set.types, stores: set.stores, docs: docs, receipts: tableRows(view, 'ใบเสร็จ') }, fy);
   assertClosedDaysUnchanged(tableRows(io, 'Ledger'), newLedger, tableRows(io, 'ปิดวัน'));
   Object.keys(changes).forEach(function (name) { io.write(name, changes[name]); });
   io.write('Ledger', newLedger);
@@ -194,7 +197,10 @@ function commitChanges(io, changes) {
 function usedIds(io, kind) {
   var used = {};
   tableRows(io, 'Ledger').forEach(function (r) { used[normText(kind === 'type' ? r[3] : r[4])] = true; });
-  if (kind === 'type') tableRows(io, 'ขบ_รายการ').forEach(function (r) { used[normText(r[3])] = true; });
+  if (kind === 'type') {
+    tableRows(io, 'ขบ_รายการ').forEach(function (r) { used[normText(r[3])] = true; });
+    tableRows(io, 'ใบเสร็จ').forEach(function (r) { used[normText(r[6])] = true; });
+  }
   else tableRows(io, 'การจ่าย').forEach(function (r) { if (normText(r[7])) used[normText(r[7])] = true; });
   delete used[''];
   return used;
@@ -203,7 +209,7 @@ function usedIds(io, kind) {
 /* ============ handlers ============ */
 
 function h_getSchema() {
-  return { schema: SCHEMA, kinds: KINDS, roles: ROLES, lineKinds: LINE_KINDS, payMethods: PAY_METHODS, taxTypes: TAX_TYPES };
+  return { schema: SCHEMA, kinds: KINDS, roles: ROLES, lineKinds: LINE_KINDS, payMethods: PAY_METHODS, taxTypes: TAX_TYPES, receiptMethods: RECEIPT_METHODS };
 }
 
 function h_me(p, io, user) { return user; }
@@ -229,7 +235,9 @@ function h_getSettings(p, io) {
       return [normText(r[0]), normText(r[1]), normText(r[2]), softRef(set.stores, r[3]), isActive(r[4]) ? 'ใช่' : 'ไม่'];
     }),
     opening: op,
-    docSettings: readDocSettings(io)
+    docSettings: readDocSettings(io),
+    aliases: tableRows(io, 'ชื่อย่อ').map(function (r) { return [normText(r[0]), normText(r[1])]; }),
+    payees: tableRows(io, 'ผู้รับเงิน').map(function (r) { return [normText(r[0]), normText(r[1]) || 'ไม่มีภาษี', normText(r[2]) || 'ไม่', normText(r[3]), normText(r[4])]; })
   };
 }
 

@@ -1,9 +1,13 @@
 // รัน: node test.js   (ข้อมูลทั้งหมดในไฟล์นี้เป็นข้อมูลจำลอง)
 // โหลดไฟล์ .gs ทุกไฟล์รวมกันใน context เดียว เหมือน Apps Script (ลำดับไฟล์สลับได้)
 var fs = require('fs'), vm = require('vm'), path = require('path');
-var FILES = ['Docs.gs', 'Code.gs', 'Ledger.gs', 'Util.gs', 'Schema.gs']; // ตั้งใจสลับลำดับ
+var FILES = ['Receipts.gs', 'Docs.gs', 'Code.gs', 'Ledger.gs', 'Util.gs', 'Schema.gs']; // ตั้งใจสลับลำดับ
 var C = vm.createContext({ console: console, Date: Date, Math: Math, JSON: JSON });
 FILES.forEach(function (f) { vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), C, { filename: f }); });
+
+var P = vm.createContext({});
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'paste.js'), 'utf8'), P, { filename: 'paste.js' });
+var Paste = P.Paste;
 
 var passed = 0, failed = 0;
 function ok(cond, name) {
@@ -23,6 +27,7 @@ function makeMemIO() {
   sheets['ผู้ใช้'].push(['boss@example.com', 'ผอ.', 'ผู้บริหาร', 'ใช่']);
   sheets['ผู้ใช้'].push(['off@example.com', 'ปิดแล้ว', 'การเงิน', 'ไม่']);
   C.SEED_STORES.forEach(function (s) { sheets['ที่เก็บเงิน'].push(s.slice()); });
+  C.ALIAS_SEED.forEach(function (a) { sheets['ชื่อย่อ'].push(a.slice()); });
   C.SEED_TYPES.forEach(function (t) { sheets['ประเภทเงิน'].push([t[0], t[1], C.SEED_GROUPS[t[2]], t[3], 'ใช่']); });
   var tokens = {
     'tok-admin': 'admin@example.com', 'tok-fin': 'fin@example.com', 'tok-sup': 'sup@example.com',
@@ -200,6 +205,106 @@ if (require.main === module) {
   ok(/T02/.test(call(io, 'tok-admin', 'saveTypes', { rows: t2 }).error), 'ลบประเภทเงินที่ใช้ใน ขบ. ไม่ได้');
   var s2 = st.stores.filter(function (s) { return s[0] !== 'S06'; });
   ok(/S06/.test(call(io, 'tok-admin', 'saveStores', { rows: s2 }).error), 'ลบที่เก็บที่ใช้แล้วไม่ได้');
+
+  console.log('10) วันที่ไทยจาก Excel / ภาษีตามประเภทผู้รับ (ตรงกับ paste.js)');
+  ok(C.parseDate('1 ต.ค. 69') === '2026-10-01' && C.parseDate('1 ตุลาคม 2569') === '2026-10-01' && C.parseDate('1-Oct-26') === '2026-10-01', 'วันที่แบบข้อความ ไทย/อังกฤษ');
+  ok(C.parseDate('8 ต.ค. 25') === '2025-10-08' && C.parseDate('1/10/69') === '2026-10-01', 'ปี 2 หลัก: 25 = ค.ศ. · 69 = พ.ศ.');
+  ok(C.calcTax('ภ.ง.ด.53', 9351, true) === 87.39 && C.calcTax('ภ.ง.ด.53', 500, false) === 5, 'ภ.ง.ด.53 หัก 1% ทุกยอด');
+  ok(C.calcTax('ภ.ง.ด.3', 9999.99, false) === 0 && C.calcTax('ภ.ง.ด.3', 10000, false) === 100 && C.calcTax('ภ.ง.ด.3', 12000, false) === 120, 'ภ.ง.ด.3 หัก 1% เมื่อตั้งแต่ 10,000');
+  ok(C.calcTax('ไม่มีภาษี', 50000, false) === 0 && C.calcTax('ภ.ง.ด.53', 0, false) === 0, 'ไม่มีภาษี = 0');
+  var parity = true;
+  ['ภ.ง.ด.53', 'ภ.ง.ด.3', 'ไม่มีภาษี'].forEach(function (tt) {
+    [0.5, 99, 9999.99, 10000, 10700, 10700.01, 123456.78, 9351, 5766.45].forEach(function (g) {
+      [true, false].forEach(function (v) { if (C.calcTax(tt, g, v) !== Paste.calcTax(tt, g, v)) parity = false; });
+    });
+  });
+  ok(parity, 'calcTax ใน Util.gs = paste.js ทุกกรณีที่ทดสอบ');
+  ok(C.resolveTypeAlias(C.SEED_TYPES.map(function (x) { return [x[0], x[1], '', '', 'ใช่']; }), C.ALIAS_SEED, 'อน.รห.') === 'T08', 'ชื่อย่อ อน.รห. -> เงินอุดหนุนรายหัว');
+
+  console.log('11) ทะเบียนผู้รับเงิน + คิดภาษีอัตโนมัติ');
+  var regRows = [['บจก.ตัวอย่างวัสดุ', 'ภ.ง.ด.53', 'ใช่', 'เช็ค', 'อน.รห.'], ['นายตัวอย่าง รับจ้าง', 'ภ.ง.ด.3', 'ไม่', 'KTB', ''], ['ร้านไม่มีภาษี', 'ไม่มีภาษี', 'ไม่', 'เช็ค', '']];
+  r = call(io, 'tok-sup', 'savePayees', { rows: regRows });
+  ok(r.ok && r.data.saved >= 3, 'พัสดุบันทึกทะเบียนผู้รับได้ ' + (r.ok ? '' : r.error));
+  ok(/ภาษี "ภงด53"/.test(call(io, 'tok-sup', 'savePayees', { rows: [['x', 'ภงด53', '', '', '']] }).error), 'ประเภทภาษีผิดถูกปฏิเสธ');
+  var L1 = function (name, gross, extra) { var o = { type: 'T08', payee: name, kind: 'พัสดุ', method: 'เช็ค', gross: gross, tax: '', taxType: 'ไม่มีภาษี', taxAuto: true }; for (var k in extra || {}) o[k] = extra[k]; return o; };
+  r = call(io, 'tok-sup', 'saveKhb', { date: '12/11/69', lines: [L1('บจก.ตัวอย่างวัสดุ', 9351), L1('นายตัวอย่าง รับจ้าง', 9999.99), L1('นายตัวอย่าง รับจ้าง', 12000), L1('ร้านไม่มีภาษี', 20000), L1('ร้านใหม่ ไม่เคยมี', 500, { taxAuto: false, tax: '5', taxType: 'ภ.ง.ด.3' })] });
+  ok(r.ok, 'บันทึก ขบ. ที่คิดภาษีอัตโนมัติ ' + (r.ok ? '' : r.error));
+  var kd = call(io, 'tok-boss', 'getDocs').data.khbs[0];
+  ok(kd.lines[0].tax === 87.39 && kd.lines[0].taxType === 'ภ.ง.ด.53', 'ภ.ง.ด.53 + VAT: 9,351 → ภาษี 87.39');
+  ok(kd.lines[1].tax === 0 && kd.lines[2].tax === 120 && kd.lines[2].taxType === 'ภ.ง.ด.3', 'ภ.ง.ด.3: 9,999.99 ไม่หัก · 12,000 หัก 120');
+  ok(kd.lines[3].tax === 0 && kd.lines[3].taxType === 'ไม่มีภาษี', 'ไม่มีภาษี = 0');
+  var learned = call(io, 'tok-admin', 'getSettings').data.payees.filter(function (x) { return x[0] === 'ร้านใหม่ ไม่เคยมี'; })[0];
+  ok(learned && learned[1] === 'ภ.ง.ด.3' && learned[3] === 'เช็ค', 'ผู้รับใหม่ถูกจำไว้ในทะเบียนอัตโนมัติ');
+
+  console.log('12) วางจาก Excel — ขบ. (ตามแบบไฟล์เดิม)');
+  var ctxP = { types: call(io, 'tok-admin', 'getSettings').data.types, aliases: call(io, 'tok-admin', 'getSettings').data.aliases, payees: {} };
+  call(io, 'tok-admin', 'getSettings').data.payees.forEach(function (p) { ctxP.payees[Paste.nk(p[0])] = { taxType: p[1], vat: p[2] === 'ใช่', method: p[3], type: p[4] }; });
+  var tsv = '1\tอน.รห\tบจก.ตัวอย่างวัสดุ\t\t\t9263.61\t87.39\t9351\n2\tรายได้สระว่ายน้ำ\tบจก.ผู้รับใหม่\t\t\t2174.49\t20.51\t2195\n3\tบกศ. จ/2\tนางสาวทดสอบ ตัวอย่าง\t\t\t11000\t0\t11000\n\t\t\t\t\t13138.1\t107.9\t13246\n(หนึ่งหมื่นสามพันบาท)\t\t\t\t\t\t\t';
+  var pr = Paste.khbRows(Paste.parseTSV(tsv), ctxP);
+  ok(pr.lines.length === 3 && pr.skipped === 2, 'วางแบบ ขบ. เดิม: 3 รายการ ข้ามแถวรวม/ตัวอักษร ' + pr.lines.length + '/' + pr.skipped);
+  ok(pr.lines[0].type === 'T08' && pr.lines[0].gross === '9351' && pr.lines[0].tax === '87.39' && pr.lines[0].taxAuto, 'อน.รห → T08 · ยอดรวม 9,351 · ภาษีคิดตามทะเบียน (ผู้รับจด VAT)');
+  ok(pr.lines[1].type === 'T02' && pr.lines[1].tax === '20.51' && /ผู้รับใหม่/.test(pr.lines[1].warn), 'ผู้รับใหม่ใช้ภาษีที่วางมา + เตือนให้ตรวจ');
+  ok(pr.lines[2].type === 'T06' && pr.lines[2].gross === '11000', 'บกศ. จ/2 → T06');
+  var head = 'ประเภทเงิน\tผู้รับ\tชนิด\tวิธีจ่าย\tยอดรวม\nอน.กพร.\tนายตัวอย่าง รับจ้าง\tเบิก\tKTB\t12,000.00\nรหัสไม่มี\tร้านอะไรสักอย่าง\t\t\t300';
+  pr = Paste.khbRows(Paste.parseTSV(head), ctxP);
+  ok(pr.header && pr.lines[0].type === 'T09' && pr.lines[0].tax === '120' && pr.lines[0].taxType === 'ภ.ง.ด.3' && pr.lines[0].method === 'KTB', 'วางแบบมีหัวตาราง: ภ.ง.ด.3 ยอด 12,000 → ภาษี 120');
+  ok(pr.lines[1].bad.indexOf('type') >= 0, 'ประเภทเงินที่ไม่รู้จัก ถูกทำเครื่องหมายให้เลือก');
+  ok(Paste.parseTSV('"ก\nข"\tค\nง\tจ').length === 2, 'อ่านช่องที่มีขึ้นบรรทัดใหม่ในเครื่องหมายคำพูด');
+  var pay = Paste.payeeRows(Paste.parseTSV('บจก.ก\tภ.ง.ด.53\tเช็ค\tอน.รห.\nนายข\tภ.ง.ด.3\tKTB\nร้านค\tไม่มีภาษี'), ctxP);
+  ok(pay.length === 3 && pay[0][1] === 'ภ.ง.ด.53' && pay[0][3] === 'เช็ค' && pay[0][4] === 'T08' && pay[1][1] === 'ภ.ง.ด.3' && pay[2][1] === 'ไม่มีภาษี', 'วางทะเบียนผู้รับเงิน (ภาษี/วิธีจ่าย/ประเภทเงิน อยู่ช่องไหนก็ได้)');
+
+  console.log('13) ใบเสร็จ (รายรับ) — วางจาก Excel กันซ้ำ และ Ledger');
+  var g0 = grandOf(io, '2027-09-30').grand;
+  var rc = [{ date: '1/11/69', book: '18655', no: '833', type: 'อน.รห.', method: 'สด', amount: '600.00', payer: 'นักเรียนก' },
+    { date: '1 พ.ย. 69', book: '18655', no: '833', type: 'ก/20', method: 'โอน', amount: '1,200', payer: 'นักเรียนก' },
+    { date: '2/11/69', book: '18655', no: '834', type: 'รายได้สระว่ายน้ำ', method: 'โอน', amount: 225, payer: '' },
+    { date: '2/11/69', book: '18655', no: '835', type: 'ประเภทที่ไม่มี', method: 'สด', amount: 10 },
+    { date: '2/11/69', book: '', no: '836', type: 'ก/20', method: 'สด', amount: 10 },
+    { date: '30/9/69', book: '1', no: '1', type: 'ก/20', method: 'สด', amount: 10 },
+    { date: '2/11/69', book: '18655', no: '837', type: 'ก/20', method: 'ผ่อน', amount: 10 },
+    { date: '2/11/69', book: '18655', no: '838', type: 'ก/20', method: 'สด', amount: 0 },
+    { date: '2/11/69', book: '18655', no: '834', line: 1, type: 'ก/20', method: 'สด', amount: 5 }];
+  r = call(io, 'tok-fin', 'importReceipts', { items: rc });
+  ok(r.ok && !r.data.committed && r.data.count.new === 3 && r.data.count.error === 6, 'ดูตัวอย่าง: ใหม่ 3 · ผิด 6 ' + (r.ok ? JSON.stringify(r.data.count) : r.error));
+  var msgs = r.data.rows.map(function (x) { return x.msg; }).join(' | ');
+  ok(/T?ประเภทที่ไม่มี/.test(msgs) && /เล่มที่/.test(msgs) && /นอกปีงบ/.test(msgs) && /สด หรือ โอน/.test(msgs) && /มากกว่า 0/.test(msgs) && /ซ้ำกับแถวที่ 3/.test(msgs), 'แต่ละแถวที่ผิดบอกเหตุผล');
+  ok(grandOf(io, '2027-09-30').grand === g0, 'ดูตัวอย่างยังไม่บันทึก ยอดไม่เปลี่ยน');
+  var good3 = rc.slice(0, 3);
+  r = call(io, 'tok-fin', 'importReceipts', { items: good3, commit: true });
+  ok(r.ok && r.data.added === 3, 'บันทึก 3 แถวที่ผ่าน ' + (r.ok ? '' : r.error));
+  var gr = grandOf(io, '2027-09-30');
+  ok(sat(gr.grand) - sat(g0) === sat(600 + 1200 + 225) && gr.receivedIn === 2025, 'ยอดคงเหลือเพิ่ม 2,025 ตรงยอดรับ');
+  var s1 = grandOf(io, '2026-11-01'); var t08 = s1.types.map(function (x) { return x.id; }).indexOf('T08');
+  ok(s1.cells[t08][s1.stores.map(function (s) { return s.id; }).indexOf('S01')] - grandOf(io, '2026-10-31').cells[t08][s1.stores.map(function (s) { return s.id; }).indexOf('S01')] === 600, 'รับเงินสด เข้าที่เก็บเงินสด');
+  var t05 = s1.types.map(function (x) { return x.id; }).indexOf('T05');
+  ok(s1.cells[t05][s1.stores.map(function (s) { return s.id; }).indexOf('S04')] - grandOf(io, '2026-10-31').cells[t05][s1.stores.map(function (s) { return s.id; }).indexOf('S04')] === 1200, 'รับเงินโอน เข้าที่เก็บหลักของประเภทเงิน (S04)');
+  r = call(io, 'tok-fin', 'importReceipts', { items: good3, commit: true });
+  ok(!r.ok && /ไม่มีแถวที่บันทึกได้/.test(r.error), 'วางซ้ำครั้งที่ 2: ไม่เพิ่ม');
+  r = call(io, 'tok-fin', 'importReceipts', { items: good3 });
+  ok(r.data.count.same === 3 && r.data.count.new === 0, 'วางซ้ำ: ซ้ำ 3 แถว ข้ามทั้งหมด');
+  var chg = [{ date: '1/11/69', book: '18655', no: '833', line: 1, type: 'อน.รห.', method: 'สด', amount: '650', payer: 'นักเรียนก' }];
+  r = call(io, 'tok-fin', 'importReceipts', { items: chg });
+  ok(r.data.count.changed === 1 && /600\.00 → 650\.00/.test(r.data.rows[0].msg), 'ยอดเปลี่ยน: แสดงว่าเปลี่ยนอะไร');
+  ok(!call(io, 'tok-fin', 'importReceipts', { items: chg, commit: true }).ok && sat(grandOf(io, '2027-09-30').grand) === sat(gr.grand), 'ไม่เลือกอัปเดต → ไม่แก้ของเดิม');
+  r = call(io, 'tok-fin', 'importReceipts', { items: chg, commit: true, updateChanged: true });
+  ok(r.ok && r.data.updated === 1 && sat(grandOf(io, '2027-09-30').grand) === sat(gr.grand) + 5000, 'เลือกอัปเดต → ยอดเปลี่ยนเป็น 650');
+  var wide = 'วันที่\tเดือน\tเล่มที่\tเลขที่\tรวม\tก/20 บัตรประจำตัว\tเงินรายได้ SMS (Student care)\tเงินอุดหนุนรายหัว\n1 พ.ย. 69\tพฤศจิกายน\t18700\t1\t825\t300\t225\t\n3 พ.ย. 69\tพฤศจิกายน\t18700\t2\t100\t\t\t100\n1 ต.ค. 69\tตุลาคม\tยอดยกมา\t\t9999\t1\t2\t3';
+  var wr = Paste.receiptRows(Paste.parseTSV(wide), { types: ctxP.types, aliases: ctxP.aliases, defaultMethod: 'โอน' });
+  ok(wr.wide && wr.items.length === 3 && wr.skipped === 1, 'ไฟล์ใบเสร็จแบบกว้างตามไฟล์เดิม แตกเป็นรายบรรทัด 3 รายการ');
+  r = call(io, 'tok-fin', 'importReceipts', { items: wr.items, commit: true });
+  ok(r.ok && r.data.added === 3 && grandOf(io, '2027-09-30').receivedIn === 2700, 'บันทึกแบบกว้างได้ ยอดรับรวม 2,700 (' + (r.ok ? '' : r.error) + ')');
+  var rs = call(io, 'tok-boss', 'getReceipts').data;
+  ok(rs.rows.length === 6 && rs.rows[0].length === 10, 'getReceipts ส่งรายการให้ผู้บริหารดู');
+  ok(call(io, 'tok-boss', 'importReceipts', { items: good3 }).code === 'FORBIDDEN' && call(io, 'tok-sup', 'importReceipts', { items: good3 }).code === 'FORBIDDEN', 'เฉพาะการเงินนำเข้าใบเสร็จ');
+  var beforeC = sat(grandOf(io, '2027-09-30').grand);
+  r = call(io, 'tok-fin', 'cancelReceipt', { book: '18655', no: '834', reason: 'ออกผิด' });
+  ok(r.ok && sat(grandOf(io, '2027-09-30').grand) === beforeC - 22500, 'ยกเลิกใบเสร็จ ยอดคืน');
+  ok(/ถูกยกเลิกไปแล้ว/.test(call(io, 'tok-fin', 'importReceipts', { items: [{ date: '2/11/69', book: '18655', no: '834', line: 1, type: 'รายได้สระว่ายน้ำ', method: 'โอน', amount: 225 }] }).data.rows[0].msg), 'วางใบเสร็จที่ยกเลิกแล้ว ไม่ซ้อนกลับ');
+  io.sheets['ปิดวัน'].push(['2026-11-03', 'fin@example.com', 'x', '', '']);
+  ok(call(io, 'tok-fin', 'importReceipts', { items: [{ date: '3/11/69', book: '18700', no: '9', type: 'ก/20', method: 'สด', amount: 50 }], commit: true }).code === 'CLOSED', 'วันที่ปิดแล้วนำเข้าใบเสร็จไม่ได้');
+  var tt2 = call(io, 'tok-admin', 'getSettings').data.types.filter(function (x) { return x[0] !== 'T05'; });
+  ok(/T05/.test(call(io, 'tok-admin', 'saveTypes', { rows: tt2 }).error), 'ลบประเภทเงินที่ใช้ในใบเสร็จไม่ได้');
+  ok(call(io, 'tok-admin', 'saveAliases', { rows: [['อน.รห.', 'T08'], ['ทดสอบ', 'T99']] }).error.indexOf('T99') > 0, 'ชื่อย่อชี้ประเภทเงินที่ไม่มี ถูกปฏิเสธ');
 
   console.log('\nผ่าน ' + passed + ' / ' + (passed + failed));
   if (failed) { console.log('มี ' + failed + ' ข้อไม่ผ่าน'); process.exit(1); }

@@ -52,6 +52,8 @@ var Docs = (function () {
       b.onclick = function () { switchSeg(b.getAttribute('data-seg')); };
     });
     renderSeg();
+    if (opt && opt.draft) openKhb(null);
+    if (opt && opt.openKhj) openKhj(opt.openKhj);
   }
   function flowTile(target, label, x) {
     return '<button class="tile" type="button" data-seg="' + target + '"><div class="k">' + esc(label) + '</div>' +
@@ -147,27 +149,29 @@ var Docs = (function () {
       }).join('') + '</optgroup>';
     }).join('');
   }
+  function badCls(l, k) { return l.bad && l.bad.indexOf(k) >= 0 ? ' class="bad"' : ''; }
   function lineHtml(l, i, locked) {
     var dis = locked ? ' disabled' : '';
-    return '<div class="line' + (locked ? ' locked' : '') + '" data-line>' +
+    return '<div class="line' + (locked ? ' locked' : '') + '" data-line' + (l.taxAuto ? ' data-auto="1"' : '') + '>' +
       '<span class="i">' + (i + 1) + '</span>' +
-      '<label class="f" data-c="type">' + esc(L('ขบ_รายการ', 3)) + '<select data-f="type"' + dis + '>' + typeOptions(l.type) + '</select></label>' +
+      '<label class="f" data-c="type">' + esc(L('ขบ_รายการ', 3)) + '<select data-f="type"' + dis + badCls(l, 'type') + '>' + typeOptions(l.type) + '</select></label>' +
       '<label class="f" data-c="payee">' + esc(L('ขบ_รายการ', 4)) + '<input data-f="payee" list="payees" value="' + esc(l.payee) + '" placeholder="ชื่อร้าน / ผู้เบิก / ผู้ยืม"' + dis + '></label>' +
       '<label class="f" data-c="kind">' + esc(L('ขบ_รายการ', 5)) + '<select data-f="kind"' + dis + '>' + plainOpts(S.schema.lineKinds, l.kind) + '</select></label>' +
       '<label class="f" data-c="method">' + esc(L('ขบ_รายการ', 6)) + '<select data-f="method"' + dis + '>' + plainOpts(S.schema.payMethods, l.method) + '</select></label>' +
-      '<label class="f" data-c="gross">' + esc(L('ขบ_รายการ', 7)) + '<input class="money" data-f="gross" inputmode="decimal" value="' + (l.gross ? esc(l.gross) : '') + '" placeholder="0.00"' + dis + '></label>' +
-      '<label class="f" data-c="tax">' + esc(L('ขบ_รายการ', 8)) + '<span class="taxrow"><input class="money" data-f="tax" inputmode="decimal" value="' + (l.tax ? esc(l.tax) : '') + '" placeholder="0.00"' + dis + '>' +
+      '<label class="f" data-c="gross">' + esc(L('ขบ_รายการ', 7)) + '<input class="money' + (l.bad && l.bad.indexOf('gross') >= 0 ? ' bad' : '') + '" data-f="gross" inputmode="decimal" value="' + (l.gross ? esc(l.gross) : '') + '" placeholder="0.00"' + dis + '></label>' +
+      '<label class="f" data-c="tax">' + esc(L('ขบ_รายการ', 8)) + ' <span class="autotag" data-autotag' + (l.taxAuto ? '' : ' hidden') + '>ตามทะเบียน</span><span class="taxrow"><input class="money" data-f="tax" inputmode="decimal" value="' + (l.tax ? esc(l.tax) : '') + '" placeholder="0.00"' + dis + '>' +
       (locked ? '' : '<select data-f="quick" aria-label="คิดภาษีอัตโนมัติ">' + TAX_QUICK.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select>') + '</span></label>' +
       '<label class="f" data-c="taxType">' + esc(L('ขบ_รายการ', 9)) + '<select data-f="taxType"' + dis + '>' + plainOpts(S.schema.taxTypes, l.taxType || 'ไม่มีภาษี') + '</select></label>' +
       '<div class="f" data-c="net"><span style="font-size:13px;font-weight:600;color:var(--ink2)">จ่ายจริง (หลังหักภาษี)</span><span class="net" data-net>' + money(r2(cleanNum(l.gross) - cleanNum(l.tax))) + '</span>' +
-      (l.state ? badge(l.state) + (l.khjNo ? ' <span class="meta" style="font-size:12.5px">ขจ.' + l.khjNo + '</span>' : '') : '') + '</div>' +
+      (l.state ? badge(l.state) + (l.khjNo ? ' <span class="meta" style="font-size:12.5px">ขจ.' + l.khjNo + '</span>' : '') : '') +
+      (l.warn ? '<span class="warnnote" title="' + esc(l.warn) + '">ผู้รับใหม่ ตรวจภาษี</span>' : '') + '</div>' +
       (locked ? '' : '<button class="del" type="button" data-del aria-label="ลบรายการ" data-c="del">×</button>') + '</div>';
   }
   function readLines(box) {
     return Array.prototype.map.call(box.querySelectorAll('[data-line]'), function (row) {
       var o = {};
       Array.prototype.forEach.call(row.querySelectorAll('[data-f]'), function (f) { o[f.getAttribute('data-f')] = f.value; });
-      return { type: o.type, payee: o.payee, kind: o.kind, method: o.method, gross: o.gross, tax: o.tax, taxType: o.taxType };
+      return { type: o.type, payee: o.payee, kind: o.kind, method: o.method, gross: o.gross, tax: o.tax, taxType: o.taxType, taxAuto: row.getAttribute('data-auto') === '1' };
     });
   }
   function recalc(box) {
@@ -186,11 +190,39 @@ var Docs = (function () {
     return { type: prev ? prev.type : '', payee: '', kind: prev ? prev.kind : 'พัสดุ', method: prev ? prev.method : 'เช็ค', gross: '', tax: '', taxType: 'ไม่มีภาษี' };
   }
 
+  /** ทะเบียนผู้รับเงิน -> แผนที่ค้นหาเร็ว */
+  function regMap() {
+    var m = {};
+    (S.st.payees || []).forEach(function (p) { m[Paste.nk(p[0])] = { taxType: p[1], vat: p[2] === 'ใช่', method: p[3], type: p[4] }; });
+    return m;
+  }
+  function pasteCtx() { return { types: S.st.types, aliases: S.st.aliases || [], payees: regMap() }; }
+  /** ตั้งภาษี/วิธีจ่าย/ประเภทเงินของแถวตามทะเบียนผู้รับ */
+  function applyReg(row, fill) {
+    var reg = regMap()[Paste.nk(row.querySelector('[data-f="payee"]').value)];
+    var tag = row.querySelector('[data-autotag]');
+    if (!reg) { row.removeAttribute('data-auto'); if (tag) tag.hidden = true; return; }
+    row.setAttribute('data-auto', '1'); if (tag) { tag.hidden = false; tag.textContent = 'ตามทะเบียน: ' + reg.taxType; }
+    if (fill) {
+      var ty = row.querySelector('[data-f="type"]'); if (!ty.value && reg.type) ty.value = reg.type;
+      if (reg.method) {
+        row.querySelector('[data-f="method"]').value = reg.method;
+        row.querySelector('[data-f="kind"]').value = METHOD_BY_KIND_R[reg.method] || row.querySelector('[data-f="kind"]').value;
+      }
+    }
+    var g = cleanNum(row.querySelector('[data-f="gross"]').value), t = Paste.calcTax(reg.taxType, g, reg.vat);
+    row.querySelector('[data-f="tax"]').value = t ? t.toFixed(2) : '';
+    row.querySelector('[data-f="taxType"]').value = reg.taxType;
+  }
+  var METHOD_BY_KIND_R = { 'เช็ค': 'พัสดุ', 'KTB': 'เบิก', 'ถอน': 'ถอน' };
+
   function openKhb(no) {
     var h = no ? findKhb(no) : null;
     var linked = h ? h.lines.filter(function (l) { return l.khjNo; }).length : 0;
     var locked = !!h && (h.status === 'ยกเลิก' || linked > 0) || !can.khb();
-    var data = h || { date: defaultDate(), note: '', lines: [blankLine(null)] };
+    var draft = !h && can.khb() ? Draft.get('khb') : null;
+    if (draft && !(draft.data.lines || []).some(function (l) { return l.payee || l.gross; })) draft = null;
+    var data = h || (draft ? { date: draft.data.date, note: draft.data.note, lines: draft.data.lines } : { date: defaultDate(), note: '', lines: [blankLine(null)] });
     var payees = (S.docs.payees || []).map(function (p) { return '<option value="' + esc(p) + '">'; }).join('');
     var info = '';
     if (h && h.status === 'ยกเลิก') info = '<div class="err-box" style="margin-bottom:12px">ขบ. นี้ถูกยกเลิกแล้ว · ' + esc(h.note) + '</div>';
@@ -199,59 +231,134 @@ var Docs = (function () {
       title: h ? 'ขบ.' + h.no + '/' + h.fy : 'สร้าง ขบ. ใหม่',
       headExtra: h ? (h.status === 'ยกเลิก' ? badge('ยกเลิก') : '') : '',
       body: info +
+        (draft ? '<div class="draftbar" id="kDraft"><span>กู้ฉบับร่างที่ค้างไว้เมื่อ ' + esc(clockText(draft.at)) + ' กลับมาแล้ว</span><button class="link" type="button" id="kDraftDel">ทิ้งฉบับร่าง เริ่มใหม่</button></div>' : '') +
         '<div class="form-head"><label class="f">' + esc(L('ขบ', 2)) + '<input type="date" id="kDate" value="' + esc(data.date) + '" min="' + S.st.fyStart + '" max="' + S.st.fyEnd + '"' + (locked ? ' disabled' : '') + '></label>' +
-        '<label class="f">' + esc(L('ขบ', 3)) + '<input id="kNote" value="' + esc(h ? h.note : '') + '" placeholder="เช่น ชุดพัสดุ ต.ค. / เงินเดือนลูกจ้าง"' + (locked ? ' disabled' : '') + '></label></div>' +
+        '<label class="f">' + esc(L('ขบ', 3)) + '<input id="kNote" value="' + esc(h ? h.note : (data.note || '')) + '" placeholder="เช่น ชุดพัสดุ ต.ค. / เงินเดือนลูกจ้าง"' + (locked ? ' disabled' : '') + '></label></div>' +
+        (locked ? '' : '<div class="toolbar"><button class="btn soft sm" type="button" id="kPasteBtn">วางจาก Excel</button><button class="btn ghost sm" type="button" id="kReg">ทะเบียนผู้รับ / ภาษี</button>' +
+          '<span class="hint" style="margin:0">คัดลอกแถวจากไฟล์เดิมแล้วกด Ctrl+V ได้เลย — วางกี่ครั้งก็เพิ่มต่อท้าย</span></div>' +
+          '<div class="paste" id="kPaste" hidden><textarea id="kPasteTa" rows="3" placeholder="วางแถวจาก Excel ที่นี่ (ตามแบบ ขบ. เดิม: ที่ | ประเภทเงิน | รายการ-ชื่อ | ขอเบิก | ภาษี | รวมเป็นเงิน หรือมีหัวตาราง: ประเภทเงิน | ผู้รับ | ชนิด | วิธีจ่าย | ยอดรวม | ภาษี)"></textarea>' +
+          '<div class="actions"><button class="btn sm" type="button" id="kPasteGo">เพิ่มลงใน ขบ.</button><button class="link" type="button" id="kPasteCopy">คัดลอกหัวตาราง</button></div></div>') +
         '<datalist id="payees">' + payees + '</datalist>' +
         '<div id="kLines">' + data.lines.map(function (l, i) { return lineHtml(l, i, locked); }).join('') + '</div>' +
         (locked ? '' : '<button class="btn soft" type="button" id="kAdd">' + ICON.plus + ' เพิ่มรายการ</button>') +
         '<div class="totals" data-tot></div>',
       footer: (h && !locked ? '<button class="btn danger" type="button" id="kCancel">ยกเลิก ขบ.</button>' : '') +
         (h ? '<button class="btn ghost" type="button" id="kPrint">' + ICON.print + ' พิมพ์</button>' : '') +
+        (!h && !locked ? '<span class="hint" style="margin:0">ฉบับร่างบันทึกอัตโนมัติ ปิดหน้าไปแล้วกลับมาทำต่อได้</span>' : '') +
         '<span class="sp"></span><button class="btn ghost" type="button" data-close>ปิด</button>' +
-        (locked ? '' : '<button class="btn" type="button" id="kSave">บันทึก ขบ.</button>')
+        (locked ? '' : '<button class="btn" type="button" id="kSave">บันทึก ขบ.</button>'),
+      onClose: function () { document.removeEventListener('paste', onDocPaste); clearTimeout(saveT); }
     });
-    var el = m.el, box = el.querySelector('#kLines');
+    var el = m.el, box = el.querySelector('#kLines'), saveT = 0;
     thaiDateHint(el.querySelector('#kDate'));
     recalc(box);
+    function onDocPaste() {}
     if (locked) {
       if (el.querySelector('#kPrint')) el.querySelector('#kPrint').onclick = function () { openPaper('khb', h.no); };
       return;
     }
-    box.addEventListener('input', function () { recalc(box); });
+    /* ---- ร่างอัตโนมัติ ---- */
+    function saveDraft() {
+      if (h) return;
+      var ls = readLines(box);
+      if (ls.some(function (l) { return l.payee || cleanNum(l.gross); })) Draft.set('khb', { date: el.querySelector('#kDate').value, note: el.querySelector('#kNote').value, lines: ls });
+      else Draft.del('khb');
+    }
+    function queueDraft() { clearTimeout(saveT); saveT = setTimeout(saveDraft, 500); }
+    el.addEventListener('input', queueDraft); el.addEventListener('change', queueDraft);
+    if (el.querySelector('#kDraftDel')) el.querySelector('#kDraftDel').onclick = function () {
+      Draft.del('khb'); box.innerHTML = lineHtml(blankLine(null), 0, false); el.querySelector('#kNote').value = '';
+      var bar = el.querySelector('#kDraft'); bar.parentNode.removeChild(bar); recalc(box); toast('ทิ้งฉบับร่างแล้ว');
+    };
+    /* ---- ช่องกรอกในแถว ---- */
+    box.addEventListener('input', function (e) {
+      if (e.target.classList.contains('bad')) e.target.classList.remove('bad');
+      var f = e.target.getAttribute('data-f'), row = e.target.closest('[data-line]');
+      if (f === 'gross' && row.getAttribute('data-auto') === '1') applyReg(row, false);
+      if (f === 'tax') { row.removeAttribute('data-auto'); row.querySelector('[data-autotag]').hidden = true; }
+      recalc(box);
+    });
     box.addEventListener('change', function (e) {
-      var f = e.target, row = f.closest('[data-line]');
-      if (f.getAttribute('data-f') === 'kind') row.querySelector('[data-f="method"]').value = METHOD_BY_KIND[f.value] || 'เช็ค';
-      if (f.getAttribute('data-f') === 'quick' && f.value) {
+      var f = e.target, row = f.closest('[data-line]'), name = f.getAttribute('data-f');
+      if (f.classList.contains('bad')) f.classList.remove('bad');
+      if (name === 'payee') applyReg(row, true);
+      if (name === 'kind') row.querySelector('[data-f="method"]').value = METHOD_BY_KIND[f.value] || 'เช็ค';
+      if (name === 'quick' && f.value) {
         var g = cleanNum(row.querySelector('[data-f="gross"]').value);
         if (!g) { toast('กรอกยอดรวมก่อน แล้วค่อยคิดภาษี', 'err'); f.value = ''; return; }
         var rate = Number(f.value.charAt(0)), vat = f.value.indexOf('v') > 0;
         row.querySelector('[data-f="tax"]').value = r2((vat ? g / 1.07 : g) * rate / 100).toFixed(2);
-        var payee = row.querySelector('[data-f="payee"]').value;
-        row.querySelector('[data-f="taxType"]').value = isCompany(payee) ? 'ภ.ง.ด.53' : 'ภ.ง.ด.3';
+        row.querySelector('[data-f="taxType"]').value = Paste.isCompany(row.querySelector('[data-f="payee"]').value) ? 'ภ.ง.ด.53' : 'ภ.ง.ด.3';
+        row.removeAttribute('data-auto'); row.querySelector('[data-autotag]').hidden = true;
         f.value = '';
       }
-      if (f.getAttribute('data-f') === 'tax' && cleanNum(f.value) === 0) row.querySelector('[data-f="taxType"]').value = 'ไม่มีภาษี';
+      if (name === 'tax') { row.removeAttribute('data-auto'); row.querySelector('[data-autotag]').hidden = true; if (cleanNum(f.value) === 0) row.querySelector('[data-f="taxType"]').value = 'ไม่มีภาษี'; }
       recalc(box);
+    });
+    function addRow(focus) {
+      var ls = readLines(box), tmp = document.createElement('div');
+      tmp.innerHTML = lineHtml(blankLine(ls[ls.length - 1]), ls.length, false);
+      box.appendChild(tmp.firstChild); recalc(box);
+      if (focus) { var last = box.lastChild.querySelector('[data-f="payee"]'); last.focus(); last.scrollIntoView({ block: 'nearest', behavior: REDUCE ? 'auto' : 'smooth' }); }
+    }
+    box.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.target.tagName === 'TEXTAREA') return;
+      var f = e.target.getAttribute('data-f'); if (f !== 'gross' && f !== 'tax') return;
+      e.preventDefault();
+      var row = e.target.closest('[data-line]'), next = row.nextElementSibling;
+      if (!next) { if (!cleanNum(row.querySelector('[data-f="gross"]').value)) return; addRow(true); }
+      else next.querySelector('[data-f="payee"]').focus();
     });
     box.addEventListener('click', function (e) {
       var d = e.target.closest('[data-del]'); if (!d) return;
       if (box.querySelectorAll('[data-line]').length === 1) { toast('ขบ. ต้องมีอย่างน้อย 1 รายการ', 'err'); return; }
-      var row = d.closest('[data-line]'); row.parentNode.removeChild(row); recalc(box);
+      var row = d.closest('[data-line]'); row.parentNode.removeChild(row); recalc(box); queueDraft();
     });
-    el.querySelector('#kAdd').onclick = function () {
-      var ls = readLines(box), tmp = document.createElement('div');
-      tmp.innerHTML = lineHtml(blankLine(ls[ls.length - 1]), ls.length, false);
-      box.appendChild(tmp.firstChild); recalc(box);
-      var last = box.lastChild.querySelector('[data-f="payee"]'); last.focus();
-      last.scrollIntoView({ block: 'nearest', behavior: REDUCE ? 'auto' : 'smooth' });
+    el.querySelector('#kAdd').onclick = function () { addRow(true); };
+    /* ---- วางจาก Excel ---- */
+    function addPasted(text) {
+      var res = Paste.khbRows(Paste.parseTSV(text), pasteCtx());
+      if (!res.lines.length) { toast('ไม่พบแถวรายการในข้อมูลที่วาง (ต้องมีชื่อผู้รับและยอดเงิน)', 'err'); return false; }
+      var ls = readLines(box);
+      if (ls.length === 1 && !ls[0].payee && !cleanNum(ls[0].gross)) box.innerHTML = '';
+      var start = box.querySelectorAll('[data-line]').length, tmp = document.createElement('div');
+      res.lines.forEach(function (l, i) { tmp.innerHTML = lineHtml(l, start + i, false); box.appendChild(tmp.firstChild); });
+      recalc(box);
+      var bad = res.lines.filter(function (l) { return l.bad.length; }).length, note = 'เพิ่ม ' + res.lines.length + ' รายการจาก Excel';
+      if (res.skipped) note += ' (ข้าม ' + res.skipped + ' แถวที่ไม่ใช่รายการ)';
+      if (bad) note += ' · ' + bad + ' รายการต้องเลือกประเภทเงิน/ยอด (ช่องสีแดง)';
+      else if (res.newPayees) note += ' · ผู้รับใหม่ ' + res.newPayees + ' ราย ตรวจภาษีด้วย';
+      toast(note, bad ? 'err' : 'good');
+      var firstBad = box.querySelector('.bad'); if (firstBad) firstBad.scrollIntoView({ block: 'center', behavior: REDUCE ? 'auto' : 'smooth' });
+      queueDraft();
+      return true;
+    }
+    var pastePanel = el.querySelector('#kPaste'), ta = el.querySelector('#kPasteTa');
+    el.querySelector('#kPasteBtn').onclick = function () { pastePanel.hidden = !pastePanel.hidden; if (!pastePanel.hidden) ta.focus(); };
+    el.querySelector('#kPasteGo').onclick = function () { if (addPasted(ta.value)) { ta.value = ''; pastePanel.hidden = true; } };
+    ta.addEventListener('paste', function () { setTimeout(function () { if (addPasted(ta.value)) { ta.value = ''; pastePanel.hidden = true; } }, 30); });
+    el.querySelector('#kPasteCopy').onclick = function () {
+      var t = Paste.KHB_HEADER.join('\t');
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { toast('คัดลอกหัวตารางแล้ว วางใน Excel ได้เลย', 'good'); }, function () { toast(t); });
+      else toast(t);
     };
+    onDocPaste = function (e) {
+      if (!document.body.contains(el)) return;
+      var tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
+      var txt = (e.clipboardData || window.clipboardData).getData('text');
+      if (!txt || (txt.indexOf('\t') < 0 && txt.indexOf('\n') < 0)) return;
+      e.preventDefault(); addPasted(txt);
+    };
+    document.addEventListener('paste', onDocPaste);
+    el.querySelector('#kReg').onclick = function () { openPayees(); };
     el.querySelector('#kSave').onclick = function () {
       var btn = this;
       busy(btn, api('saveKhb', { no: h ? h.no : null, date: el.querySelector('#kDate').value, note: el.querySelector('#kNote').value, lines: readLines(box) }))
         .then(function (r) {
+          Draft.del('khb'); clearTimeout(saveT);
           toast('บันทึก ขบ.' + r.no + '/' + r.fy + ' แล้ว', 'good');
           m.close();
-          return reloadDocs().then(function () { seg = 'khb'; rerender(); });
+          return Promise.all([reloadDocs(), reloadSettings()]).then(function () { seg = 'khb'; rerender(); });
         }).catch(handleError);
     };
     if (el.querySelector('#kPrint')) el.querySelector('#kPrint').onclick = function () { openPaper('khb', h.no); };
