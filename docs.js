@@ -94,10 +94,13 @@ var Docs = (function () {
   function leave() { var d = $('dock'); if (d) d.parentNode.removeChild(d); }
 
 
-  /* ================= ตารางกรอกแบบ Excel (แถวละรายการ) ================= */
-  var gridRows = null, gridMonth = '';
+  /* ================= ตาราง Excel เดียวครบวงจร: ขบ. → ขจ. → จ่ายเงิน (แถวเดียวกันตลอดทาง) ================= */
+  var gridRows = null, gridMonth = '', gridFilter = 'all';
   var KIND_METHOD = { 'พัสดุ': 'เช็ค', 'เบิก': 'KTB', 'ค่าจ้าง': 'KTB', 'เงินยืม': 'KTB', 'ถอน': 'ถอน' };
   function typeIdOf(name) { return name ? Paste.matchType(name, pasteCtx(), true) || '' : ''; }
+  function storeNameOf(id) { var s = S.st.stores.filter(function (x) { return x[0] === id; })[0]; return s ? s[1] : id || ''; }
+  function storeIdOf(name) { var s = S.st.stores.filter(function (x) { return x[1] === name || x[0] === name; })[0]; return s ? s[0] : ''; }
+  function mainStoreOfType(tid) { var t = S.st.types.filter(function (x) { return x[0] === tid; })[0]; return t ? t[3] : ''; }
   function gridBlank(prev) {
     return { date: prev ? prev.date : defaultDate(), grp: prev ? prev.grp : '', kind: prev ? prev.kind : 'เบิก', payee: '', gross: '', tax: '', taxType: 'ไม่มีภาษี', type: prev ? prev.type : '', method: prev ? prev.method : 'KTB', auto: false };
   }
@@ -106,6 +109,7 @@ var Docs = (function () {
     r.tax = g ? (Paste.calcTax(r.taxType, g, reg ? reg.vat : false) || '') : '';
   }
   function gridOnRow(r, k) {
+    if (r._old) return;
     if (k === 'payee') {
       var reg = regMap()[Paste.nk(r.payee)];
       if (reg) { r.taxType = reg.taxType; if (reg.method) r.method = reg.method; if (reg.type && !r.type) { var t = S.st.types.filter(function (x) { return x[0] === reg.type; })[0]; if (t) r.type = t[1]; } r.auto = true; gridRecalc(r); }
@@ -116,32 +120,41 @@ var Docs = (function () {
   }
   function gridCols() {
     return [
-      { k: 'date', label: 'วันที่เบิก', w: 118, type: 'date', ph: 'วว/ดด/ปป' },
-      { k: 'grp', label: 'ขบ. (กลุ่ม)', w: 86, ph: 'อัตโนมัติ' },
-      { k: 'khj', label: 'ขจ.', w: 64, ro: true },
-      { k: 'kind', label: 'ชนิด', w: 92, list: function () { return S.schema.lineKinds; } },
-      { k: 'payee', label: 'รายชื่อผู้รับ', w: 270, list: function () { return S.docs.payees || []; } },
-      { k: 'gross', label: 'จำนวนที่ขอเบิก', w: 124, type: 'money', align: 'r' },
-      { k: 'tax', label: 'ภาษี', w: 100, type: 'money' },
-      { k: 'net', label: 'จำนวนเงินที่จ่าย', w: 128, type: 'money', calc: function (r) { return (Number(r.gross) || 0) - (Number(r.tax) || 0); } },
-      { k: 'type', label: 'ประเภทเงิน', w: 168, list: function () { return S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่'; }).map(function (t) { return t[1]; }); } },
-      { k: 'group', label: 'รายการเงิน', w: 96, calc: function (r) { var id = typeIdOf(r.type); return id ? typeGroup(id) : ''; } },
-      { k: 'taxType', label: 'ประเภทภาษี', w: 112, list: function () { return S.schema.taxTypes; } },
-      { k: 'method', label: 'วิธีจ่าย', w: 84, list: function () { return S.schema.payMethods; } }
+      { k: 'chk', label: '', w: 40, type: 'chk' },
+      { k: 'date', label: 'วันที่เบิก', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
+      { k: 'grp', label: 'ขบ.', w: 84, ph: 'อัตโนมัติ' },
+      { k: 'khj', label: 'ขจ.', w: 66, ro: true },
+      { k: 'kind', label: 'ชนิด', w: 88, list: function () { return S.schema.lineKinds; } },
+      { k: 'payee', label: 'รายชื่อผู้รับ', w: 250, list: function () { return S.docs.payees || []; } },
+      { k: 'gross', label: 'จำนวนที่ขอเบิก', w: 120, type: 'money' },
+      { k: 'tax', label: 'ภาษี', w: 96, type: 'money' },
+      { k: 'net', label: 'จำนวนเงินที่จ่าย', w: 124, type: 'money', calc: function (r) { return (Number(r.gross) || 0) - (Number(r.tax) || 0); } },
+      { k: 'type', label: 'ประเภทเงิน', w: 160, list: function () { return S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่'; }).map(function (t) { return t[1]; }); } },
+      { k: 'group', label: 'รายการเงิน', w: 92, calc: function (r) { var id = typeIdOf(r.type); return id ? typeGroup(id) : ''; } },
+      { k: 'taxType', label: 'ประเภทภาษี', w: 108, list: function () { return S.schema.taxTypes; } },
+      { k: 'method', label: 'วิธีจ่าย', w: 80, list: function () { return S.schema.payMethods; } },
+      { k: 'ref', label: 'เลขเช็ค / อ้างอิง', w: 124, ph: 'หลัง ขจ.' },
+      { k: 'store', label: 'จ่ายจากที่เก็บ', w: 168, list: function () { return S.st.stores.map(function (s) { return s[1]; }); } },
+      { k: 'paid', label: 'วันที่จ่ายจริง', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
+      { k: 'status', label: 'สถานะ', w: 96, ro: true, tag: true }
     ];
   }
-  function gridPre() {
-    var out = [], mk = gridMonth;
+  var PAYCOLS = { method: 1, ref: 1, store: 1, paid: 1 };
+  var ST_TXT = { wait: 'รอทำ ขจ.', 'in': 'รอจ่ายเงิน', paid: 'จ่ายแล้ว', cancel: 'ยกเลิก' };
+  /** แถวเดิมจาก ขบ. ทั้งปีงบ (แถวเดียวกันตลอดสาย ขบ. → ขจ. → จ่ายเงิน) */
+  function oldRows() {
+    var out = [];
     khbs().forEach(function (h) {
-      if (mk && h.date.slice(0, 7) !== mk) return;
       h.lines.forEach(function (l) {
-        out.push({ date: h.date, grp: 'ขบ.' + h.no, khj: l.khjNo ? 'ขจ.' + l.khjNo : (h.status === 'ยกเลิก' ? 'ยกเลิก' : ''), kind: l.kind, payee: l.payee, gross: l.gross, tax: l.tax, net: l.net, type: typeName(l.type), group: typeGroup(l.type), taxType: l.taxType, method: l.method });
+        var st = h.status === 'ยกเลิก' ? 'cancel' : l.state === 'จ่ายแล้ว' ? 'paid' : l.state === 'อยู่ใน ขจ.' ? 'in' : 'wait';
+        var mainStore = mainStoreOfType(l.type);
+        out.push({ _old: true, _st: st, _fy: h.fy, _no: h.no, _seq: l.seq, _khj: l.khjNo || 0, date: h.date, grp: 'ขบ.' + h.no, khj: l.khjNo ? 'ขจ.' + l.khjNo : '', kind: l.kind, payee: l.payee, gross: l.gross, tax: l.tax, type: typeName(l.type), taxType: l.taxType,
+          method: l.payMethod || l.method, ref: l.ref || '', store: l.store ? storeNameOf(l.store) : (st === 'in' ? storeNameOf(mainStore) : ''), paid: l.paidDate || '', status: ST_TXT[st] });
       });
     });
-    out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a._no - b._no) || (a._seq - b._seq); });
     return out;
   }
-
   /** วางจากชีท "รายการ" เดิม (วันที่เบิก | เดือน | ขบ. | ขจ. | ชนิด | เงินยืม | รายชื่อผู้รับ | มูลค่าสินค้า | จำนวนเงินที่จ่าย | ภาษี | จำนวนที่ขอเบิก | ประเภทเงิน | รายการเงิน | ประเภทภาษี | หมายเหตุ)
       หรือแบบมีหัวตารางตามชื่อช่องในตารางนี้ · ถ้าไม่ตรงแบบ คืน null แล้วตารางวางตามตำแหน่งช่อง */
   function gridFromSheet(text, prev) {
@@ -170,42 +183,78 @@ var Docs = (function () {
   }
   function renderGrid(dv) {
     if (!gridMonth) gridMonth = (S.date || defaultDate()).slice(0, 7);
-    var mons = []; for (var i = 0; i < 12; i++) { var d0 = new Date(S.st.fyStart + 'T00:00:00'), x = new Date(d0.getFullYear(), d0.getMonth() + i, 1); mons.push([x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2), MONTHS_L[x.getMonth()] + ' ' + (x.getFullYear() + 543)]); }
-    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางกรอก ขบ. (แถวละรายการ)</h2><p class="hint" style="margin:4px 0 0">พิมพ์ต่อท้ายตาราง หรือคัดลอกหลายแถวจาก Excel แล้ว Ctrl+V · ลูกศร/Enter/Tab เลื่อนช่อง · Ctrl+D คัดลอกจากแถวบน · ภาษีเติมให้ตามทะเบียนผู้รับ</p></div>' +
-      '<div class="xtools"><label class="f inl">แสดงข้อมูลเดิม<select id="xMon"><option value="">ทั้งหมด</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gridMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '<option value="-"' + (gridMonth === '-' ? ' selected' : '') + '>ซ่อน</option></select></label>' +
-      '<button class="btn ghost sm" type="button" id="xReg">ทะเบียนผู้รับ / ภาษี</button><button class="btn ghost sm" type="button" id="xXls">ส่งออก Excel</button><button class="btn ghost sm" type="button" id="xClear">ล้างแถวใหม่</button><button class="btn" type="button" id="xSave">บันทึกแถวใหม่</button></div></div>' +
+    var fin = can.fin(), mons = [];
+    for (var i = 0; i < 12; i++) { var d0 = new Date(S.st.fyStart + 'T00:00:00'), x = new Date(d0.getFullYear(), d0.getMonth() + i, 1); mons.push([x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2), MONTHS_L[x.getMonth()] + ' ' + (x.getFullYear() + 543)]); }
+    var olds = oldRows(), cnt = { wait: 0, 'in': 0, paid: 0 };
+    olds.forEach(function (r) { if (cnt[r._st] !== undefined) cnt[r._st]++; });
+    function chip(id, label, n) { return '<button type="button" class="fchip" data-f="' + id + '" aria-pressed="' + (gridFilter === id) + '">' + label + (n === undefined ? '' : ' <b>' + n + '</b>') + '</button>'; }
+    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางเดียว ครบวงจร ขบ. → ขจ. → จ่ายเงิน</h2>' +
+      '<p class="hint" style="margin:4px 0 0">① พิมพ์/วางแถวใหม่ท้ายตาราง แล้วบันทึกแถวใหม่ → ② ติ๊กแถวที่ "รอทำ ขจ." แล้วกดสร้าง ขจ. → ③ กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดียวกัน (Ctrl+D คัดลอกลงล่าง) แล้วกดบันทึกการจ่าย · แถวที่อยู่ใน ขจ. แล้วจะไม่ถูกเลือกซ้ำ</p></div>' +
+      '<div class="xtools"><label class="f inl">เดือน<select id="xMon"><option value="">ทั้งปีงบ</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gridMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '</select></label>' +
+      '<button class="btn ghost sm" type="button" id="xReg">ทะเบียนผู้รับ / ภาษี</button><button class="btn ghost sm" type="button" id="xXls">ส่งออก Excel</button></div></div>' +
+      '<div class="xflow"><div class="fchips" role="group" aria-label="กรองสถานะ">' + chip('all', 'ทั้งหมด') + chip('wait', 'รอทำ ขจ.', cnt.wait) + chip('in', 'รอจ่ายเงิน', cnt['in']) + chip('paid', 'จ่ายแล้ว', cnt.paid) + '</div>' +
+      '<div class="fact"><span class="fstep" id="fSel"></span>' + (fin ? '<label class="f inl">วันที่ ขจ.<input type="date" id="xKhjDate" value="' + esc(defaultDate()) + '" min="' + esc(S.st.fyStart) + '" max="' + esc(S.st.fyEnd) + '"></label><button class="btn soft sm" type="button" id="xAllWait">ติ๊กทั้งหมดที่รอ</button><button class="btn sm" type="button" id="xMake" disabled>สร้าง ขจ.</button><button class="btn sm" type="button" id="xPay" disabled>บันทึกการจ่าย</button>' : '') +
+      '<button class="btn ghost sm" type="button" id="xClear">ล้างแถวใหม่</button><button class="btn" type="button" id="xSave">บันทึกแถวใหม่</button></div></div>' +
       '<div id="xHost"></div><div class="xstat" id="xStat"></div></section>';
+    function hide(r) {
+      if (gridFilter !== 'all' && r._st !== gridFilter) return true;
+      if (gridMonth && r.date.slice(0, 7) !== gridMonth && !(gridFilter !== 'all' && (r._st === 'wait' || r._st === 'in') && gridFilter !== 'paid')) return true;
+      return false;
+    }
     var g = Grid.create($('xHost'), {
-      cols: gridCols(), pre: gridMonth === '-' ? [] : gridPre(), rows: gridRows || [], blank: gridBlank, onRow: function (r, k) { gridOnRow(r, k); if (g) { var ri = g.rows().indexOf(r); g.set(ri, 'gross', r.gross); } stat(); gridRows = g ? g.rows() : null; },
+      cols: gridCols(), rows: olds.concat(gridRows || []), blank: gridBlank, hide: hide,
+      chkOk: function (r) { return fin && r._st === 'wait'; },
+      cellRo: function (r, c) { return !(r._st === 'in' && fin && PAYCOLS[c.k]); },
+      rowCls: function (r) { return (r._old ? 'st-' + r._st : '') + (r._on ? ' sel' : ''); },
+      onRow: function (r, k) { gridOnRow(r, k); if (!r._old) { var ri = g.rows().indexOf(r); g.set(ri, 'gross', r.gross); } bar(); },
+      onChk: function () { bar(); },
       isEmpty: function (r) { return !r.payee && !r.gross; },
       onPaste: function (text, api) {
         var list = gridFromSheet(text, g.filled().slice(-1)[0]);
         if (!list) return false;
-        api.append(list); gridRows = api.rows(); stat();
-        toast('วางแล้ว ' + list.length + ' แถว — ตรวจวันที่และประเภทเงินก่อนบันทึก', 'good');
+        api.append(list); bar(); toast('วางแล้ว ' + list.length + ' แถว — ตรวจวันที่และประเภทเงินก่อนบันทึก', 'good');
         return true;
       },
       totals: function (rows) {
-        var gs = 0, ts = 0; rows.forEach(function (r) { gs += Math.round((Number(r.gross) || 0) * 100); ts += Math.round((Number(r.tax) || 0) * 100); });
-        return '<td colspan="5" class="tl">รวมแถวใหม่ ' + rows.filter(function (r) { return r.payee || r.gross; }).length + ' แถว</td><td class="mn">' + Grid.fmtN(gs / 100) + '</td><td class="mn">' + Grid.fmtN(ts / 100) + '</td><td class="mn">' + Grid.fmtN((gs - ts) / 100) + '</td><td colspan="4"></td>';
+        var gs = 0, ts = 0, n = 0; rows.forEach(function (r) { if (r._old) return; if (r.payee || r.gross) n++; gs += Math.round((Number(r.gross) || 0) * 100); ts += Math.round((Number(r.tax) || 0) * 100); });
+        return '<td colspan="6" class="tl">รวมแถวใหม่ ' + n + ' แถว</td><td class="mn">' + Grid.fmtN(gs / 100) + '</td><td class="mn">' + Grid.fmtN(ts / 100) + '</td><td class="mn">' + Grid.fmtN((gs - ts) / 100) + '</td><td colspan="8"></td>';
       }
     });
-    function stat() { var n = g.filled().length; $('xStat').textContent = n ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + n + ' แถว' : ''; gridRows = g.rows(); }
-    stat();
-    $('xMon').onchange = function () { gridMonth = this.value; gridRows = g.rows(); renderGrid(dv); };
+    function bar() {
+      var sel = g.selected(), sum = 0; sel.forEach(function (r) { sum += Math.round(((Number(r.gross) || 0) - (Number(r.tax) || 0)) * 100); });
+      var dr = g.dirty().filter(function (r) { return r._st === 'in'; }), nw = g.filled().length;
+      var kd = $('xKhjDate'); if (kd && sel.length && !kd.getAttribute('data-u')) { var md = defaultDate(); sel.forEach(function (r) { if (r.date > md) md = r.date; }); kd.value = md; }
+      if ($('fSel')) $('fSel').textContent = sel.length ? 'เลือก ' + sel.length + ' รายการ · ' + money(sum / 100) + ' บาท' : '';
+      if ($('xMake')) { $('xMake').disabled = !sel.length; $('xMake').textContent = sel.length ? 'สร้าง ขจ. จาก ' + sel.length + ' รายการ' : 'สร้าง ขจ.'; }
+      if ($('xPay')) { $('xPay').disabled = !dr.length; $('xPay').textContent = dr.length ? 'บันทึกการจ่าย ' + dr.length + ' แถว' : 'บันทึกการจ่าย'; }
+      $('xSave').textContent = nw ? 'บันทึกแถวใหม่ ' + nw + ' แถว' : 'บันทึกแถวใหม่';
+      $('xStat').textContent = nw ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + nw + ' แถว' : '';
+      gridRows = g.rows().filter(function (r) { return !r._old; });
+    }
+    bar();
+    Array.prototype.forEach.call(dv.querySelectorAll('[data-f]'), function (b) { b.onclick = function () { gridFilter = b.getAttribute('data-f'); gridRows = g.rows().filter(function (r) { return !r._old; }); renderGrid(dv); }; });
+    $('xMon').onchange = function () { gridMonth = this.value; gridRows = g.rows().filter(function (r) { return !r._old; }); renderGrid(dv); };
     $('xReg').onclick = function () { openPayees(); };
     $('xXls').onclick = function () {
       if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริงที่วางบน Netlify', 'err'); return; }
-      var all = (gridMonth === '-' ? [] : gridPre()).map(function (p) { return [thaiDate(p.date), p.grp, p.khj || '', p.kind, p.payee, p.gross, p.tax, p.net, p.type, p.group, p.taxType, p.method]; });
-      g.filled().forEach(function (r) { var gv = Number(r.gross) || 0, tv = Number(r.tax) || 0, id = typeIdOf(r.type); all.push([r.date ? thaiDate(r.date) : '', r.grp || '', '', r.kind, r.payee, gv, tv, gv - tv, r.type, id ? typeGroup(id) : '', r.taxType, r.method]); });
-      var cols = [{ label: 'วันที่เบิก', w: 14, type: 'center' }, { label: 'ขบ.', w: 11, type: 'center' }, { label: 'ขจ.', w: 8, type: 'center' }, { label: 'ชนิด', w: 10, type: 'center' }, { label: 'รายชื่อผู้รับ', w: 40 }, { label: 'จำนวนที่ขอเบิก', w: 17, type: 'money', sum: true }, { label: 'ภาษี', w: 12, type: 'money', sum: true }, { label: 'จำนวนเงินที่จ่าย', w: 17, type: 'money', sum: true }, { label: 'ประเภทเงิน', w: 22 }, { label: 'รายการเงิน', w: 12, type: 'center' }, { label: 'ประเภทภาษี', w: 14, type: 'center' }, { label: 'วิธีจ่าย', w: 10, type: 'center' }];
-      busy(this, XlsxExport.sheet('ทะเบียนรายการ ขบ. ปีงบ ' + S.st.fy, cols, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'รายการ-ขบ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
+      var all = [];
+      g.rows().forEach(function (r) {
+        if (r._old ? hide(r) : !(r.payee || r.gross)) return;
+        var gv = Number(r.gross) || 0, tv = Number(r.tax) || 0, id = typeIdOf(r.type);
+        all.push([r.date ? thaiDate(r.date) : '', r.grp || '', r.khj || '', r.kind, r.payee, gv, tv, gv - tv, r.type, id ? typeGroup(id) : '', r.taxType, r.method, r.ref || '', r.store || '', r.paid ? thaiDate(r.paid) : '', r._old ? r.status : 'ยังไม่บันทึก']);
+      });
+      var cols = [{ label: 'วันที่เบิก', w: 14, type: 'center' }, { label: 'ขบ.', w: 10, type: 'center' }, { label: 'ขจ.', w: 8, type: 'center' }, { label: 'ชนิด', w: 10, type: 'center' }, { label: 'รายชื่อผู้รับ', w: 38 }, { label: 'จำนวนที่ขอเบิก', w: 16, type: 'money', sum: true }, { label: 'ภาษี', w: 12, type: 'money', sum: true }, { label: 'จำนวนเงินที่จ่าย', w: 16, type: 'money', sum: true }, { label: 'ประเภทเงิน', w: 22 }, { label: 'รายการเงิน', w: 12, type: 'center' }, { label: 'ประเภทภาษี', w: 13, type: 'center' }, { label: 'วิธีจ่าย', w: 9, type: 'center' }, { label: 'เลขเช็ค/อ้างอิง', w: 15, type: 'center' }, { label: 'จ่ายจากที่เก็บ', w: 24 }, { label: 'วันที่จ่ายจริง', w: 14, type: 'center' }, { label: 'สถานะ', w: 12, type: 'center' }];
+      busy(this, XlsxExport.sheet('ทะเบียนรายการ ขบ.-ขจ. ปีงบ ' + S.st.fy, cols, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ทะเบียน-ขบ-ขจ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
     };
-    $('xClear').onclick = function () { gridRows = null; g.replace([]); stat(); toast('ล้างแถวใหม่แล้ว'); };
+    $('xClear').onclick = function () { gridRows = null; g.replace(g.rows().filter(function (r) { return r._old; })); bar(); toast('ล้างแถวใหม่แล้ว'); };
+    function afterSave(toastText, kind) {
+      return Promise.all([reloadDocs(), reloadSettings()]).then(function () { toast(toastText, kind || 'good'); if (S.tab === 'expense' && seg === 'grid' && $('dv')) renderGrid($('dv')); });
+    }
+    /* ① บันทึกแถวใหม่ -> ขบ. */
     $('xSave').onclick = function () {
-      var rows = g.rows(), ctx = pasteCtx(), groups = {}, order = [], bad = 0, errMsg = '';
+      var rows = g.rows(), groups = {}, order = [], bad = 0, errMsg = '';
       rows.forEach(function (r, ri) {
-        if (!r.payee && !r.gross) return;
+        if (r._old || (!r.payee && !r.gross)) return;
         var id = typeIdOf(r.type), iso = /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') ? r.date : '', gv = Number(r.gross) || 0;
         function m(k) { g.mark(ri, k); bad++; }
         if (!iso) m('date'); if (!r.payee) m('payee'); if (!(gv > 0)) m('gross'); if (!id) m('type');
@@ -218,8 +267,7 @@ var Docs = (function () {
       });
       if (!order.length) { toast('ยังไม่มีแถวใหม่ให้บันทึก', 'err'); return; }
       if (bad || errMsg) { toast(errMsg || 'มี ' + bad + ' ช่องที่ยังไม่ครบ (ช่องสีแดง) — วันที่ ผู้รับ จำนวนเงิน ประเภทเงิน ชนิด วิธีจ่าย', 'err'); return; }
-      var btn = this, done = [], keep = rows.slice();
-      var p = Promise.resolve();
+      var done = [], keep = rows.filter(function (r) { return !r._old; }), p = Promise.resolve();
       order.forEach(function (key) {
         p = p.then(function () {
           var gp = groups[key];
@@ -228,8 +276,36 @@ var Docs = (function () {
             .catch(function (e) { gp.idx.forEach(function (ri) { g.markRow(ri); }); throw e; });
         });
       });
-      busy(btn, p).then(function () { toast('บันทึก ' + done.join(', ') + ' แล้ว', 'good'); }).catch(function (e) { toast((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); })
-        .then(function () { gridRows = keep; return Promise.all([reloadDocs(), reloadSettings()]); }).then(function () { if (S.tab === 'expense' && seg === 'grid') { var dv2 = $('dv'); if (dv2) renderGrid(dv2); } });
+      busy(this, p).then(function () { gridRows = keep; return afterSave('บันทึก ' + done.join(', ') + ' แล้ว — ติ๊กแถวที่ "รอทำ ขจ." เพื่อทำ ขจ. ต่อได้เลย'); })
+        .catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
+    };
+    if (!fin) return;
+    $('xKhjDate').onchange = function () { this.setAttribute('data-u', '1'); };
+    $('xAllWait').onclick = function () { var all = dv.querySelector('#xAll'); if (all) { all.checked = true; all.dispatchEvent(new Event('change', { bubbles: true })); } };
+    /* ② ติ๊กแถว -> สร้าง ขจ. */
+    $('xMake').onclick = function () {
+      var sel = g.selected(); if (!sel.length) return;
+      var items = sel.map(function (r) { return { fy: r._fy, no: r._no, seq: r._seq }; }), keep = g.rows().filter(function (r) { return !r._old; });
+      busy(this, api('createKhj', { date: $('xKhjDate').value, note: '', items: items })).then(function (res) {
+        gridRows = keep; return afterSave('สร้าง ขจ.' + res.no + ' แล้ว (' + items.length + ' รายการ) — กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดียวกัน แล้วกด "บันทึกการจ่าย"');
+      }).then(function () { gridFilter = 'in'; if ($('dv')) renderGrid($('dv')); }).catch(handleError);
+    };
+    /* ③ กรอกเลขเช็ค/ที่เก็บ/วันที่จ่ายในแถว -> บันทึกการจ่าย */
+    $('xPay').onclick = function () {
+      var drows = g.dirty().filter(function (r) { return r._st === 'in'; }), byKhj = {}, order = [], bad = 0, rowsAll = g.rows();
+      drows.forEach(function (r) {
+        var ri = rowsAll.indexOf(r), iso = r.paid && /^\d{4}-\d{2}-\d{2}$/.test(r.paid) ? r.paid : '', sid = storeIdOf(r.store);
+        function m(k) { g.mark(ri, k); bad++; }
+        if (r.paid && !iso) m('paid');
+        if (iso) { if (!sid) m('store'); if ((r.method === 'เช็ค' || r.method === 'KTB') && !String(r.ref || '').trim()) m('ref'); }
+        if (S.schema.payMethods.indexOf(r.method) < 0) m('method');
+        if (!byKhj[r._khj]) { byKhj[r._khj] = []; order.push(r._khj); }
+        byKhj[r._khj].push({ khbFy: r._fy, khbNo: r._no, seq: r._seq, method: r.method, ref: String(r.ref || '').trim(), store: sid, date: iso });
+      });
+      if (bad) { toast('มี ' + bad + ' ช่องที่ยังไม่ครบ (สีแดง) — จ่ายด้วยเช็ค/KTB ต้องมีเลขอ้างอิง และต้องเลือกที่เก็บเมื่อใส่วันที่จ่าย', 'err'); return; }
+      var done = [], p = Promise.resolve(), keep = g.rows().filter(function (r) { return !r._old; });
+      order.forEach(function (n) { p = p.then(function () { return api('savePayments', { no: n, rows: byKhj[n] }).then(function () { done.push('ขจ.' + n); }); }); });
+      busy(this, p).then(function () { gridRows = keep; return afterSave('บันทึกการจ่าย ' + done.join(', ') + ' แล้ว'); }).catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
     };
   }
 

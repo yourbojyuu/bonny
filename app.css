@@ -910,3 +910,28 @@ body.authed .bnav { position: sticky !important; top: max(8px, env(safe-area-ins
 .xlt tfoot th, .xlt tfoot td { position: sticky; bottom: 0; background: #eef1f7; font-weight: 700; z-index: 3; padding: 0 9px; height: 34px; border-top: 1.5px solid #b9c0cf; border-bottom: 0; }
 .xlt tfoot .mn { text-align: right; font-family: var(--num); } .xlt tfoot .tl { color: var(--muted); font-weight: 600; }
 .xstat { min-height: 22px; margin-top: 8px; font-size: 13.5px; color: var(--c1); font-weight: 700; }
+
+/* ---------- ตารางครบวงจร ขบ. → ขจ. → จ่าย ---------- */
+.xflow { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin: 0 0 10px; padding: 10px 12px; border-radius: 16px; background: color-mix(in srgb, var(--c2) 7%, #fff); border: 1px solid var(--line); }
+.fchips { display: flex; gap: 6px; flex-wrap: wrap; }
+.fchip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 13.5px; cursor: pointer; color: var(--ink2); transition: background .3s, color .3s, transform .3s var(--spring); }
+.fchip b { font-family: var(--num); margin-left: 4px; }
+.fchip[aria-pressed="true"] { background: linear-gradient(180deg, var(--c2), var(--c1)); color: #fff; border-color: transparent; }
+.fchip:active { transform: scale(.95); }
+.fact { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.fstep { font-weight: 700; color: var(--c1); font-size: 13.5px; }
+.xlt td.chk { text-align: center; background: #f7f8fb; }
+.xlt td.chk input { width: 18px; height: 18px; min-height: 0; margin: 0; accent-color: var(--c1); cursor: pointer; }
+.xlt thead th input[type="checkbox"] { width: 17px; height: 17px; min-height: 0; accent-color: var(--c1); vertical-align: middle; cursor: pointer; }
+.xlt tr.old.st-wait td.xc { background: #fff; color: var(--ink); }
+.xlt tr.old.st-wait td.xc.ro { background: #fffaf0; }
+.xlt tr.old.st-in td.xc.ro { background: #f4f8ff; }
+.xlt tr.old.st-in td.xc:not(.ro) { background: #fff; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c2) 35%, transparent); }
+.xlt tr.old.st-paid td.xc { background: #f3faf6; color: #4b6b5b; }
+.xlt tr.old.st-cancel td.xc { background: #f3f3f6; color: #9aa0ad; text-decoration: line-through; }
+.xlt tr.old th.rn { box-shadow: inset 3px 0 0 transparent; }
+.xlt tr.st-wait th.rn { box-shadow: inset 3px 0 0 #ffb020; } .xlt tr.st-in th.rn { box-shadow: inset 3px 0 0 #3b9bff; } .xlt tr.st-paid th.rn { box-shadow: inset 3px 0 0 #12b863; } .xlt tr.st-cancel th.rn { box-shadow: inset 3px 0 0 #b6bccb; }
+.xlt tr.sel td.xc { background: color-mix(in srgb, var(--c2) 14%, #fff) !important; }
+.xlt td.tag input { font-weight: 700; text-align: center; }
+.xlt tr.st-wait td.tag input { color: #a35f00; } .xlt tr.st-in td.tag input { color: #1262f0; } .xlt tr.st-paid td.tag input { color: #079a55; }
+.xlt tr.old td.xc { height: 31px; }

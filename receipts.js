@@ -74,13 +74,13 @@ var Receipts = (function () {
       { k: 'status', label: 'สถานะ', w: 80, ro: true }
     ];
     var pre = rows().filter(function (x) { return !gMonth || gMonth === '-' ? gMonth !== '-' : String(x[3]).slice(0, 7) === gMonth; }).sort(function (a, b) { return a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : 0; }).map(function (x) {
-      return { date: x[3], book: x[0], no: x[1] + (Number(x[2]) > 1 ? '.' + x[2] : ''), type: typeName(x[5]), method: x[6], amount: x[7], payer: x[4], status: x[8] ? 'ยกเลิก' : '' };
+      return { _old: true, date: x[3], book: x[0], no: x[1] + (Number(x[2]) > 1 ? '.' + x[2] : ''), type: typeName(x[5]), method: x[6], amount: x[7], payer: x[4], status: x[8] ? 'ยกเลิก' : '' };
     });
     dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางกรอกใบเสร็จ (แถวละรายการ)</h2><p class="hint" style="margin:4px 0 0">พิมพ์ต่อท้ายตาราง หรือคัดลอกจากไฟล์ใบเสร็จเดิมแล้ว Ctrl+V · เลขที่เพิ่มให้ทีละ 1 · ระบบตรวจซ้ำและวันที่ที่ปิดแล้วก่อนบันทึก</p></div>' +
       '<div class="xtools"><label class="f inl">แสดงข้อมูลเดิม<select id="rxMon"><option value="">ทั้งหมด</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '<option value="-"' + (gMonth === '-' ? ' selected' : '') + '>ซ่อน</option></select></label>' +
       '<button class="btn ghost sm" type="button" id="rxXls">ส่งออก Excel</button><button class="btn ghost sm" type="button" id="rxClear">ล้างแถวใหม่</button><button class="btn" type="button" id="rxSave">บันทึกแถวใหม่</button></div></div><div id="rxHost"></div><div class="xstat" id="rxStat"></div></section>';
     var g = Grid.create($('rxHost'), {
-      cols: cols, pre: gMonth === '-' ? [] : pre, rows: gRows || [], blank: gBlank,
+      cols: cols, rows: (gMonth === '-' ? [] : pre).concat(gRows || []), blank: gBlank,
       isEmpty: function (r) { return !r.amount && !r.payer; },
       onRow: function () { stat(); },
       onPaste: function (text, api) {
@@ -91,9 +91,9 @@ var Receipts = (function () {
       },
       totals: function (rs) { var s = 0; rs.forEach(function (r) { s += Math.round((Number(r.amount) || 0) * 100); }); return '<td colspan="5" class="tl">รวมแถวใหม่ ' + rs.filter(function (r) { return r.amount || r.payer; }).length + ' แถว</td><td class="mn">' + Grid.fmtN(s / 100) + '</td><td colspan="2"></td>'; }
     });
-    function stat() { var n = g.filled().length; $('rxStat').textContent = n ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + n + ' แถว' : ''; gRows = g.rows(); }
+    function stat() { var n = g.filled().length; $('rxStat').textContent = n ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + n + ' แถว' : ''; gRows = g.rows().filter(function (x) { return !x._old; }); }
     stat();
-    $('rxMon').onchange = function () { gMonth = this.value; gRows = g.rows(); renderGrid(dv); };
+    $('rxMon').onchange = function () { gMonth = this.value; stat(); renderGrid(dv); };
     $('rxXls').onclick = function () {
       if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริงที่วางบน Netlify', 'err'); return; }
       var all = (gMonth === '-' ? [] : pre).map(function (p) { return [thaiDate(p.date), p.book, p.no, p.type, p.method, p.amount, p.payer, p.status]; });
@@ -101,11 +101,11 @@ var Receipts = (function () {
       var cc = [{ label: 'วันที่', w: 14, type: 'center' }, { label: 'เล่มที่', w: 10, type: 'center' }, { label: 'เลขที่', w: 10, type: 'center' }, { label: 'ประเภทเงิน', w: 30 }, { label: 'วิธีรับ', w: 9, type: 'center' }, { label: 'จำนวนเงิน', w: 17, type: 'money', sum: true }, { label: 'ผู้ชำระ', w: 28 }, { label: 'สถานะ', w: 10, type: 'center' }];
       busy(this, XlsxExport.sheet('ทะเบียนใบเสร็จ ปีงบ ' + S.st.fy, cc, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ใบเสร็จ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
     };
-    $('rxClear').onclick = function () { gRows = null; g.replace([]); stat(); toast('ล้างแถวใหม่แล้ว'); };
+    $('rxClear').onclick = function () { gRows = null; g.replace(g.rows().filter(function (x) { return x._old; })); stat(); toast('ล้างแถวใหม่แล้ว'); };
     $('rxSave').onclick = function () {
       var rowsAll = g.rows(), items = [], idx = [];
       rowsAll.forEach(function (r, ri) {
-        if (!r.amount && !r.payer) return;
+        if (r._old || (!r.amount && !r.payer)) return;
         var id = typeIdOfName(r.type); idx.push(ri);
         if (!id) g.mark(ri, 'type'); if (!(Number(r.amount) > 0)) g.mark(ri, 'amount'); if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) g.mark(ri, 'date'); if (!r.book) g.mark(ri, 'book'); if (!r.no) g.mark(ri, 'no');
         items.push({ date: r.date, book: r.book, no: r.no, type: id || r.type, method: r.method, amount: String(r.amount), payer: r.payer });

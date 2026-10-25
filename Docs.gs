@@ -267,7 +267,8 @@ function serializeDocs(idx) {
       counts[l.state] = (counts[l.state] || 0) + 1;
       return { seq: l.seq, type: l.type, payee: l.payee, kind: l.kind, method: l.method, gross: l.gross, tax: l.tax,
         taxType: l.taxType, net: l.net, state: l.state,
-        khjFy: l.pay ? l.pay.fy : null, khjNo: l.pay ? l.pay.no : null, ref: l.pay ? l.pay.ref : '', paidDate: l.pay ? l.pay.date : '' };
+        khjFy: l.pay ? l.pay.fy : null, khjNo: l.pay ? l.pay.no : null, ref: l.pay ? l.pay.ref : '', paidDate: l.pay ? l.pay.date : '',
+        payMethod: l.pay ? l.pay.method : '', store: l.pay ? l.pay.store : '' };
     });
     return { fy: h.fy, no: h.no, date: h.date, note: h.note, by: h.by, status: h.status, lines: lines,
       total: { gross: tot.gross / 100, tax: tot.tax / 100, net: tot.net / 100 }, counts: counts };
