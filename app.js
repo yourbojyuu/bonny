@@ -375,16 +375,34 @@ function countUp(el, to) {
 }
 
 /* ================= ภาพรวม ================= */
+/** ฉากตกแต่ง hero: แต่ละแท็บมีเรื่องของตัวเอง (เรขาคณิต + กระจกเหลวแบบแบน) */
 function heroDeco(kind) {
-  var b = kind === 'income'
-    ? '<rect class="hg" x="270" y="150" width="62" height="170" rx="22"/><rect class="hg" x="350" y="90" width="62" height="230" rx="22"/><rect class="hg" x="430" y="20" width="62" height="300" rx="22"/><path class="hl" d="M240 230 C 320 210 370 150 430 100 S 500 30 540 10"/><circle class="hl" cx="300" cy="60" r="44"/>'
-    : kind === 'expense'
-    ? '<path class="hg" d="M300 -20h70L250 300h-70z"/><path class="hg" d="M400 -20h40L320 300h-40z"/><circle class="hl" cx="420" cy="220" r="90"/><circle class="hg" cx="470" cy="70" r="38"/>'
-    : '<circle class="hl" cx="380" cy="140" r="150"/><circle class="hl" cx="380" cy="140" r="104" stroke-dasharray="3 9"/><circle class="hg" cx="430" cy="70" r="64"/><rect class="hg" x="250" y="170" width="110" height="110" rx="30" transform="rotate(16 305 225)"/>';
-  return '<div class="deco" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i>' +
-    '<i class="blob bl1"></i><i class="blob bl2"></i><i class="sph s1"></i><i class="sph s2"></i><i class="sph s3"></i>' +
-    '<svg class="ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="70"/><circle class="dot" cx="100" cy="8" r="5"/></svg>' +
-    '<svg class="geo" viewBox="0 0 520 300">' + b + '</svg></div>';
+  var G = '<defs><linearGradient id="hg-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity=".07"/></linearGradient>' +
+    '<linearGradient id="hv-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient></defs>';
+  var s = '', f = 'url(#hg-' + kind + ')', v = 'url(#hv-' + kind + ')', i;
+  if (kind === 'income') {            // เติบโต: แท่งกระจกสูงขึ้น เส้นพุ่ง หยดลอยขึ้น
+    var hs = [62, 98, 134, 176, 222];
+    for (i = 0; i < 5; i++) s += '<rect class="gbar" style="animation-delay:' + (i * 0.35) + 's" x="' + (292 + i * 58) + '" y="' + (282 - hs[i]) + '" width="42" height="' + hs[i] + '" rx="15" fill="' + v + '"/>';
+    s += '<path class="ln trend" pathLength="1" d="M300 205 C350 190 380 160 420 150 S500 90 560 38"/><path class="ln" d="M545 36 l15 2 -6 14"/>' +
+      '<circle class="drop d1" cx="272" cy="150" r="9" fill="' + f + '"/><circle class="drop d2" cx="500" cy="190" r="6" fill="' + f + '"/><circle class="drop d3" cx="410" cy="120" r="12" fill="' + f + '"/><circle class="drop d4" cx="548" cy="120" r="5" fill="' + f + '"/>';
+  } else if (kind === 'expense') {    // ไหลออก: แผ่นกระจกเฉียง ริบบิ้นไหล แท่งขั้นบันไดลดลง
+    for (i = 0; i < 5; i++) s += '<path class="slat" style="animation-delay:' + (i * -1.4) + 's" fill="' + f + '" d="M' + (262 + i * 54) + ' 290 L' + (318 + i * 54) + ' 10 L' + (342 + i * 54) + ' 10 L' + (286 + i * 54) + ' 290Z" opacity="' + (0.5 + i * 0.1) + '"/>';
+    s += '<path class="ln gflow" d="M250 60 C330 60 360 200 450 200 S540 250 600 240"/><path class="ln gflow gf2" d="M270 20 C350 30 390 140 470 140 S560 190 610 180"/>';
+    var ws = [118, 94, 70, 48];
+    for (i = 0; i < 4; i++) s += '<rect class="gpill" style="animation-delay:' + (i * 0.5) + 's" x="' + (330 + i * 44) + '" y="' + (214 + i * 16) + '" width="' + ws[i] + '" height="26" rx="13" fill="' + f + '"/>';
+  } else if (kind === 'settings') {   // ปรับแต่ง: เฟืองหมุน แถบเลื่อน ลำแสง
+    s += '<g class="rays">'; for (i = 0; i < 12; i++) s += '<line x1="450" y1="150" x2="450" y2="-30" transform="rotate(' + (i * 30) + ' 450 150)"/>'; s += '</g>' +
+      '<circle class="gear" cx="450" cy="150" r="66" fill="none" stroke="' + f + '" stroke-width="24" stroke-dasharray="12.9 12.9"/><circle cx="450" cy="150" r="52" fill="' + f + '"/><circle class="ln" cx="450" cy="150" r="22" fill="none"/>' +
+      '<circle class="gear rev" cx="352" cy="232" r="38" fill="none" stroke="' + f + '" stroke-width="16" stroke-dasharray="9.9 9.9"/><circle cx="352" cy="232" r="29" fill="' + f + '"/>';
+    for (i = 0; i < 3; i++) s += '<line class="trk" x1="' + (250 + i * 14) + '" x2="' + (360 + i * 14) + '" y1="' + (52 + i * 34) + '" y2="' + (52 + i * 34) + '"/><circle class="knob k' + i + '" cx="' + (280 + i * 14) + '" cy="' + (52 + i * 34) + '" r="9" fill="' + f + '"/>';
+  } else {                            // ภาพรวม: วงโคจร เกจ การ์ดซ้อน เส้นกราฟ
+    s += '<circle class="gl" cx="430" cy="150" r="112" fill="' + f + '"/><circle cx="430" cy="150" r="76" fill="' + f + '" opacity=".7"/>' +
+      '<circle class="ln dash spin" cx="430" cy="150" r="140" fill="none"/><path class="ln gauge" pathLength="1" d="M340 150 A90 90 0 1 1 430 240" fill="none"/>' +
+      '<g class="orbit"><circle class="dotw" cx="430" cy="10" r="6"/></g>' +
+      '<rect class="gcard c1" x="250" y="188" width="150" height="66" rx="18" fill="' + f + '"/><rect class="gcard c2" x="300" y="224" width="150" height="56" rx="16" fill="' + f + '"/><rect class="gcard c3" x="500" y="60" width="86" height="86" rx="24" fill="' + f + '"/>' +
+      '<path class="ln spark" pathLength="1" d="M350 176 C380 140 400 196 430 150 S480 118 520 96" fill="none"/>';
+  }
+  return '<div class="deco k-' + kind + '" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><svg class="scene" viewBox="200 -20 420 340" preserveAspectRatio="xMaxYMid meet">' + G + '<g class="par">' + s + '</g></svg></div>';
 }
 function pendingAmount() {
   var w = 0, k = 0;

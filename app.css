@@ -724,3 +724,45 @@ html { scroll-behavior: smooth; }
 .hero .deco svg.geo { right: -30px; top: -20px; }
 @media (max-width: 640px) { .hero .deco .bl1 { width: 130px; height: 130px; right: -20px; top: -30px; } .hero .deco .bl2, .hero .deco .s3 { display: none; } .hero .deco svg.ring { width: 170px; height: 170px; right: -30px; top: -30px; } .hero .deco .s1 { width: 40px; height: 40px; right: 16%; top: 14px; } }
 @media (prefers-reduced-motion: reduce) { #bg .liq i, .hero .deco .blob, .hero .deco .sph, .hero .deco svg.ring { animation: none !important; } }
+
+/* ---------- hero: ฉากเฉพาะแต่ละแท็บ (แบน บางเบา) ---------- */
+.hero .deco .blob, .hero .deco .sph, .hero .deco svg.ring, .hero .deco svg.geo { display: none; }
+.hero .deco svg.scene { position: absolute; right: 0; top: 0; width: min(62%, 640px); height: 100%; opacity: 1; animation: none; transform: none; overflow: visible; }
+.hero .deco svg.scene * { transform-box: fill-box; }
+.hero .deco svg.scene > * { animation: none; }
+.hero .deco svg.scene > g.par { transform: translate(calc(var(--mx, 0) * -14px), calc(var(--my, 0) * -9px)); transition: transform .7s cubic-bezier(.22,1,.36,1); }
+.hero .deco svg.scene .ln { fill: none; stroke: rgba(255,255,255,.6); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.hero .deco svg.scene .dash { stroke-dasharray: 2 8; stroke: rgba(255,255,255,.45); }
+.hero .deco svg.scene .gl, .hero .deco svg.scene .gcard, .hero .deco svg.scene .gbar, .hero .deco svg.scene .slat, .hero .deco svg.scene .gpill, .hero .deco svg.scene .drop, .hero .deco svg.scene .knob, .hero .deco svg.scene .gear { stroke-opacity: 1; }
+.hero .deco svg.scene .gl, .hero .deco svg.scene .gcard, .hero .deco svg.scene .gbar, .hero .deco svg.scene .slat, .hero .deco svg.scene .gpill, .hero .deco svg.scene .drop, .hero .deco svg.scene .knob { stroke: rgba(255,255,255,.55); stroke-width: 1.2; }
+.hero .deco svg.scene .dotw { fill: #fff; filter: drop-shadow(0 0 5px rgba(255,255,255,.9)); }
+/* ภาพรวม */
+.k-overview .spin { transform-origin: 430px 150px; transform-box: view-box; animation: heroSpin 80s linear infinite; }
+.k-overview .orbit { transform-origin: 430px 150px; transform-box: view-box; animation: heroSpin 16s linear infinite; }
+.k-overview .gauge { stroke-width: 6; stroke-opacity: .85; stroke-dasharray: 1; stroke-dashoffset: 0; animation: gauge 7s ease-in-out infinite alternate; }
+.k-overview .spark { stroke-dasharray: 1; animation: draw 6s ease-in-out infinite alternate; stroke-width: 2.5; stroke: #fff; }
+.k-overview .gcard { animation: bob 8s ease-in-out infinite alternate; } .k-overview .c2 { animation-duration: 10s; animation-delay: -3s; } .k-overview .c3 { animation-duration: 7s; animation-delay: -1s; }
+@keyframes gauge { from { stroke-dashoffset: .55; } to { stroke-dashoffset: 0; } }
+@keyframes draw { from { stroke-dashoffset: .7; } to { stroke-dashoffset: 0; } }
+/* รายรับ */
+.k-income .gbar { transform-origin: 50% 100%; animation: barGrow 4.4s ease-in-out infinite alternate; }
+.k-income .trend { stroke-dasharray: 1; stroke: #fff; stroke-width: 2.6; animation: draw 5s ease-in-out infinite alternate; }
+.k-income .drop { animation: rise 6s ease-in infinite; } .k-income .d2 { animation-delay: -2s; } .k-income .d3 { animation-delay: -4s; animation-duration: 8s; } .k-income .d4 { animation-delay: -1s; animation-duration: 7s; }
+@keyframes barGrow { from { transform: scaleY(.55); } to { transform: scaleY(1); } }
+@keyframes rise { 0% { transform: translateY(40px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-90px); opacity: 0; } }
+/* รายจ่าย */
+.k-expense .slat { animation: slide 9s ease-in-out infinite alternate; }
+.k-expense .gflow { stroke-dasharray: 3 11; stroke: #fff; stroke-width: 2.4; animation: flow 3.2s linear infinite; } .k-expense .gf2 { stroke-width: 1.5; stroke-opacity: .6; animation-duration: 4.5s; }
+.k-expense .gpill { animation: slide 6s ease-in-out infinite alternate; }
+@keyframes slide { from { transform: translateX(-16px); } to { transform: translateX(22px); } }
+@keyframes flow { to { stroke-dashoffset: -28; } }
+/* ตั้งค่า */
+.k-settings .gear { transform-origin: 50% 50%; animation: heroSpin 46s linear infinite; } .k-settings .gear.rev { animation-direction: reverse; animation-duration: 32s; }
+.k-settings .rays { stroke: rgba(255,255,255,.28); stroke-width: 1.2; transform-origin: 450px 150px; transform-box: view-box; animation: heroSpin 120s linear infinite; }
+.k-settings .trk { stroke: rgba(255,255,255,.5); stroke-width: 3; stroke-linecap: round; }
+.k-settings .knob { animation: knob 5s ease-in-out infinite alternate; } .k-settings .k1 { animation-duration: 7s; animation-delay: -2s; } .k-settings .k2 { animation-duration: 6s; animation-delay: -4s; }
+@keyframes knob { from { transform: translateX(0); } to { transform: translateX(86px); } }
+.hero .deco .o1 { right: -30px; top: -80px; } 
+.k-income .o2 { background: radial-gradient(circle, #d6ffe9, transparent 70%); } .k-expense .o2 { background: radial-gradient(circle, #ffd2da, transparent 70%); } .k-settings .o2 { background: radial-gradient(circle, #fff2b8, transparent 70%); }
+@media (max-width: 640px) { .hero .deco svg.scene { width: 92%; opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .hero .deco svg.scene * { animation: none !important; } }
