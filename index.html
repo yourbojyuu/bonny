@@ -31,6 +31,8 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
 </section>
 
 <div id="app" hidden>
+  <div class="shell">
+  <nav class="side" id="side" aria-label="เมนูหลัก"></nav>
   <div class="wrap">
     <header class="top">
       <div class="brand">
@@ -42,6 +44,7 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
     <nav class="tabs glass" id="tabs" role="tablist" aria-label="เมนูหลัก"></nav>
     <main id="view"></main>
   </div>
+  </div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -50,6 +53,7 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
 <script src="paste.js"></script>
 <script src="docs.js"></script>
 <script src="receipts.js"></script>
+<script src="bento.js"></script>
 <script src="export.js"></script>
 <script src="vendor/exceljs.min.js" defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer onload="initGsi()"></script>
