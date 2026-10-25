@@ -98,6 +98,28 @@ var Docs = (function () {
     return '<div class="bar" aria-hidden="true"><i class="p" style="flex-grow:' + p + '"></i><i class="k" style="flex-grow:' + k + '"></i><i class="w" style="flex-grow:' + w + '"></i></div>' +
       '<div class="legend"><span><i style="background:var(--ok)"></i>จ่ายแล้ว ' + p + '</span><span><i style="background:var(--c2)"></i>ใน ขจ. ' + k + '</span><span><i style="background:#f5b13d"></i>รอจ่าย ' + w + '</span></div>';
   }
+  /** จัดกลุ่มรายการตามเดือน ยุบ/ขยายได้ จำสถานะที่กดไว้ เดือนล่าสุดเปิดเป็นค่าตั้งต้น (ค้นหาอยู่ = เปิดหมด) */
+  var monOpen = {};
+  function months(list, kind, dateOf, totalOf, card) {
+    var by = {}, keys = [];
+    list.forEach(function (x) { var k = String(dateOf(x)).slice(0, 7); if (!by[k]) { by[k] = []; keys.push(k); } by[k].push(x); });
+    keys.sort().reverse();
+    var n = 0;
+    return keys.map(function (k, ki) {
+      var arr = by[k], sat = 0, mk = kind + ':' + k;
+      arr.forEach(function (x) { sat += Math.round(totalOf(x) * 100); });
+      var open = q ? true : monOpen.hasOwnProperty(mk) ? monOpen[mk] : ki === 0;
+      return '<details class="mgrp" data-mk="' + mk + '"' + (open ? ' open' : '') + '><summary><span class="mn">' + esc(MONTHS_L[Number(k.slice(5)) - 1] + ' ' + (Number(k.slice(0, 4)) + 543)) + '</span>' +
+        '<span class="meta">' + arr.length + ' ฉบับ</span><span class="sp"></span><span class="money tot">' + money(sat / 100) + '</span><span class="chev" aria-hidden="true"></span></summary>' +
+        '<div class="grid stagger">' + arr.map(function (x) { return card(x, n++); }).join('') + '</div></details>';
+    }).join('');
+  }
+  function wireMonths(dv) {
+    Array.prototype.forEach.call(dv.querySelectorAll('details.mgrp'), function (el) {
+      el.addEventListener('toggle', function () { monOpen[el.getAttribute('data-mk')] = el.open; });
+    });
+  }
+
   function renderKhbList(dv) {
     var list = khbs().filter(function (h) {
       if (filt === 'open' && !(h.status !== 'ยกเลิก' && (h.counts['รอจ่าย'] || h.counts['อยู่ใน ขจ.']))) return false;
@@ -117,7 +139,7 @@ var Docs = (function () {
       h += '<div class="empty"><b>' + (khbs().length ? 'ไม่พบ ขบ. ที่ตรงเงื่อนไข' : 'ยังไม่มี ขบ. ในปีงบนี้') + '</b>' +
         (can.khb() && !khbs().length ? 'กด "สร้าง ขบ." เพื่อเริ่มกรอกรายการขอเบิกใบแรก' : 'ลองเปลี่ยนคำค้นหรือตัวกรอง') + '</div>';
     } else {
-      h += '<div class="grid stagger">' + list.map(function (x, i) {
+      h += months(list, 'khb', function (x) { return x.date; }, function (x) { return x.status === 'ยกเลิก' ? 0 : x.total.gross; }, function (x, i) {
         var n = x.lines.length;
         return '<button class="doc glass' + (x.status === 'ยกเลิก' ? ' cancel' : '') + '" type="button" data-khb="' + x.no + '" style="--i:' + Math.min(i, 12) + '">' +
           '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="no">ขบ.' + x.no + '/' + x.fy + '</span>' +
@@ -125,9 +147,9 @@ var Docs = (function () {
           '<div class="meta">' + esc(thaiDate(x.date)) + ' · ' + n + ' รายการ' + (x.note ? ' · ' + esc(x.note) : '') + '</div>' +
           '<div class="amt">' + money(x.total.gross) + ' <small class="meta">บาท</small></div>' +
           (x.status === 'ยกเลิก' ? '' : bar(x.counts, n)) + '</button>';
-      }).join('') + '</div>';
+      });
     }
-    dv.innerHTML = h;
+    dv.innerHTML = h; wireMonths(dv);
     $('q').oninput = function () { q = this.value; var pos = this.selectionStart; renderKhbList(dv); var qq = $('q'); qq.focus(); qq.setSelectionRange(pos, pos); };
     $('filt').onchange = function () { filt = this.value; renderKhbList(dv); };
     if ($('newKhb')) $('newKhb').onclick = function () { openKhb(null); };
@@ -459,7 +481,7 @@ var Docs = (function () {
     var h = '<div class="toolbar"><input class="grow" type="search" id="q" placeholder="ค้นหา เลข ขจ. / ผู้รับ / เลขเช็ค" value="' + esc(q) + '" aria-label="ค้นหา">' +
       '<button class="btn soft" type="button" data-to="pending">' + ICON.plus + ' สร้างจากรายการรอจ่าย</button></div>';
     if (!list.length) h += '<div class="empty"><b>' + (khjs().length ? 'ไม่พบ ขจ. ที่ตรงคำค้น' : 'ยังไม่มี ขจ.') + '</b>สร้าง ขจ. ได้จากแท็บ "รอจ่าย"</div>';
-    else h += '<div class="grid stagger">' + list.map(function (j, i) {
+    else h += months(list, 'khj', function (j) { return j.date; }, function (j) { return j.status === 'ยกเลิก' ? 0 : j.total; }, function (j, i) {
       var st = j.status === 'ยกเลิก' ? 'ยกเลิก' : j.paid === j.count ? 'จ่ายแล้ว' : 'อยู่ใน ขจ.';
       return '<button class="doc glass' + (j.status === 'ยกเลิก' ? ' cancel' : '') + '" type="button" data-khj="' + j.no + '" style="--i:' + Math.min(i, 12) + '">' +
         '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="no">ขจ.' + j.no + '/' + j.fy + '</span>' +
@@ -468,8 +490,8 @@ var Docs = (function () {
         '<div class="amt">' + money(j.total) + ' <small class="meta">บาท</small></div>' +
         (j.status === 'ยกเลิก' ? '' : '<div class="bar"><i class="p" style="flex-grow:' + j.paid + '"></i><i class="k" style="flex-grow:' + (j.count - j.paid) + '"></i></div>' +
           '<div class="legend"><span><i style="background:var(--ok)"></i>จ่ายแล้ว ' + j.paid + '/' + j.count + '</span></div>') + '</button>';
-    }).join('') + '</div>';
-    dv.innerHTML = h;
+    });
+    dv.innerHTML = h; wireMonths(dv);
     $('q').oninput = function () { q = this.value; var pos = this.selectionStart; renderKhjList(dv); var qq = $('q'); qq.focus(); qq.setSelectionRange(pos, pos); };
     dv.querySelector('[data-to]').onclick = function () { switchSeg('pending'); };
     Array.prototype.forEach.call(dv.querySelectorAll('[data-khj]'), function (b) {
@@ -657,6 +679,7 @@ var Docs = (function () {
       title: (kind === 'khb' ? 'ขบ.' : 'ขจ.') + no + '/' + fy() + ' · ตัวอย่างก่อนพิมพ์', width: 980,
       body: '<div class="paperwrap"><div class="skel" style="min-height:400px"></div></div>',
       footer: '<span class="hint" style="margin:0">ตรวจชื่อผู้ลงนามได้ที่หน้า ตั้งค่า</span><span class="sp"></span><button class="btn ghost" type="button" data-close>ปิด</button>' +
+        '<button class="btn ghost" type="button" id="pXlsx" disabled>' + ICON.down + ' ดาวน์โหลด Excel</button>' +
         '<button class="btn" type="button" id="pPrint" disabled>' + ICON.print + ' พิมพ์ / บันทึกเป็น PDF</button>',
       onClose: function () { document.body.classList.remove('printing'); }
     });
@@ -665,6 +688,12 @@ var Docs = (function () {
       wrap.innerHTML = '<div class="paper">' + (kind === 'khb' ? paperKhb(d) : paperKhj(d)) + '</div>';
       var paper = wrap.firstChild, avail = wrap.clientWidth - 16;
       if (avail > 0 && paper.offsetWidth > avail) paper.style.zoom = String(Math.max(0.42, avail / paper.offsetWidth));
+      var xb = m.el.querySelector('#pXlsx');
+      xb.disabled = false;
+      xb.onclick = function () {
+        if (!window.XlsxExport || !window.ExcelJS) { toast('ดาวน์โหลด Excel ใช้ได้ในเว็บจริงที่วางบน Netlify (หน้าตัวอย่างนี้ปิดการดาวน์โหลด)', 'err'); return; }
+        busy(xb, XlsxExport.download(d)).then(function (name) { toast('ดาวน์โหลด ' + name + ' แล้ว', 'good'); }).catch(handleError);
+      };
       var pb = m.el.querySelector('#pPrint');
       pb.disabled = false;
       pb.onclick = function () {

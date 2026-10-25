@@ -63,6 +63,7 @@ var ICON = {
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
   up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
 };
 
@@ -224,7 +225,7 @@ function buildBg() {
   var settings = L('settings',
     '<g class="f1"><circle class="l" cx="1320" cy="640" r="180" stroke-dasharray="2 12"/><circle class="g" cx="1320" cy="640" r="74"/></g>' +
     '<g class="f2"><rect class="t" x="1190" y="320" width="160" height="160" rx="40"/><rect class="g" x="40" y="720" width="150" height="150" rx="40" transform="rotate(12 115 795)"/></g>');
-  $('bg').innerHTML = '<div class="dots"></div>' + defs + overview + income + expense + settings;
+  $('bg').innerHTML = '<div class="aur"><i></i><i></i><i></i></div><div class="dots"></div>' + defs + overview + income + expense + settings;
 }
 var revealIO = null;
 function observeReveal() {
@@ -238,16 +239,18 @@ function observeReveal() {
   Array.prototype.forEach.call(els, function (e) { revealIO.observe(e); });
 }
 (function () {
-  var raf = 0;
-  window.addEventListener('scroll', function () {
-    if (raf) return;
-    raf = requestAnimationFrame(function () {
-      raf = 0;
-      var h = document.documentElement, max = h.scrollHeight - h.clientHeight, y = window.scrollY || 0;
-      $('prog').style.transform = 'scaleX(' + (max > 0 ? Math.min(1, y / max) : 0) + ')';
-      if (!REDUCE) document.body.style.setProperty('--sy', String(Math.round(y)));
-    });
-  }, { passive: true });
+  var raf = 0, cur = 0;
+  /** ค่าเลื่อนที่ไหลตามอย่างนุ่ม ๆ (ใช้กับพื้นหลัง/hero) ไม่กระตุกตามล้อเมาส์ */
+  function tick() {
+    raf = 0;
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight, y = window.scrollY || 0;
+    $('prog').style.transform = 'scaleX(' + (max > 0 ? Math.min(1, y / max) : 0) + ')';
+    if (REDUCE) return;
+    cur += (y - cur) * 0.085;
+    if (Math.abs(y - cur) < 0.15) cur = y; else raf = requestAnimationFrame(tick);
+    document.body.style.setProperty('--sy', cur.toFixed(2));
+  }
+  window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
   window.addEventListener('resize', movePill);
 })();
 
@@ -325,7 +328,7 @@ function heroDeco(kind) {
     : kind === 'expense'
     ? '<path class="hg" d="M300 -20h70L250 300h-70z"/><path class="hg" d="M400 -20h40L320 300h-40z"/><circle class="hl" cx="420" cy="220" r="90"/><circle class="hg" cx="470" cy="70" r="38"/>'
     : '<circle class="hl" cx="380" cy="140" r="150"/><circle class="hl" cx="380" cy="140" r="104" stroke-dasharray="3 9"/><circle class="hg" cx="430" cy="70" r="64"/><rect class="hg" x="250" y="170" width="110" height="110" rx="30" transform="rotate(16 305 225)"/>';
-  return '<div class="deco" aria-hidden="true"><svg viewBox="0 0 520 300">' + b + '</svg></div>';
+  return '<div class="deco" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><svg viewBox="0 0 520 300">' + b + '</svg></div>';
 }
 function pendingAmount() {
   var w = 0, k = 0;
