@@ -788,3 +788,48 @@ body[data-tab="settings"] { --h1: #ffd000; --h2: #ff6b3d; --h3: #fff0a0; --h4: #
 @keyframes waveMove { to { transform: translateX(-50%); } }
 .hero .deco .orb { mix-blend-mode: normal; filter: blur(30px); opacity: .5; }
 @media (prefers-reduced-motion: reduce) { .hero::before, .hero .deco svg.wave { animation: none !important; } }
+
+/* ---------- hero v3: ป้ายกระจกพร้อมไอคอน ---------- */
+.hero .deco svg.scene .gbadge rect { stroke: rgba(255,255,255,.6); stroke-width: 1.2; }
+.hero .deco svg.scene .gbadge .hl { fill: none; stroke: rgba(255,255,255,.85); stroke-width: 1.4; stroke-linecap: round; }
+.hero .deco svg.scene .ic { fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
+.hero .deco svg.scene .gbadge { animation: bob 7s ease-in-out infinite alternate; } .hero .deco svg.scene .gbadge.b2 { animation-duration: 9s; } .hero .deco svg.scene .gbadge.b3 { animation-duration: 8s; }
+.hero .deco svg.scene .spin2 { transform-origin: 50% 50%; animation: heroSpin 50s linear infinite; }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-9px); } }
+/* ---------- เมนูล่างบนมือถือ ---------- */
+.bnav { display: none; }
+@media (max-width: 959px) {
+  .shell > .wrap > .tabs { display: none; }
+  body.authed .bnav { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); z-index: 60; display: flex; gap: 2px; padding: 6px;
+    border-radius: 22px; background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.78)); -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,.9); box-shadow: 0 18px 40px -18px rgba(20,27,45,.45), 0 0 0 1px var(--line); }
+  .bn { position: relative; flex: 1; min-width: 0; border: 0; background: none; border-radius: 16px; padding: 8px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted); transition: background .35s, color .3s, transform .35s var(--spring); }
+  .bn svg { width: 22px; height: 22px; } .bn:active { transform: scale(.94); }
+  .bn[data-tab="overview"] { --t: #1262f0; } .bn[data-tab="income"] { --t: #079a55; } .bn[data-tab="expense"] { --t: #e8173f; } .bn[data-tab="settings"] { --t: #ee7000; }
+  .bn[aria-current="page"] { color: var(--t); background: color-mix(in srgb, var(--t) 13%, #fff); }
+  .bn em { position: absolute; top: 3px; right: calc(50% - 22px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--t); color: #fff; font-style: normal; font-size: 11px; display: grid; place-items: center; }
+  main { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
+  #toast { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  .top { padding-top: 12px; }
+  .hero { padding: 18px 18px 16px; border-radius: 24px; }
+  .hero .big { font-size: clamp(30px, 9.5vw, 42px); }
+}
+/* ---------- แตะง่าย อ่านง่าย ---------- */
+@media (pointer: coarse) { input, select, textarea { min-height: 46px; font-size: 16px; } .btn { min-height: 46px; } .btn.sm { min-height: 40px; } }
+input:focus-visible, select:focus-visible { outline: none; }
+label.f { font-weight: 600; }
+/* ---------- การ์ดพับได้ (หน้าตั้งค่า) ---------- */
+.chd { cursor: pointer; user-select: none; position: relative; padding-right: 34px; transition: color .3s; }
+.chd:hover { color: var(--c1); }
+.chd::after { content: ""; position: absolute; right: 6px; top: 50%; width: 9px; height: 9px; border-right: 2.4px solid var(--c1); border-bottom: 2.4px solid var(--c1); transform: translateY(-70%) rotate(-135deg); transition: transform .4s var(--spring); }
+.card.col .chd::after { transform: translateY(-70%) rotate(45deg); }
+.card.col > h2 { margin-bottom: 0; }
+.cwrap { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .5s cubic-bezier(.22,1,.36,1), opacity .4s; }
+.cbody { min-height: 0; overflow: hidden; }
+.card.col .cwrap { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.card.col .cbody { visibility: hidden; transition: visibility 0s .5s; }
+
+.hero .deco svg.scene { top: -26%; height: 152%; right: -2%; }
+@media (max-width: 640px) { .hero .deco svg.scene { opacity: .4; width: 96%; top: -20%; height: 140%; } }
+body[data-tab="settings"] .hero { min-height: 190px; display: flex; flex-direction: column; justify-content: center; }
+body[data-tab="settings"] .hero .deco svg.scene { right: 2%; }

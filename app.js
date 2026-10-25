@@ -124,7 +124,7 @@ function initGsi() {
 function signOut(message) {
   S.token = ''; S.me = null;
   try { sessionStorage.removeItem('tok'); } catch (e) {}
-  $('app').hidden = true; $('login').hidden = false;
+  $('app').hidden = true; $('login').hidden = false; document.body.classList.remove('authed');
   $('loginMsg').textContent = message || '';
   if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
 }
@@ -137,7 +137,7 @@ function startApp(token) {
   }).then(function (r) {
     S.schema = r[0]; S.st = r[1]; S.docs = r[2]; S.rcv = r[3];
     try { sessionStorage.setItem('tok', token); } catch (e) {}
-    $('login').hidden = true; $('app').hidden = false;
+    $('login').hidden = true; $('app').hidden = false; document.body.classList.add('authed');
     $('who').textContent = S.me.name + ' · ' + S.me.role;
     $('fyLabel').textContent = 'ปีงบประมาณ ' + S.st.fy;
     S.date = defaultDate();
@@ -208,6 +208,14 @@ function renderSide() {
   $('sTog').onclick = function () { try { localStorage.setItem('fin-side', sideOpen() ? '0' : '1'); } catch (e) {} renderSide(); document.body.classList.toggle('side-mini', !sideOpen()); };
   $('sOut').onclick = function () { signOut(''); };
   document.body.classList.toggle('side-mini', !open);
+  var bn = $('bnav');
+  if (!bn) { bn = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); document.body.appendChild(bn); }
+  bn.innerHTML = TABS.map(function (t) {
+    if (t.admin && !can.admin()) return '';
+    var n = t.id === 'expense' ? pendingCount() : 0;
+    return '<button type="button" class="bn" data-bn="' + t.id + '" data-tab="' + t.id + '" aria-current="' + (S.tab === t.id ? 'page' : 'false') + '">' + si(SIDE_ICON[t.id]) + '<span>' + esc(t.label) + '</span>' + (n ? '<em>' + n + '</em>' : '') + '</button>';
+  }).join('');
+  Array.prototype.forEach.call(bn.querySelectorAll('[data-bn]'), function (b) { b.onclick = function () { go(b.getAttribute('data-bn'), null); }; });
 }
 function movePill() {
   var nav = $('tabs'), a = nav.querySelector('.tab[aria-selected="true"]'), pill = nav.querySelector('.pill');
@@ -230,6 +238,7 @@ function go(tab, opt, instant) {
     movePill();
     if (window.Bento) Bento.unmount();
     Array.prototype.forEach.call(document.querySelectorAll('#side [data-sg]'), function (b) { b.setAttribute('aria-current', b.getAttribute('data-sg') === tab ? 'page' : 'false'); });
+    Array.prototype.forEach.call(document.querySelectorAll('#bnav [data-bn]'), function (b) { b.setAttribute('aria-current', b.getAttribute('data-bn') === tab ? 'page' : 'false'); });
     var v = $('view');
     v.className = '';
     if (tab === 'overview') renderOverview();
@@ -375,32 +384,61 @@ function countUp(el, to) {
 }
 
 /* ================= ภาพรวม ================= */
-/** ฉากตกแต่ง hero: แต่ละแท็บมีเรื่องของตัวเอง (เรขาคณิต + กระจกเหลวแบบแบน) */
+/** ไอคอนเส้นบาง (กริด 24) สำหรับป้ายกระจกใน hero */
+var HI = {
+  wallet: 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2 M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4',
+  bank: 'M3 22h18 M6 18v-7 M10 18v-7 M14 18v-7 M18 18v-7 M12 2 3 7h18z',
+  chart: 'M3 3v18h18 M7 15l4-4 3 3 5-6',
+  coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v10 M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4',
+  receipt: 'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z M8 8h8 M8 12h8 M8 16h5',
+  tray: 'M12 3v12 M7 10l5 5 5-5 M4 20h16',
+  doc: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h6',
+  send: 'M7 17 17 7 M8 7h9v9',
+  check: 'M22 11.1V12a10 10 0 1 1-5.9-9.1 M22 4 12 14l-3-3',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4',
+  key: 'M15.5 7.5 19 4 M18 5l2 2 M10.5 11.5a4.5 4.5 0 1 1-6.4 6.4 4.5 4.5 0 0 1 6.4-6.4z M10.5 11.5 15.5 7.5',
+  sliders: 'M21 4h-7 M10 4H3 M21 12h-9 M8 12H3 M21 20h-5 M12 20H3 M14 2v4 M8 10v4 M16 18v4',
+  trend: 'M22 7l-8.5 8.5-5-5L2 17 M16 7h6v6',
+  spark: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z'
+};
+/** ป้ายกระจกแบนบาง + ไอคอน: ชั้นนอกวางตำแหน่ง ชั้นในขยับ */
+function hbadge(x, y, size, icon, cls, f, delay) {
+  var k = size / 24 * 0.52, o = size * 0.24;
+  return '<g transform="translate(' + x + ' ' + y + ')"><g class="gbadge ' + (cls || '') + '"' + (delay ? ' style="animation-delay:' + delay + 's"' : '') + '><rect width="' + size + '" height="' + size + '" rx="' + (size * 0.3) + '" fill="' + f + '"/>' +
+    '<path class="hl" d="M' + (size * 0.2) + ' 3 H' + (size * 0.8) + '"/><g transform="translate(' + o + ' ' + o + ') scale(' + (size * 0.52 / 24) + ')"><path class="ic" d="' + HI[icon] + '"/></g></g></g>';
+}
+/** ฉากตกแต่ง hero: แต่ละแท็บมีเรื่องและไอคอนของตัวเอง (เรขาคณิต + abstract + กระจกเหลวแบบแบน) */
 function heroDeco(kind) {
   var G = '<defs><linearGradient id="hg-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity=".07"/></linearGradient>' +
     '<linearGradient id="hv-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient></defs>';
   var s = '', f = 'url(#hg-' + kind + ')', v = 'url(#hv-' + kind + ')', i;
-  if (kind === 'income') {            // เติบโต: แท่งกระจกสูงขึ้น เส้นพุ่ง หยดลอยขึ้น
-    var hs = [62, 98, 134, 176, 222];
-    for (i = 0; i < 5; i++) s += '<rect class="gbar" style="animation-delay:' + (i * 0.35) + 's" x="' + (292 + i * 58) + '" y="' + (282 - hs[i]) + '" width="42" height="' + hs[i] + '" rx="15" fill="' + v + '"/>';
-    s += '<path class="ln trend" pathLength="1" d="M300 205 C350 190 380 160 420 150 S500 90 560 38"/><path class="ln" d="M545 36 l15 2 -6 14"/>' +
-      '<circle class="drop d1" cx="272" cy="150" r="9" fill="' + f + '"/><circle class="drop d2" cx="500" cy="190" r="6" fill="' + f + '"/><circle class="drop d3" cx="410" cy="120" r="12" fill="' + f + '"/><circle class="drop d4" cx="548" cy="120" r="5" fill="' + f + '"/>';
-  } else if (kind === 'expense') {    // ไหลออก: แผ่นกระจกเฉียง ริบบิ้นไหล แท่งขั้นบันไดลดลง
-    for (i = 0; i < 5; i++) s += '<path class="slat" style="animation-delay:' + (i * -1.4) + 's" fill="' + f + '" d="M' + (262 + i * 54) + ' 290 L' + (318 + i * 54) + ' 10 L' + (342 + i * 54) + ' 10 L' + (286 + i * 54) + ' 290Z" opacity="' + (0.5 + i * 0.1) + '"/>';
-    s += '<path class="ln gflow" d="M250 60 C330 60 360 200 450 200 S540 250 600 240"/><path class="ln gflow gf2" d="M270 20 C350 30 390 140 470 140 S560 190 610 180"/>';
-    var ws = [118, 94, 70, 48];
-    for (i = 0; i < 4; i++) s += '<rect class="gpill" style="animation-delay:' + (i * 0.5) + 's" x="' + (330 + i * 44) + '" y="' + (214 + i * 16) + '" width="' + ws[i] + '" height="26" rx="13" fill="' + f + '"/>';
-  } else if (kind === 'settings') {   // ปรับแต่ง: เฟืองหมุน แถบเลื่อน ลำแสง
-    s += '<g class="rays">'; for (i = 0; i < 12; i++) s += '<line x1="450" y1="150" x2="450" y2="-30" transform="rotate(' + (i * 30) + ' 450 150)"/>'; s += '</g>' +
-      '<circle class="gear" cx="450" cy="150" r="66" fill="none" stroke="' + f + '" stroke-width="24" stroke-dasharray="12.9 12.9"/><circle cx="450" cy="150" r="52" fill="' + f + '"/><circle class="ln" cx="450" cy="150" r="22" fill="none"/>' +
+  if (kind === 'income') {            // เงินเข้า: แท่งโต ใบเสร็จ ถาดรับ เหรียญลอยขึ้น
+    var hs = [58, 92, 126, 168, 214];
+    for (i = 0; i < 5; i++) s += '<rect class="gbar" style="animation-delay:' + (i * 0.35) + 's" x="' + (330 + i * 52) + '" y="' + (286 - hs[i]) + '" width="38" height="' + hs[i] + '" rx="14" fill="' + v + '"/>';
+    s += '<path class="ln trend" pathLength="1" d="M300 232 C350 214 372 176 420 162 S500 96 580 40"/>' +
+      '<circle class="ln dash spin2" cx="300" cy="118" r="74" fill="none"/>' +
+      hbadge(262, 80, 76, 'receipt', 'b1', f, 0) + hbadge(468, 52, 50, 'tray', 'b2', f, -2) + hbadge(560, 120, 44, 'coin', 'b3', f, -4) +
+      '<circle class="drop d1" cx="330" cy="40" r="7" fill="' + f + '"/><circle class="drop d2" cx="515" cy="190" r="5" fill="' + f + '"/><circle class="drop d3" cx="445" cy="120" r="10" fill="' + f + '"/>';
+  } else if (kind === 'expense') {    // ขบ. → ขจ. → จ่าย: เอกสารสามใบต่อกันด้วยลูกศรไหล
+    for (i = 0; i < 4; i++) s += '<path class="slat" style="animation-delay:' + (i * -1.6) + 's" fill="' + f + '" d="M' + (340 + i * 54) + ' 300 L' + (390 + i * 54) + ' 20 L' + (410 + i * 54) + ' 20 L' + (360 + i * 54) + ' 300Z" opacity="' + (0.3 + i * 0.08) + '"/>';
+    s += '<path class="ln gflow" d="M294 84 C340 84 340 144 390 144 S440 204 486 204"/><path class="ln gflow gf2" d="M300 90 C360 70 400 120 440 120 S520 170 590 150"/>' +
+      hbadge(262, 52, 64, 'doc', 'b1', f, 0) + hbadge(358, 112, 64, 'doc', 'b2', f, -2) + hbadge(454, 172, 64, 'send', 'b3', f, -4) +
+      '<rect class="gpill" x="440" y="40" width="120" height="24" rx="12" fill="' + f + '"/><rect class="gpill" style="animation-delay:-2s" x="480" y="74" width="80" height="20" rx="10" fill="' + f + '"/>' +
+      '<circle class="ln dash spin2" cx="540" cy="250" r="44" fill="none"/>';
+  } else if (kind === 'settings') {   // ปรับแต่ง/ปลอดภัย: เฟือง แถบเลื่อน โล่ กุญแจ
+    s += '<g class="rays">'; for (i = 0; i < 12; i++) s += '<line x1="470" y1="140" x2="470" y2="-40" transform="rotate(' + (i * 30) + ' 470 140)"/>'; s += '</g>' +
+      '<circle class="gear" cx="470" cy="140" r="70" fill="none" stroke="' + f + '" stroke-width="24" stroke-dasharray="13.7 13.7"/><circle cx="470" cy="140" r="56" fill="' + f + '"/>' +
+      '<g transform="translate(446 116) scale(2)"><path class="ic" d="' + HI.sliders + '"/></g>' +
       '<circle class="gear rev" cx="352" cy="232" r="38" fill="none" stroke="' + f + '" stroke-width="16" stroke-dasharray="9.9 9.9"/><circle cx="352" cy="232" r="29" fill="' + f + '"/>';
-    for (i = 0; i < 3; i++) s += '<line class="trk" x1="' + (250 + i * 14) + '" x2="' + (360 + i * 14) + '" y1="' + (52 + i * 34) + '" y2="' + (52 + i * 34) + '"/><circle class="knob k' + i + '" cx="' + (280 + i * 14) + '" cy="' + (52 + i * 34) + '" r="9" fill="' + f + '"/>';
-  } else {                            // ภาพรวม: วงโคจร เกจ การ์ดซ้อน เส้นกราฟ
-    s += '<circle class="gl" cx="430" cy="150" r="112" fill="' + f + '"/><circle cx="430" cy="150" r="76" fill="' + f + '" opacity=".7"/>' +
-      '<circle class="ln dash spin" cx="430" cy="150" r="140" fill="none"/><path class="ln gauge" pathLength="1" d="M340 150 A90 90 0 1 1 430 240" fill="none"/>' +
-      '<g class="orbit"><circle class="dotw" cx="430" cy="10" r="6"/></g>' +
-      '<rect class="gcard c1" x="250" y="188" width="150" height="66" rx="18" fill="' + f + '"/><rect class="gcard c2" x="300" y="224" width="150" height="56" rx="16" fill="' + f + '"/><rect class="gcard c3" x="500" y="60" width="86" height="86" rx="24" fill="' + f + '"/>' +
-      '<path class="ln spark" pathLength="1" d="M350 176 C380 140 400 196 430 150 S480 118 520 96" fill="none"/>';
+    for (i = 0; i < 3; i++) s += '<line class="trk" x1="' + (240 + i * 12) + '" x2="' + (330 + i * 12) + '" y1="' + (40 + i * 30) + '" y2="' + (40 + i * 30) + '"/><circle class="knob k' + i + '" cx="' + (262 + i * 12) + '" cy="' + (40 + i * 30) + '" r="8" fill="' + f + '"/>';
+    s += hbadge(552, 62, 54, 'shield', 'b2', f, -1) + hbadge(560, 190, 46, 'key', 'b3', f, -3);
+  } else {                            // ภาพรวม: กระเป๋าเงินกลางวงเกจ ล้อมด้วยธนาคาร กราฟ เหรียญ
+    s += '<circle class="gl" cx="440" cy="150" r="108" fill="' + f + '"/><circle cx="440" cy="150" r="74" fill="' + f + '" opacity=".6"/>' +
+      '<circle class="ln dash spin" cx="440" cy="150" r="138" fill="none"/><path class="ln gauge" pathLength="1" d="M350 150 A90 90 0 1 1 440 240" fill="none"/>' +
+      '<g class="orbit"><circle class="dotw" cx="440" cy="12" r="6"/></g>' +
+      '<path class="ln dash" d="M440 150 L318 78 M440 150 L548 214 M440 150 L292 226"/>' +
+      hbadge(404, 114, 72, 'wallet', 'b1', f, 0) + hbadge(292, 58, 54, 'bank', 'b2', f, -2) + hbadge(522, 190, 54, 'chart', 'b3', f, -4) + hbadge(262, 204, 46, 'coin', 'b2', f, -1) +
+      '<rect class="gcard c3" x="540" y="50" width="62" height="62" rx="20" fill="' + f + '"/><path class="ln spark" pathLength="1" d="M552 100 L566 82 L576 92 L592 66" fill="none"/>';
   }
   var wv = function (ph) { var d = 'M0 ' + (200 + ph); for (var x = 0; x < 2400; x += 600) d += 'C' + (x + 150) + ' ' + (150 + ph) + ',' + (x + 450) + ' ' + (250 + ph) + ',' + (x + 600) + ' ' + (200 + ph); return d + 'L2400 300L0 300Z'; };
   return '<div class="deco k-' + kind + '" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i>' +
@@ -578,6 +616,23 @@ var DOC_FIELDS = [
   ['ขจ_ลงนาม3_ชื่อ', 'ขจ. ผู้ลงนาม 3 ชื่อ'], ['ขจ_ลงนาม3_ตำแหน่ง', 'ตำแหน่ง'], ['ขจ_ลงนาม4_ชื่อ', 'ขจ. ผู้ลงนาม 4 ชื่อ'], ['ขจ_ลงนาม4_ตำแหน่ง', 'ตำแหน่ง'],
   ['ผอ_ชื่อ', 'ผู้อำนวยการ ชื่อ'], ['ผอ_ตำแหน่ง', 'ตำแหน่ง']
 ];
+/** การ์ดตั้งค่าพับได้: เปิดทีละหัวข้อที่ต้องใช้ จำสถานะไว้ */
+function collapsify(root) {
+  var state = {}; try { state = JSON.parse(localStorage.getItem('fin-col') || '{}'); } catch (e) {}
+  Array.prototype.forEach.call(root.querySelectorAll('section.card'), function (sec, i) {
+    var h2 = sec.querySelector(':scope > h2'); if (!h2) return;
+    var key = 'c' + i, open = state.hasOwnProperty(key) ? state[key] : i === 0;
+    var wrap = document.createElement('div'), body = document.createElement('div');
+    wrap.className = 'cwrap'; body.className = 'cbody';
+    while (h2.nextSibling) body.appendChild(h2.nextSibling);
+    wrap.appendChild(body); sec.appendChild(wrap);
+    h2.setAttribute('role', 'button'); h2.setAttribute('tabindex', '0'); h2.classList.add('chd');
+    function set(o) { sec.classList.toggle('col', !o); h2.setAttribute('aria-expanded', String(o)); }
+    set(open);
+    function toggle() { var o = sec.classList.contains('col'); set(o); state[key] = o; try { localStorage.setItem('fin-col', JSON.stringify(state)); } catch (e) {} }
+    h2.onclick = toggle; h2.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+  });
+}
 function renderSettings() {
   var st = S.st, h = '', groups = {}, gl = '';
   st.types.forEach(function (t) { groups[t[2]] = true; });
@@ -609,6 +664,7 @@ function renderSettings() {
     '<div class="actions"><button class="btn ghost" type="button" data-act="addopen">' + ICON.plus + ' เพิ่มแถว</button><button class="btn" type="button" data-act="saveopen">บันทึกยอดยกมา</button>' +
     '<button class="btn soft" type="button" data-act="rebuild">สร้าง Ledger ใหม่จากเอกสาร</button></div></section>';
   $('view').innerHTML = h;
+  collapsify($('view'));
   updateOpenSum();
   var v = $('view');
   v.onclick = onSettingsClick;
