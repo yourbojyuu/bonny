@@ -306,6 +306,13 @@ if (require.main === module) {
   ok(/T10/.test(call(io, 'tok-admin', 'saveTypes', { rows: tt2 }).error), 'ลบประเภทเงินที่ใช้ในใบเสร็จไม่ได้');
   ok(call(io, 'tok-admin', 'saveAliases', { rows: [['อน.รห.', 'T20'], ['ทดสอบ', 'T99']] }).error.indexOf('T99') > 0, 'ชื่อย่อชี้ประเภทเงินที่ไม่มี ถูกปฏิเสธ');
 
+  console.log('11) บัญชีแยกประเภท (getLedger)');
+  var lg = call(io, 'tok-boss', 'getLedger');
+  ok(lg.ok && lg.data.rows.length > 0 && lg.data.rows[0].length === 6, 'getLedger ส่งแถวบัญชีให้ผู้บริหารดูได้');
+  var sumL = 0; lg.data.rows.forEach(function (r) { sumL += Math.round(r[5] * 100); });
+  ok(sumL === Math.round(grandOf(io, '2027-09-30').grand * 100), 'ผลรวม Ledger = ยอดคงเหลือรวมสิ้นปีงบ');
+  ok(lg.data.rows.every(function (r, i, a) { return !i || a[i - 1][0] <= r[0]; }), 'เรียงตามวันที่');
+
   console.log('\nผ่าน ' + passed + ' / ' + (passed + failed));
   if (failed) { console.log('มี ' + failed + ' ข้อไม่ผ่าน'); process.exit(1); }
   console.log('ทุกข้อผ่าน');

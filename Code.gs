@@ -19,7 +19,7 @@ function actionRoles() {
   var ALL = ROLES, FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
   return {
     ping: null,
-    getSchema: ALL, me: ALL, getSettings: ALL, getBalances: ALL,
+    getSchema: ALL, me: ALL, getSettings: ALL, getBalances: ALL, getLedger: ALL,
     getDocs: ALL, khbDoc: ALL, khjDoc: ALL, getReceipts: ALL,
     importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN,
     saveKhb: KHB, cancelKhb: KHB,
@@ -30,7 +30,7 @@ function actionRoles() {
 
 function handlers() {
   return {
-    getSchema: h_getSchema, me: h_me, getSettings: h_getSettings, getBalances: h_getBalances,
+    getSchema: h_getSchema, me: h_me, getSettings: h_getSettings, getBalances: h_getBalances, getLedger: h_getLedger,
     saveStores: h_saveStores, saveTypes: h_saveTypes, saveOpening: h_saveOpening, rebuildLedger: h_rebuildLedger,
     saveDocSettings: h_saveDocSettings,
     getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb,

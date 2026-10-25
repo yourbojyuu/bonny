@@ -1,6 +1,5 @@
 /* ระบบการเงินโรงเรียน — bento.js
-   การ์ดสรุป 4 ใบหน้าภาพรวม (ตามแบบ Analytics Bento): เส้นรับสะสม · คลื่นรับ/จ่ายรายวัน · treemap ยอดคงเหลือแยกประเภท · เรดาร์รายเดือน
-   วาดด้วย SVG ล้วน คำนวณจากข้อมูลที่หน้าเว็บมีอยู่แล้ว (ใบเสร็จ, ขบ./ขจ., ยอดคงเหลือ) ไม่เรียกเซิร์ฟเวอร์เพิ่ม */
+   กราฟ SVG สไตล์ Analytics Bento ที่หน้ารายงานใช้: คลื่นรับ/จ่ายรายวัน (waves) · แท่งคู่รายเดือน (bars) */
 
 var Bento = (function () {
   var NS = 'http://www.w3.org/2000/svg', GROUP_COLORS = ['#7CFF5B', '#8B3DFF', '#FFB800', '#FF5A1F', '#9aa3b5', '#22D3EE'], GROUP_INK = ['dark', 'light', 'dark', 'dark', 'dark', 'dark'];
@@ -125,43 +124,10 @@ var Bento = (function () {
     g.appendChild(hit); box.appendChild(g);
   }
 
-  /* ---------- ประกอบการ์ด ---------- */
-  function mount(host) {
-    unmount();
-    if (!host || !S.bal || !S.st) return;
-    var D = collect(), end = S.date && S.date < S.st.fyEnd ? S.date : S.st.fyEnd, start = addDays(end, -29), pStart = addDays(end, -59), pEnd = addDays(end, -30);
-    if (start < S.st.fyStart) start = S.st.fyStart;
-    var days = []; for (var d = start; d <= end; d = addDays(d, 1)) days.push(d);
-    var rcDay = dayVals(D.rc, days), pdDay = dayVals(D.pd, days);
-    var rcTot = sumBy(D.rc, start, end), rcPrev = sumBy(D.rc, pStart, pEnd), pdTot = sumBy(D.pd, start, end), pdPrev = sumBy(D.pd, pStart, pEnd), net = Math.round((rcTot - pdTot) * 100) / 100;
-    var axis = [], mstart = new Date(S.st.fyStart + 'T00:00:00'), mkeys = [], nowKey = end.slice(0, 7);
-    for (var m = 0; m < 12; m++) { var dm = new Date(mstart.getFullYear(), mstart.getMonth() + m, 1); axis.push(MONTHS[dm.getMonth()]); mkeys.push(dm.getFullYear() + '-' + ('0' + (dm.getMonth() + 1)).slice(-2)); }
-    function monthly(list) { var o = mkeys.map(function () { return 0; }); list.forEach(function (x) { var i = mkeys.indexOf(x.d.slice(0, 7)); if (i >= 0) o[i] += Math.round(x.v * 100); }); return o.map(function (v) { return v / 100; }); }
-    var mr = monthly(D.rc), mp = monthly(D.pd), mrT = 0, mpT = 0; mr.forEach(function (v) { mrT += v; }); mp.forEach(function (v) { mpT += v; });
-
-    host.innerHTML =
-      '<div class="bgrid12">' +
-      '<section class="bcard c7 enter" style="--i:0"><div class="bhd"><h3>รับ − จ่าย 30 วันล่าสุด</h3><div class="blegend"><span><i style="background:linear-gradient(90deg,#22D3EE,#2e6bff)"></i>รับ (ขึ้น)</span><span><i style="background:linear-gradient(90deg,#FFB800,#FF3DA5)"></i>จ่าย (ลง)</span></div></div>' +
-      '<div class="bsum"><div><div class="bk">รับ</div><div class="bnum2 g">' + money(rcTot) + '</div><div class="bd ' + (rcTot >= rcPrev ? 'up' : 'dn') + '">' + esc(pct(rcTot, rcPrev)) + ' เทียบ 30 วันก่อน</div></div>' +
-      '<div><div class="bk">จ่าย</div><div class="bnum2 r">' + money(pdTot) + '</div><div class="bd ' + (pdTot <= pdPrev ? 'up' : 'dn') + '">' + esc(pct(pdTot, pdPrev)) + ' เทียบ 30 วันก่อน</div></div>' +
-      '<div><div class="bk">รับ − จ่าย</div><div class="bnum2 ' + (net >= 0 ? 'g' : 'r') + '">' + (net < 0 ? '−' : '') + money(Math.abs(net)) + '</div><div class="bd" style="color:var(--muted)">เฉลี่ยวันละ ' + money(rcTot / Math.max(1, days.length)) + '</div></div></div>' +
-      '<div class="bpanel tall" id="bBc"></div></section>' +
-      '<section class="bcard c5 enter" style="--i:1"><div class="bhd"><h3>รายเดือนตลอดปีงบ</h3><div class="blegend"><span><i style="background:#12b863"></i>รับ</span><span><i style="background:#ff4d6d"></i>จ่าย</span></div></div>' +
-      '<div class="bsum two"><div><div class="bk">รับทั้งปีงบ</div><div class="bnum2 g">' + money(mrT) + '</div></div><div><div class="bk">จ่ายทั้งปีงบ</div><div class="bnum2 r">' + money(mpT) + '</div></div></div>' +
-      '<div class="bpanel tall" id="bMo"></div></section></div>';
-
-    function drawAll() {
-      waves($('bBc'), days, rcDay, pdDay);
-      bars($('bMo'), axis, mr, mp, mkeys.indexOf(nowKey));
-    }
-    var rt = 0; window.addEventListener('resize', onResize); function onResize() { clearTimeout(rt); rt = setTimeout(function () { if ($('bBc')) drawAll(); }, 200); }
-    Bento._rs = onResize;
-    drawAll();
-  }
   function unmount() {
     cancelAnimationFrame(raf); timers.forEach(clearTimeout); timers = [];
     if (Bento._rs) { window.removeEventListener('resize', Bento._rs); Bento._rs = null; }
     tip();
   }
-  return { mount: mount, unmount: unmount };
+  return { waves: waves, bars: bars, unmount: unmount };
 })();

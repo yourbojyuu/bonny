@@ -1,7 +1,7 @@
 /* ระบบการเงินโรงเรียน — app.js (แกนหลัก: เข้าสู่ระบบ เมนู ภาพรวม ตั้งค่า และเครื่องมือร่วม)
    JS แบบ ES5 · ค่า API_URL / CLIENT_ID อยู่บนสุดของ index.html */
 
-var S = { token: '', me: null, schema: null, st: null, docs: null, tab: 'overview', date: '', bal: null, opt: {} };
+var S = { led: null, token: '', me: null, schema: null, st: null, docs: null, tab: 'overview', date: '', bal: null, opt: {} };
 var MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 var MONTHS_L = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -88,6 +88,7 @@ function toast(text, kind) {
 
 /* ================= เรียก API ================= */
 function api(action, payload) {
+  if (!/^(get|me$|ping|khbDoc|khjDoc)/.test(action)) S.led = null;
   if (!API_URL || API_URL.indexOf('ใส่') === 0) return Promise.reject(new Error('ยังไม่ได้ใส่ API_URL ใน index.html'));
   return fetch(API_URL, {
     method: 'POST',
@@ -146,9 +147,11 @@ function startApp(token) {
 }
 /** โหลดเอกสารใหม่ (หลังบันทึก) */
 function reloadDocs() {
+  S.led = null;
   return api('getDocs').then(function (d) { S.docs = d; renderTabs(); return d; });
 }
 function reloadReceipts() {
+  S.led = null;
   return api('getReceipts').then(function (d) { S.rcv = d; return d; });
 }
 function reloadSettings() {
@@ -265,7 +268,7 @@ function buildBg() {
   var settings = L('settings',
     '<g class="f1"><circle class="l" cx="1320" cy="640" r="180" stroke-dasharray="2 12"/><circle class="g" cx="1320" cy="640" r="74"/></g>' +
     '<g class="f2"><rect class="t" x="1190" y="320" width="160" height="160" rx="40"/><rect class="g" x="40" y="720" width="150" height="150" rx="40" transform="rotate(12 115 795)"/></g>');
-  $('bg').innerHTML = '<div class="aur"><i></i><i></i><i></i></div><div class="dots"></div>' + defs + overview + income + expense + settings;
+  $('bg').innerHTML = '<div class="aur"><i></i><i></i><i></i></div><div class="liq"><i></i><i></i><i></i><i></i><i></i></div><div class="dots"></div>' + defs + overview + income + expense + settings;
 }
 var revealIO = null;
 function observeReveal() {
@@ -278,6 +281,16 @@ function observeReveal() {
   }
   Array.prototype.forEach.call(els, function (e) { revealIO.observe(e); });
 }
+(function () {
+  var hr = 0, hel = null, hx = 0, hy = 0;
+  document.addEventListener('pointermove', function (e) {
+    if (REDUCE || e.pointerType === 'touch') return;
+    var h = e.target.closest ? e.target.closest('.hero') : null;
+    if (!h) { if (hel) { hel.style.setProperty('--mx', 0); hel.style.setProperty('--my', 0); hel = null; } return; }
+    var r = h.getBoundingClientRect(); hel = h; hx = ((e.clientX - r.left) / r.width) * 2 - 1; hy = ((e.clientY - r.top) / r.height) * 2 - 1;
+    if (!hr) hr = requestAnimationFrame(function () { hr = 0; if (hel) { hel.style.setProperty('--mx', hx.toFixed(3)); hel.style.setProperty('--my', hy.toFixed(3)); } });
+  }, { passive: true });
+})();
 (function () {
   var raf = 0, cur = 0;
   /** ค่าเลื่อนที่ไหลตามอย่างนุ่ม ๆ (ใช้กับพื้นหลัง/hero) ไม่กระตุกตามล้อเมาส์ */
@@ -368,7 +381,10 @@ function heroDeco(kind) {
     : kind === 'expense'
     ? '<path class="hg" d="M300 -20h70L250 300h-70z"/><path class="hg" d="M400 -20h40L320 300h-40z"/><circle class="hl" cx="420" cy="220" r="90"/><circle class="hg" cx="470" cy="70" r="38"/>'
     : '<circle class="hl" cx="380" cy="140" r="150"/><circle class="hl" cx="380" cy="140" r="104" stroke-dasharray="3 9"/><circle class="hg" cx="430" cy="70" r="64"/><rect class="hg" x="250" y="170" width="110" height="110" rx="30" transform="rotate(16 305 225)"/>';
-  return '<div class="deco" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><svg viewBox="0 0 520 300">' + b + '</svg></div>';
+  return '<div class="deco" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i>' +
+    '<i class="blob bl1"></i><i class="blob bl2"></i><i class="sph s1"></i><i class="sph s2"></i><i class="sph s3"></i>' +
+    '<svg class="ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="70"/><circle class="dot" cx="100" cy="8" r="5"/></svg>' +
+    '<svg class="geo" viewBox="0 0 520 300">' + b + '</svg></div>';
 }
 function pendingAmount() {
   var w = 0, k = 0;
@@ -393,108 +409,25 @@ function clockText(ms) {
 }
 function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000); }
 
-/** งานที่ต้องทำต่อ: เรียงตามความเร่งด่วน กดแล้วไปทำต่อได้ทันที */
-function inboxItems() {
-  var items = [], d = S.docs, rc = S.rcv ? S.rcv.rows : [];
-  var dk = Draft.get('khb'), dr = Draft.get('rcv');
-  if (dk && dk.data && dk.data.lines && can.khb()) {
-    var n = dk.data.lines.filter(function (l) { return l.payee || l.gross; }).length;
-    if (n) items.push({ cls: 'draft', t: 'ฉบับร่าง ขบ. ค้างอยู่ ' + n + ' รายการ', s: 'บันทึกไว้เมื่อ ' + clockText(dk.at) + ' · ยังไม่ได้กดบันทึก', b: 'ทำต่อ', go: ['expense', { seg: 'khb', draft: 1 }] });
-  }
-  if (dr && dr.data && can.fin() && (dr.data.lines || []).some(function (l) { return l.amount; })) {
-    items.push({ cls: 'draft', t: 'ฉบับร่างใบเสร็จ เล่ม ' + (dr.data.book || '-') + ' เลขที่ ' + (dr.data.no || '-'), s: 'บันทึกไว้เมื่อ ' + clockText(dr.at), b: 'ทำต่อ', go: ['income', { seg: 'enter' }] });
-  }
-  var pa = pendingAmount(), wn = 0, jn = 0;
-  (d.khbs || []).forEach(function (h) { h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') wn++; }); });
-  if (wn) items.push({ cls: 'wait', t: 'ขบ. รอทำ ขจ. ' + wn + ' รายการ', s: 'รวม ' + money(pa.wait) + ' บาท · ติ๊กเลือกแล้วสร้าง ขจ. ได้เลย', b: can.fin() ? 'สร้าง ขจ.' : 'ดู', go: ['expense', { seg: 'pending' }] });
-  (d.khjs || []).forEach(function (j) {
-    if (j.status === 'ยกเลิก' || j.paid >= j.count) return;
-    jn++;
-    if (jn <= 3) items.push({ cls: 'pay', t: 'ขจ.' + j.no + ' รอบันทึกการจ่าย ' + (j.count - j.paid) + '/' + j.count + ' รายการ', s: thaiDate(j.date) + ' · ' + money(j.total) + ' บาท · ใส่เลขเช็ค/KTB และวันที่จ่าย', b: can.fin() ? 'บันทึกการจ่าย' : 'ดู', khj: j.no });
-  });
-  if (jn > 3) items.push({ cls: 'pay', t: 'ขจ. ที่ยังจ่ายไม่ครบ อีก ' + (jn - 3) + ' ใบ', s: '', b: 'ดูทั้งหมด', go: ['expense', { seg: 'khj' }] });
-  var last = '';
-  rc.forEach(function (r) { if (!r[8] && r[3] > last) last = r[3]; });
-  var today = defaultDate();
-  if (!rc.length) items.push({ cls: 'rcv', t: 'ยังไม่มีใบเสร็จในปีงบนี้', s: 'เริ่มบันทึกหรือวางจาก Excel ได้ที่หน้า รายรับ', b: 'ไปหน้ารายรับ', go: ['income', { seg: 'enter' }] });
-  else if (last < today && daysBetween(last, today) >= 1) {
-    var dd = daysBetween(last, today);
-    items.push({ cls: 'rcv', t: 'ใบเสร็จล่าสุดที่บันทึก ' + thaiDate(last) + ' (ผ่านมา ' + dd + ' วัน)', s: 'ถ้ามีใบเสร็จใหม่ วางจาก Excel ได้ทีเดียวทั้งก้อน', b: 'บันทึกรายรับ', go: ['income', { seg: 'enter' }] });
-  }
-  return items;
-}
-/** ลิ้นชักงาน: แฟ้มแก้ว 4 แฟ้ม กดแฟ้มเดียวเห็นงานในนั้นทั้งหมด กดงานเพื่อไปทำต่อ */
-function drawerFolders() {
-  var d = S.docs, rc = S.rcv ? S.rcv.rows : [], out = [];
-  var dk = Draft.get('khb'), dr = Draft.get('rcv'), drafts = [];
-  if (dk && dk.data && can.khb()) {
-    var n = (dk.data.lines || []).filter(function (l) { return l.payee || l.gross; }).length;
-    if (n) drafts.push({ name: 'ฉบับร่าง ขบ.', meta: n + ' รายการ', go: ['expense', { seg: 'khb', draft: 1 }] });
-  }
-  if (dr && dr.data && can.fin() && (dr.data.lines || []).some(function (l) { return l.amount; })) drafts.push({ name: 'ฉบับร่างใบเสร็จ ' + (dr.data.book || '-') + '/' + (dr.data.no || '-'), meta: clockText(dr.at), go: ['income', { seg: 'enter' }] });
-  out.push({ key: 'draft', label: 'ฉบับร่าง', art: 'aurora', seed: 3, meta: drafts.length ? drafts.length + ' ฉบับ · ทำต่อได้เลย' : 'ไม่มีฉบับร่าง', files: drafts });
-
-  var wait = [], waitSum = 0, pay = [];
-  (d.khbs || []).forEach(function (h) {
-    if (h.status === 'ยกเลิก') return;
-    h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') { wait.push({ name: l.payee || typeName(l.type), meta: money(l.net), go: ['expense', { seg: 'pending' }] }); waitSum += Math.round(l.net * 100); } });
-  });
-  out.push({ key: 'wait', label: 'ขบ. รอทำ ขจ.', art: 'ember', seed: 11, meta: wait.length ? wait.length + ' รายการ · ' + money(waitSum / 100) : 'ไม่มีรายการรอ', files: wait });
-  (d.khjs || []).forEach(function (j) {
-    if (j.status === 'ยกเลิก' || j.paid >= j.count) return;
-    pay.push({ name: 'ขจ.' + j.no + ' · ' + thaiDate(j.date), meta: 'เหลือ ' + (j.count - j.paid) + '/' + j.count, khj: j.no });
-  });
-  out.push({ key: 'pay', label: 'รอจ่ายเงิน', art: 'glacier', seed: 5, meta: pay.length ? pay.length + ' ใบ ขจ.' : 'จ่ายครบแล้ว', files: pay });
-
-  var live = rc.filter(function (r) { return !r[8]; }).sort(function (x, y) { return x[3] < y[3] ? -1 : x[3] > y[3] ? 1 : 0; });
-  var last = live.length ? live[live.length - 1][3] : '', ago = last ? daysBetween(last, defaultDate()) : 0;
-  out.push({ key: 'rcv', label: 'รายรับล่าสุด', art: 'verdant', seed: 7,
-    meta: !live.length ? 'ยังไม่มีใบเสร็จ' : ago > 0 ? 'ล่าสุด ' + thaiDate(last) + ' · ' + ago + ' วันก่อน' : 'บันทึกวันนี้แล้ว',
-    files: live.slice(-6).map(function (r) { return { name: 'ใบเสร็จ ' + r[0] + '/' + r[1], meta: money(r[7]), go: ['income', { seg: 'list' }] }; }) });
-  return out;
+/** แถบงานค้างบาง ๆ (กดแล้วไปทำต่อ) */
+function workChips() {
+  var d = S.docs, chips = [], wn = 0, jn = 0, dr = 0;
+  var dk = Draft.get('khb'), dc = Draft.get('rcv');
+  if (dk && dk.data && can.khb() && (dk.data.lines || []).some(function (l) { return l.payee || l.gross; })) dr++;
+  if (dc && dc.data && can.fin() && (dc.data.lines || []).some(function (l) { return l.amount; })) dr++;
+  (d.khbs || []).forEach(function (h) { if (h.status !== 'ยกเลิก') h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') wn++; }); });
+  (d.khjs || []).forEach(function (j) { if (j.status !== 'ยกเลิก' && j.paid < j.count) jn++; });
+  if (dr) chips.push({ c: 'draft', t: 'ฉบับร่างค้าง ' + dr, go: dk && can.khb() ? ['expense', { seg: 'khb', draft: 1 }] : ['income', { seg: 'enter' }] });
+  if (wn) chips.push({ c: 'wait', t: 'ขบ. รอทำ ขจ. ' + wn + ' รายการ', go: ['expense', { seg: 'pending' }] });
+  if (jn) chips.push({ c: 'pay', t: 'ขจ. รอจ่ายเงิน ' + jn + ' ใบ', go: ['expense', { seg: 'khj' }] });
+  return chips;
 }
 function renderInbox() {
   var box = $('inbox'); if (!box) return;
-  if (window.GFUnmount) Array.prototype.forEach.call(document.querySelectorAll('.gfhost'), GFUnmount);
-  var fs = drawerFolders(), total = 0;
-  fs.forEach(function (f) { if (f.key !== 'rcv') total += f.files.length; });
-  var h = '<h2>งานที่ต้องทำต่อ' + (total ? ' <span class="cnt">' + total + '</span>' : '') + '</h2>' +
-    '<div class="quick">' +
-    (can.khb() ? '<button class="btn sm" type="button" data-q="khb">' + ICON.plus + ' ขบ. ใหม่</button>' : '') +
-    (can.fin() ? '<button class="btn sm soft" type="button" data-q="rcv">' + ICON.plus + ' บันทึกใบเสร็จ</button>' : '') +
-    (can.fin() ? '<button class="btn sm ghost" type="button" data-q="pending">ทำ ขจ. จากรายการรอ</button>' : '') + '</div>';
-  if (!window.GFMount) {
-    h += '<div class="rows">' + fs.map(function (f) {
-      return f.files.length ? '<div class="todo ' + f.key + '"><span class="dot"></span><span class="tx"><b>' + esc(f.label) + '</b><br><span class="tag">' + esc(f.meta) + '</span></span></div>' : '';
-    }).join('') + '</div>';
-    box.innerHTML = h; wireQuick(box); return;
-  }
-  h += '<div class="drawer" id="drawer">' + fs.map(function (f, i) { return '<div class="gfhost" data-f="' + i + '"></div>'; }).join('') + '</div>';
-  box.innerHTML = h; wireQuick(box);
-  var dw = $('drawer'), cols = dw.clientWidth < 560 ? 2 : 4, gap = cols === 2 ? 10 : 20;
-  var wd = Math.max(140, Math.min(300, Math.floor((dw.clientWidth - gap * (cols - 1)) / cols)));
-  Array.prototype.forEach.call(dw.querySelectorAll('.gfhost'), function (el, i) {
-    var f = fs[i];
-    el.style.setProperty('--k', (wd / 340).toFixed(3));
-    GFMount(el, {
-      label: f.label, meta: f.meta, art: f.art, seed: f.seed, width: wd, action: 'none', appearDelay: i * 120, defaultOpen: false,
-      files: f.files.map(function (x) { return { name: x.name, meta: x.meta }; }),
-      onFileSelect: function (file, idx) {
-        var x = f.files[idx]; if (!x) return;
-        if (x.khj) go('expense', { seg: 'khj', openKhj: x.khj }); else go(x.go[0], x.go[1]);
-      }
-    });
-  });
-}
-function wireQuick(box) {
-  Array.prototype.forEach.call(box.querySelectorAll('[data-q]'), function (b) {
-    b.onclick = function () {
-      var q = b.getAttribute('data-q');
-      if (q === 'khb') go('expense', { seg: 'khb', draft: 1 });
-      else if (q === 'rcv') go('income', { seg: 'enter' });
-      else go('expense', { seg: 'pending' });
-    };
-  });
+  var chips = workChips();
+  box.innerHTML = chips.length ? '<span class="wl">งานค้าง</span>' + chips.map(function (x, i) { return '<button type="button" class="wchip ' + x.c + '" data-i="' + i + '"><i></i>' + esc(x.t) + '</button>'; }).join('') :
+    '<span class="wl ok">ไม่มีงานค้าง</span>';
+  Array.prototype.forEach.call(box.querySelectorAll('[data-i]'), function (b) { b.onclick = function () { var x = chips[Number(b.getAttribute('data-i'))]; go(x.go[0], x.go[1]); }; });
 }
 function renderOverview() {
   var pa = pendingAmount();
@@ -507,9 +440,8 @@ function renderOverview() {
     '<button class="tile" type="button" data-go="expense"><div class="k">จ่ายแล้วตั้งแต่ต้นปีงบ</div><div class="v money" id="kPaid">—</div><div class="s">ถึงวันที่เลือก · ไปหน้ารายจ่าย →</div></button>' +
     '<button class="tile" type="button" data-go="pending"><div class="k">ขอเบิกแล้ว ยังไม่ได้จ่าย</div><div class="v money">' + money(pa.wait + pa.inKhj) + '</div><div class="s">รอ ขจ. ' + money(pa.wait) + ' · รอจ่าย ' + money(pa.inKhj) + '</div></button>' +
     '</div></section>' +
-    '<section class="card glass" id="inbox"></section>' +
-    '<section id="bento" aria-label="สรุปกราฟ"></section>' +
-    '<div id="ov"><div class="skel"></div></div>';
+    '<div class="wstrip" id="inbox"></div>' +
+    '<section id="rep" aria-label="รายงานสรุป"></section>';
   var dt = $('dt');
   dt.onchange = function () { if (this.value) { S.date = this.value; fetchBalances(); } };
   Array.prototype.forEach.call($('view').querySelectorAll('[data-go]'), function (b) {
@@ -520,17 +452,17 @@ function renderOverview() {
   });
   renderInbox();
   fetchBalances();
+  Report.mount($('rep'));
 }
 function fetchBalances() {
   $('dtTh').textContent = thaiDateLong(S.date);
   api('getBalances', { date: S.date }).then(function (d) {
     S.bal = d;
-    if (S.tab !== 'overview' || !$('ov')) return;
+    if (S.tab !== 'overview' || !$('kpi')) return;
     countUp($('kpi'), d.grand);
     $('kRecv').textContent = money(d.receivedIn || 0);
     $('kPaid').textContent = money(d.paidOut || 0);
-    renderBalanceTable(d);
-    if (window.Bento) Bento.mount($('bento'));
+    Report.refreshBal();
   }).catch(function (e) {
     if (e && e.code === 'AUTH') { handleError(e); return; }
     if ($('ov')) $('ov').innerHTML = '<div class="err-box"><b>แสดงยอดไม่ได้</b><br>' + esc(e.message) + '</div>';
@@ -542,7 +474,7 @@ function groupsOf(d) {
   return { order: order, map: map };
 }
 function renderBalanceTable(d) {
-  var g = groupsOf(d), i, j, k, h = '<section class="card glass reveal"><h2>คงเหลือแยกประเภทเงิน × ที่เก็บ</h2>';
+  var g = groupsOf(d), i, j, k, h = '';
   h += '<div class="tablewrap bal"><table><thead><tr><th>ประเภทเงิน</th>';
   for (j = 0; j < d.stores.length; j++) h += '<th class="money">' + esc(d.stores[j].name) + '</th>';
   h += '<th class="money">รวม</th></tr></thead><tbody>';

@@ -298,3 +298,17 @@ function h_getBalances(p, io) {
   res.ledgerRows = ledger.length;
   return res;
 }
+
+/** บัญชีแยกประเภท: ส่ง Ledger ทั้งปีงบให้หน้าเว็บทำรายงานรายวัน/รายเดือน/แยกประเภท (อ่านอย่างเดียว) */
+function serializeLedger(ledger, types, stores) {
+  return ledger.map(function (r, i) {
+    try {
+      return [parseDate(r[0]), normText(r[1]), normText(r[2]), resolveRef(types, r[3], 'ประเภทเงิน'), resolveRef(stores, r[4], 'ที่เก็บ'), sheetNumber(r[5], 'จำนวน')];
+    } catch (e) { throw new Error('Ledger แถวที่ ' + (i + 2) + ': ' + e.message); }
+  });
+}
+function h_getLedger(p, io) {
+  var set = readSettings(io), rows = serializeLedger(tableRows(io, 'Ledger'), set.types, set.stores);
+  rows.sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; });
+  return { fy: FISCAL_YEAR, rows: rows };
+}
