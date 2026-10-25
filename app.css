@@ -1106,3 +1106,71 @@ body.authed .bnav.one { max-width: 400px; }
 @media (max-width: 640px) { .who { flex-wrap: wrap; } .modesw { order: 3; width: 100%; } .modesw button { flex: 1; } }
 /* ระดับของเหลวต่ำกว่าบรรทัดคำอธิบาย ไม่ให้เส้นคลื่นพาดตัวหนังสือ */
 .hero .deco svg.wave.w1 { height: 64%; } .hero .deco svg.wave.w2 { height: 56%; } .hero .deco svg.wave.w3 { height: 46%; }
+
+/* ================= v7: hero เคลื่อนไหวแบบ gif · เปลี่ยนหน้าแบบ morph · เฟดตามการเลื่อน ================= */
+/* hero: รูปทรงเดินวนเป็นเส้นทางหลายจุด (ต่อเนื่องไม่สะดุด) แต่ละรูปจังหวะไม่เท่ากัน */
+.hero .deco svg.scene .gs { animation: wander1 11s cubic-bezier(.45,.05,.55,.95) infinite; }
+.hero .deco svg.scene .gs.g2 { animation-name: wander2; animation-duration: 13s; }
+.hero .deco svg.scene .gs.g3 { animation-name: wander3; animation-duration: 9s; }
+.hero .deco svg.scene .gs.sp { animation: heroSpin 36s linear infinite; } .hero .deco svg.scene .gs.sp.rev { animation-duration: 28s; animation-direction: reverse; }
+@keyframes wander1 { 0%, 100% { transform: translate(0, 0) rotate(0) scale(1); } 25% { transform: translate(-16px, -12px) rotate(9deg) scale(1.05); } 50% { transform: translate(-4px, -24px) rotate(-5deg) scale(.97); } 75% { transform: translate(14px, -8px) rotate(-11deg) scale(1.03); } }
+@keyframes wander2 { 0%, 100% { transform: translate(0, 0) rotate(0) scale(1); } 20% { transform: translate(22px, 10px) rotate(-14deg) scale(.94); } 45% { transform: translate(30px, -16px) rotate(8deg) scale(1.08); } 70% { transform: translate(6px, -26px) rotate(20deg) scale(1); } }
+@keyframes wander3 { 0%, 100% { transform: translate(0, 0) rotate(0); } 30% { transform: translate(-20px, 16px) rotate(-30deg); } 60% { transform: translate(12px, 24px) rotate(25deg); } 80% { transform: translate(18px, -6px) rotate(-10deg); } }
+/* แท่งรายรับขึ้นลงแบบอีควอไลเซอร์ */
+.k-income svg.scene .gs.g1 { animation: none; }
+.k-income svg.scene .gs.g1 rect { transform-box: fill-box; transform-origin: 50% 100%; animation: eq 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+.k-income svg.scene .gs.g1 rect:nth-child(2) { animation-delay: -1.2s; animation-duration: 4.2s; } .k-income svg.scene .gs.g1 rect:nth-child(3) { animation-delay: -2.4s; animation-duration: 3.2s; }
+@keyframes eq { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.62); } }
+/* ภาพรวม: ดวงสีเน้นโคจรรอบดวงใหญ่ */
+.k-overview svg.scene .gs.g2 { animation: orbitA 14s linear infinite; }
+@keyframes orbitA { 0% { transform: translate(0, 0); } 25% { transform: translate(-40px, 30px) scale(.9); } 50% { transform: translate(-80px, 70px) scale(.82); } 75% { transform: translate(-30px, 66px) scale(.95); } 100% { transform: translate(0, 0); } }
+/* อนุมัติ: วงแหวนหนาหมุน ดวงในเต้นเบา ๆ เหมือนตราประทับ */
+.k-approve svg.scene .gs.g1 { animation: heroSpin 18s linear infinite; }
+.k-approve svg.scene .gs.g2 { animation: stamp 3.4s cubic-bezier(.45,.05,.55,.95) infinite; }
+@keyframes stamp { 0%, 100% { transform: scale(1); } 40% { transform: scale(.82); } 55% { transform: scale(1.08); } }
+.k-approve svg.scene .gs.g1 circle { stroke-dasharray: 26 10; }
+/* รายจ่าย: แผ่นเอกสารโยกเอียงซ้ายขวา */
+.k-expense svg.scene .gs.g1 { animation: sway 7s cubic-bezier(.45,.05,.55,.95) infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(0) translate(0, 0); } 50% { transform: rotate(-12deg) translate(-12px, 8px); } }
+.hero .deco svg.scene .gdots { animation: dotsDrift 8s ease-in-out infinite alternate; }
+@keyframes dotsDrift { from { opacity: .18; transform: translate(0, 0); } to { opacity: .4; transform: translate(10px, -8px); } }
+.hero .deco svg.scene .orbit { animation-duration: 12s; }
+.hero .deco svg.wave { animation-duration: 30s, 8s; } .hero .deco svg.wave.w1 { animation-duration: 44s, 10s; } .hero .deco svg.wave.w2 { animation-duration: 36s, 7s; } .hero .deco svg.wave.w3 { animation-duration: 24s, 6s; }
+.hero::before { animation-duration: 18s; }
+
+/* เปลี่ยนหน้า: จับคู่ hero ↔ hero, ตัวเลขใหญ่ ↔ ตัวเลขใหญ่, แถบเมนู ↔ แถบเมนู แล้วย่อขยายเข้าหากัน */
+.hero { view-transition-name: hero; }
+.hero .big { view-transition-name: hero-big; }
+.hero .lbl { view-transition-name: hero-lbl; }
+#bnav { view-transition-name: nav; }
+#bnav .bpill { view-transition-name: navpill; }
+::view-transition-group(*) { animation-duration: .62s; animation-timing-function: cubic-bezier(.32, .72, 0, 1); }
+::view-transition-old(hero), ::view-transition-new(hero) { height: 100%; width: 100%; object-fit: cover; object-position: left top; overflow: clip; }
+::view-transition-old(hero) { animation: vtFadeOut .36s cubic-bezier(.4, 0, .2, 1) both; }
+::view-transition-new(hero) { animation: vtFadeIn .62s cubic-bezier(.32, .72, 0, 1) both; }
+::view-transition-old(hero-big), ::view-transition-new(hero-big), ::view-transition-old(hero-lbl), ::view-transition-new(hero-lbl) { height: 100%; object-fit: none; object-position: left center; }
+::view-transition-old(root) { animation: vtRootOut .34s cubic-bezier(.4, 0, .2, 1) both; }
+::view-transition-new(root) { animation: vtRootIn .62s cubic-bezier(.32, .72, 0, 1) .06s both; }
+@keyframes vtFadeOut { to { opacity: 0; } }
+@keyframes vtFadeIn { from { opacity: 0; } }
+@keyframes vtRootOut { to { opacity: 0; transform: scale(.965); filter: blur(4px); } }
+@keyframes vtRootIn { from { opacity: 0; transform: scale(1.025); filter: blur(4px); } }
+
+/* เลื่อนขึ้นลง: เนื้อหาค่อย ๆ ปรากฏตอนเข้าจอ และค่อย ๆ จางเฉพาะช่วงท้ายก่อนลับใต้แถบเมนู (ไม่จางทั้งก้อนแม้การ์ดจะสูง) */
+@supports (animation-timeline: view()) {
+  #view > :not(.hero):not(#bnav):not(#dv):not(.apbar), #dv > *, .rqlist > *, .aplist > *, .mgrp .grid > *, .cl-cards {
+    animation: sfIn linear both, sfOut linear both;
+    animation-timeline: view(block 92px 0px), view(block 92px 0px);
+    animation-range: cover 0px cover 140px, cover calc(100% - 150px) cover 100%;
+  }
+  #view > .reveal, #dv > .reveal, .rqlist > .reveal, .aplist > .reveal { opacity: 1; transform: none; transition: none; }
+  .hero { animation: heroOut linear both; animation-timeline: view(block 92px 0px); animation-range: cover calc(100% - 240px) cover 100%; }
+  @keyframes sfIn { from { opacity: 0; transform: translateY(26px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes sfOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-12px) scale(.985); } }
+  @keyframes heroOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-14px) scale(.97); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero .deco svg.scene .gs, .hero .deco svg.scene .gs rect, .hero .deco svg.scene .gdots { animation: none !important; }
+  #view > *, #dv > *, .rqlist > *, .aplist > *, .mgrp .grid > *, .cl-cards, .hero { animation: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

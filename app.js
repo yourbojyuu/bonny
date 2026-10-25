@@ -63,11 +63,13 @@ var can = {
 };
 /** สามโหมดตามบทบาท: ครู (ส่งคำขอ/ติดตาม) · การเงิน (ทำงานเต็ม) · ผู้บริหาร (อนุมัติ/ดูรายงาน) — admin สลับดูได้ */
 var MODES = { teacher: 'โหมดครู', fin: 'โหมดการเงิน', exec: 'โหมดผู้บริหาร' };
+var TEACHER_MODE = false; // โหมดครูพับเก็บไว้ก่อน (เริ่มใช้ภายในฝ่าย: การเงิน + ผู้บริหาร) เปลี่ยนเป็น true เมื่อพร้อมให้ครูใช้
+function modeList() { return TEACHER_MODE ? ['fin', 'exec', 'teacher'] : ['fin', 'exec']; }
 function mode() {
   var r = role();
   if (r === 'ครู') return 'teacher';
   if (r === 'ผู้บริหาร') return 'exec';
-  if (r === 'admin' && S.modeAs) return S.modeAs;
+  if (r === 'admin' && S.modeAs && modeList().indexOf(S.modeAs) >= 0) return S.modeAs;
   return 'fin';
 }
 function homeTab() { return { teacher: 'request', exec: 'approve', fin: 'overview' }[mode()]; }
@@ -148,6 +150,7 @@ function startApp(token) {
   S.token = token;
   $('loginMsg').textContent = 'กำลังตรวจสิทธิ์…';
   api('me').then(function (me) {
+    if (me.role === 'ครู' && !TEACHER_MODE) throw new Error('ระบบเปิดให้ใช้ภายในฝ่ายการเงินและผู้บริหารก่อน — โหมดครูยังไม่เปิด');
     S.me = me;
     try { S.modeAs = me.role === 'admin' ? (localStorage.getItem('fin-mode') || '') : ''; } catch (e) { S.modeAs = ''; }
     return Promise.all([api('getSchema'), api('getSettings'), api('getDocs'), me.role === 'ครู' ? null : api('getReceipts')]);
@@ -183,7 +186,7 @@ function renderWho() {
   var old = $('modeSw'); if (old) old.parentNode.removeChild(old);
   if (!can.admin()) return;
   var sw = document.createElement('div'); sw.id = 'modeSw'; sw.className = 'modesw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'สลับโหมด');
-  sw.innerHTML = ['fin', 'teacher', 'exec'].map(function (m) { return '<button type="button" data-mode="' + m + '" aria-pressed="' + (mode() === m) + '">' + MODES[m].replace('โหมด', '') + '</button>'; }).join('');
+  sw.innerHTML = modeList().map(function (m) { return '<button type="button" data-mode="' + m + '" aria-pressed="' + (mode() === m) + '">' + MODES[m].replace('โหมด', '') + '</button>'; }).join('');
   w.parentNode.insertBefore(sw, w);
   sw.onclick = function (e) {
     var b = e.target.closest('[data-mode]'); if (!b) return;
@@ -294,7 +297,9 @@ function movePill() {
 }
 /** เปลี่ยนหน้าแบบลื่น (View Transition ถ้ารองรับ) */
 function go(tab, opt, instant) {
+  var vt = !instant && !!document.startViewTransition && !REDUCE;
   var run = function () {
+    if (vt) jumpTop(); // หน้าใหม่เริ่มบนสุดทันที ให้ hero/แถบเมนูจับคู่ย่อขยายจากตำแหน่งเดิมไปตำแหน่งใหม่
     if (window.GFUnmount) Array.prototype.forEach.call(document.querySelectorAll('.gfhost'), GFUnmount);
     if (window.Docs) Docs.leave();
     if (window.Receipts) Receipts.leave();
@@ -319,10 +324,14 @@ function go(tab, opt, instant) {
     if (!document.startViewTransition || REDUCE) { void v.offsetWidth; v.className = 'view-in'; }
     observeReveal();
   };
-  if (!instant && document.startViewTransition && !REDUCE) {
+  if (vt) {
     try { document.startViewTransition(run); } catch (e) { run(); }
   } else run();
-  if (!instant) window.scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });
+  if (!instant && !vt) window.scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });
+}
+function jumpTop() {
+  var h = document.documentElement, old = h.style.scrollBehavior;
+  h.style.scrollBehavior = 'auto'; window.scrollTo(0, 0); h.style.scrollBehavior = old;
 }
 
 /* ================= พื้นหลังเรขาคณิต + การเลื่อน ================= */
