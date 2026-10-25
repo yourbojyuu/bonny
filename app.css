@@ -1174,3 +1174,44 @@ body.authed .bnav.one { max-width: 400px; }
   #view > *, #dv > *, .rqlist > *, .aplist > *, .mgrp .grid > *, .cl-cards, .hero { animation: none !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* ================= v8: เปลี่ยนหน้าแบบแก้วใส (ซูมเข้า/ออก + morph + แสงกวาด) · hero เปลี่ยนรูปช้า ๆ ================= */
+/* ซูมตามทิศ: ไปหน้าถัดไป = หน้าเก่าขยายเข้าหาแล้วจางเป็นฝ้า · หน้าใหม่ค่อยหดจากใหญ่มาพอดี | ย้อนกลับ = กลับกัน */
+html { --vt-d: 1.05s; --vt-e: cubic-bezier(.32, .72, 0, 1); }
+::view-transition-group(*) { animation-duration: var(--vt-d); animation-timing-function: var(--vt-e); }
+::view-transition-old(root) { animation: vtGlassOut var(--vt-d) var(--vt-e) both; }
+::view-transition-new(root) { animation: vtGlassIn var(--vt-d) var(--vt-e) both; }
+html[data-vt="back"]::view-transition-old(root) { animation-name: vtGlassOutB; }
+html[data-vt="back"]::view-transition-new(root) { animation-name: vtGlassInB; }
+@keyframes vtGlassOut { 0% { opacity: 1; filter: blur(0) saturate(1) brightness(1); transform: scale(1); } 55% { opacity: .55; filter: blur(14px) saturate(1.35) brightness(1.06); } 100% { opacity: 0; filter: blur(22px) saturate(1.5) brightness(1.1); transform: scale(1.07); } }
+@keyframes vtGlassIn { 0%, 12% { opacity: 0; filter: blur(22px) saturate(1.5) brightness(1.1); transform: scale(.93); } 62% { opacity: .85; filter: blur(8px) saturate(1.2); } 100% { opacity: 1; filter: blur(0) saturate(1) brightness(1); transform: scale(1); } }
+@keyframes vtGlassOutB { 0% { opacity: 1; filter: blur(0); transform: scale(1); } 55% { opacity: .55; filter: blur(14px) saturate(1.35) brightness(1.06); } 100% { opacity: 0; filter: blur(22px) saturate(1.5) brightness(1.1); transform: scale(.93); } }
+@keyframes vtGlassInB { 0%, 12% { opacity: 0; filter: blur(22px) saturate(1.5) brightness(1.1); transform: scale(1.07); } 62% { opacity: .85; filter: blur(8px) saturate(1.2); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
+/* hero / ตัวเลข / เมนู จับคู่ย่อขยาย มุมโค้งตามขอบแก้ว */
+::view-transition-old(hero), ::view-transition-new(hero) { border-radius: 28px; overflow: clip; mix-blend-mode: normal; }
+::view-transition-old(hero) { animation: vtFadeOut calc(var(--vt-d) * .7) var(--vt-e) both; }
+::view-transition-new(hero) { animation: vtFadeIn var(--vt-d) var(--vt-e) both; }
+::view-transition-group(hero) { animation-duration: calc(var(--vt-d) * 1.05); }
+::view-transition-group(nav), ::view-transition-group(navpill) { animation-duration: calc(var(--vt-d) * .9); }
+/* แสงแก้วกวาดผ่านจอ 1 ครั้งตอนเปลี่ยนหน้า (อยู่ในชั้น top-layer ของ transition) */
+#vtveil { position: fixed; top: -20vh; left: 0; width: 46vw; height: 140vh; pointer-events: none; opacity: 0; z-index: 80; transform: rotate(14deg); transform-origin: 50% 50%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.38) 40%, rgba(255,255,255,.7) 50%, rgba(255,255,255,.38) 60%, transparent); }
+#vtveil.on { opacity: 1; view-transition-name: veil; }
+::view-transition-old(veil) { display: none; }
+::view-transition-new(veil) { animation: none; opacity: .9; }
+::view-transition-group(veil) { animation: veilSweep calc(var(--vt-d) * 1.15) var(--vt-e) both; }
+html[data-vt="back"]::view-transition-group(veil) { animation-name: veilSweepB; }
+@keyframes veilSweep { from { transform: translateX(-60vw) rotate(14deg); opacity: 0; } 25% { opacity: 1; } 80% { opacity: .8; } to { transform: translateX(120vw) rotate(14deg); opacity: 0; } }
+@keyframes veilSweepB { from { transform: translateX(120vw) rotate(14deg); opacity: 0; } 25% { opacity: 1; } 80% { opacity: .8; } to { transform: translateX(-60vw) rotate(14deg); opacity: 0; } }
+/* hero: ช้าลงและค่อย ๆ เปลี่ยน — รูปหลักเปลี่ยนทรงเอง สีไล่เฉดช้า ๆ */
+.hero .deco svg.scene .gs { animation-duration: 26s; } .hero .deco svg.scene .gs.g2 { animation-duration: 31s; } .hero .deco svg.scene .gs.g3 { animation-duration: 22s; }
+.hero .deco svg.scene .gs.sp { animation-duration: 90s; } .hero .deco svg.scene .gs.sp.rev { animation-duration: 70s; }
+.hero .deco svg.scene .gs.lqd { stroke: rgba(255,255,255,.7); stroke-width: 1.4; }
+.k-income svg.scene .gs.g1 rect { animation-duration: 9s; } .k-income svg.scene .gs.g1 rect:nth-child(2) { animation-duration: 11s; } .k-income svg.scene .gs.g1 rect:nth-child(3) { animation-duration: 8s; }
+.k-overview svg.scene .gs.g2 { animation-duration: 34s; } .k-approve svg.scene .gs.g1 { animation-duration: 60s; } .k-approve svg.scene .gs.g2 { animation-duration: 9s; } .k-expense svg.scene .gs.g1 { animation-duration: 18s; }
+.hero .deco svg.scene .orbit { animation-duration: 40s; } .hero .deco svg.scene .gdots { animation-duration: 18s; }
+.hero .deco svg.wave { animation-duration: 70s, 18s; } .hero .deco svg.wave.w1 { animation-duration: 110s, 22s; } .hero .deco svg.wave.w2 { animation-duration: 90s, 16s; } .hero .deco svg.wave.w3 { animation-duration: 60s, 14s; }
+.hero::before { animation: mesh 44s ease-in-out infinite alternate, hueSlow 38s ease-in-out infinite alternate; }
+@keyframes hueSlow { from { filter: saturate(1.15) hue-rotate(-14deg); } to { filter: saturate(1.3) hue-rotate(16deg); } }
+.hero .deco .orb { animation-duration: 28s; } .hero .deco .o2 { animation-duration: 36s; }
+@media (prefers-reduced-motion: reduce) { #vtveil { display: none; } .hero::before { animation: none !important; } }

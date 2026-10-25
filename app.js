@@ -298,6 +298,12 @@ function movePill() {
 /** เปลี่ยนหน้าแบบลื่น (View Transition ถ้ารองรับ) */
 function go(tab, opt, instant) {
   var vt = !instant && !!document.startViewTransition && !REDUCE;
+  if (vt) { // ทิศทาง: ไปแท็บถัดไป = ซูมเข้าหาเรา · ย้อนกลับ = ซูมออก
+    var ids = tabsNow().map(function (t) { return t.id; });
+    document.documentElement.setAttribute('data-vt', ids.indexOf(tab) >= ids.indexOf(S.tab) ? 'fwd' : 'back');
+    var vl = $('vtveil'); if (!vl) { vl = document.createElement('div'); vl.id = 'vtveil'; vl.setAttribute('aria-hidden', 'true'); document.body.appendChild(vl); }
+    vl.classList.add('on');
+  }
   var run = function () {
     if (vt) jumpTop(); // หน้าใหม่เริ่มบนสุดทันที ให้ hero/แถบเมนูจับคู่ย่อขยายจากตำแหน่งเดิมไปตำแหน่งใหม่
     if (window.GFUnmount) Array.prototype.forEach.call(document.querySelectorAll('.gfhost'), GFUnmount);
@@ -325,7 +331,11 @@ function go(tab, opt, instant) {
     observeReveal();
   };
   if (vt) {
-    try { document.startViewTransition(run); } catch (e) { run(); }
+    try {
+      var tr = document.startViewTransition(run);
+      var off = function () { var vl = $('vtveil'); if (vl) vl.classList.remove('on'); };
+      tr.finished.then(off, off);
+    } catch (e) { run(); }
   } else run();
   if (!instant && !vt) window.scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });
 }
@@ -483,6 +493,25 @@ function gshape(t, x, y, r, rot, fill, cls, delay) {
   else p = '<circle r="' + r + '" fill="' + fill + '"/>';
   return '<g transform="translate(' + x + ' ' + y + ') rotate(' + (rot || 0) + ')"><g class="gs ' + (cls || '') + '"' + (delay ? ' style="animation-delay:' + delay + 's"' : '') + '>' + p + '</g></g>';
 }
+/** ก้อนของเหลวแก้วใส: เส้นขอบเปลี่ยนรูปช้า ๆ วนไปมา (วงกลม → สี่เหลี่ยมมน → ใบไม้ → เพชรมน) ใช้ SMIL ให้ morph ทุกเบราว์เซอร์ */
+var BLOB_SHAPES = [[.552, .552, .552, .552, 0, 0], [.9, .9, .9, .9, 0, 0], [.7, .4, .8, .5, .12, -.1], [.22, .3, .25, .3, 0, 0], [.5, .8, .4, .7, -.1, .1]];
+function blobPath(sh, r) {
+  var a = sh[0], b = sh[1], c = sh[2], d = sh[3], dx = sh[4], dy = sh[5];
+  function n(v) { return (v * r).toFixed(1); }
+  return 'M' + n(dx) + ' ' + n(-1 + dy) + ' C' + n(a) + ' ' + n(-1 + dy) + ' ' + n(1 + dx) + ' ' + n(-a) + ' ' + n(1 + dx) + ' ' + n(0) +
+    ' C' + n(1 + dx) + ' ' + n(b) + ' ' + n(b) + ' ' + n(1 - dy) + ' ' + n(dx) + ' ' + n(1 - dy) +
+    ' C' + n(-c) + ' ' + n(1 - dy) + ' ' + n(-1 + dx) + ' ' + n(c) + ' ' + n(-1 + dx) + ' ' + n(0) +
+    ' C' + n(-1 + dx) + ' ' + n(-d) + ' ' + n(-d) + ' ' + n(-1 + dy) + ' ' + n(dx) + ' ' + n(-1 + dy) + 'Z';
+}
+function gblob(x, y, r, fill, cls, dur, offset) {
+  var order = [], k, n = BLOB_SHAPES.length;
+  for (k = 0; k < n; k++) order.push(BLOB_SHAPES[(k + (offset || 0)) % n]);
+  order.push(order[0]);
+  var vals = order.map(function (sh) { return blobPath(sh, r); }), kt = order.map(function (_, i) { return (i / (order.length - 1)).toFixed(3); }).join(';');
+  var spl = order.slice(1).map(function () { return '.45 .05 .55 .95'; }).join(';');
+  return '<g transform="translate(' + x + ' ' + y + ')"><g class="gs ' + (cls || '') + ' lqd"><path d="' + vals[0] + '" fill="' + fill + '">' +
+    (REDUCE ? '' : '<animate attributeName="d" dur="' + dur + 's" repeatCount="indefinite" calcMode="spline" keyTimes="' + kt + '" keySplines="' + spl + '" values="' + vals.join(';') + '"/>') + '</path></g></g>';
+}
 /** ตารางจุดบาง ๆ เป็นพื้นผิว (ไม่ขยับ) */
 function gdots(kind, x, y, w, h) { return '<rect class="gdots" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#hd-' + kind + ')"/>'; }
 /** ฉากตกแต่ง hero: แก้วใสที่มีของเหลวไหลช้า ๆ ภายใน + เรขาคณิตแบบจัดองค์ประกอบ
@@ -499,24 +528,24 @@ function heroDeco(kind) {
       S('quart', 556, 70, 46, 0, a, 'g2', -2) + S('ring', 352, 96, 34, 0, 0, 'g3') + S('c', 594, 210, 10, 0, f, 'g1', -3) + S('arc', 466, 160, 150, 200, 0, 'sp');
   } else if (kind === 'expense') {    // เงินออก: เอกสารเอียงซ้อนสามเหลี่ยมสีเน้น
     s += gdots(kind, 300, 40, 84, 70) +
-      S('sq', 468, 152, 70, 14, f, 'g1') + S('tri', 536, 96, 46, 12, a, 'g2', -2) + S('dash', 468, 152, 112, 0, 0, 'sp') +
+      gblob(468, 152, 72, f, 'g1', 48, 2) + S('tri', 536, 96, 46, 12, a, 'g2', -2) + S('dash', 468, 152, 112, 0, 0, 'sp') +
       S('dia', 330, 236, 20, 0, b, 'g3', -1) + S('semi', 576, 254, 22, 180, f, 'g1', -3);
   } else if (kind === 'settings') {   // ปรับแต่ง: วงซ้อนแบบเวนน์ + หกเหลี่ยม
     s += gdots(kind, 296, 196, 84, 70) +
-      S('c', 444, 146, 66, 0, f, 'g1') + S('c', 508, 168, 54, 0, a, 'g2', -3) + S('c', 478, 96, 26, 0, b, 'g3', -1) +
+      gblob(444, 146, 68, f, 'g1', 52, 1) + gblob(508, 168, 56, a, 'g2', 40, 3) + gblob(478, 96, 26, b, 'g3', 30, 4) +
       S('ring', 470, 146, 112, 0, 0, 'sp') + S('hex', 326, 90, 26, 0, f, 'g2', -2);
   } else if (kind === 'request') {    // คำขอ: กระดาษลอยตามเส้นทางจุดไปหาวงกลม (ส่งออกไป)
     s += gdots(kind, 520, 200, 84, 70) +
       '<path class="ln trail" d="M296 262 C340 250 360 200 404 186" fill="none"/>' +
-      S('doc', 466, 146, 76, -10, f, 'g1') + S('c', 552, 74, 38, 0, a, 'g2', -2) + S('ring', 552, 74, 56, 0, 0, 'g2', -2) +
+      S('doc', 466, 146, 76, -10, f, 'g1') + gblob(552, 74, 38, a, 'g2', 32, 2) + S('ring', 552, 74, 56, 0, 0, 'g2', -2) +
       S('tri', 340, 104, 20, -16, b, 'g3', -1) + S('pill', 586, 210, 16, 30, f, 'g1', -3);
   } else if (kind === 'approve') {    // อนุมัติ: วงแหวนหนาแบบตราประทับ + เพชรสีเน้น
     s += gdots(kind, 298, 46, 84, 70) +
-      S('thick', 468, 150, 76, 0, f, 'g1') + S('c', 468, 150, 44, 0, a, 'g2', -2) + S('arc', 468, 150, 112, 120, 0, 'sp') +
+      S('thick', 468, 150, 76, 0, f, 'g1') + gblob(468, 150, 46, a, 'g2', 36, 0) + S('arc', 468, 150, 112, 120, 0, 'sp') +
       S('dia', 566, 76, 24, 0, b, 'g3', -1) + S('sq', 340, 236, 18, 20, f, 'g1', -3);
   } else {                            // ภาพรวม: ดวงกลมใหญ่ + ดวงสีเน้น + วงโคจร
     s += gdots(kind, 296, 188, 84, 70) +
-      S('c', 466, 146, 82, 0, f, 'g1') + S('c', 524, 104, 42, 0, a, 'g2', -2) + S('dash', 466, 146, 118, 0, 0, 'sp') +
+      gblob(466, 146, 84, f, 'g1', 46, 0) + gblob(530, 100, 40, a, 'g2', 34, 2) + S('dash', 466, 146, 118, 0, 0, 'sp') +
       '<g class="orbit"><circle class="dotw" cx="466" cy="28" r="5"/></g>' +
       S('sq', 336, 74, 20, 18, b, 'g3', -1) + S('semi', 568, 262, 22, 180, f, 'g1', -3);
   }
