@@ -152,20 +152,30 @@ var Docs = (function () {
   function badCls(l, k) { return l.bad && l.bad.indexOf(k) >= 0 ? ' class="bad"' : ''; }
   function lineHtml(l, i, locked) {
     var dis = locked ? ' disabled' : '';
+    var taxN = cleanNum(l.tax);
+    var more =
+      '<div class="morebody">' +
+      '<label class="f">' + esc(L('ขบ_รายการ', 5)) + '<select data-f="kind"' + dis + '>' + plainOpts(S.schema.lineKinds, l.kind) + '</select></label>' +
+      '<label class="f">' + esc(L('ขบ_รายการ', 6)) + '<select data-f="method"' + dis + '>' + plainOpts(S.schema.payMethods, l.method) + '</select></label>' +
+      '<label class="f">' + esc(L('ขบ_รายการ', 8)) + ' <span class="autotag" data-autotag' + (l.taxAuto ? '' : ' hidden') + '>ตามทะเบียน</span><span class="taxrow"><input class="money" data-f="tax" inputmode="decimal" value="' + (l.tax ? esc(l.tax) : '') + '" placeholder="0.00"' + dis + '>' +
+      (locked ? '' : '<select data-f="quick" aria-label="คิดภาษีอัตโนมัติ">' + TAX_QUICK.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select>') + '</span></label>' +
+      '<label class="f">' + esc(L('ขบ_รายการ', 9)) + '<select data-f="taxType"' + dis + '>' + plainOpts(S.schema.taxTypes, l.taxType || 'ไม่มีภาษี') + '</select></label></div>';
     return '<div class="line' + (locked ? ' locked' : '') + '" data-line' + (l.taxAuto ? ' data-auto="1"' : '') + '>' +
       '<span class="i">' + (i + 1) + '</span>' +
       '<label class="f" data-c="type">' + esc(L('ขบ_รายการ', 3)) + '<select data-f="type"' + dis + badCls(l, 'type') + '>' + typeOptions(l.type) + '</select></label>' +
       '<label class="f" data-c="payee">' + esc(L('ขบ_รายการ', 4)) + '<input data-f="payee" list="payees" value="' + esc(l.payee) + '" placeholder="ชื่อร้าน / ผู้เบิก / ผู้ยืม"' + dis + '></label>' +
-      '<label class="f" data-c="kind">' + esc(L('ขบ_รายการ', 5)) + '<select data-f="kind"' + dis + '>' + plainOpts(S.schema.lineKinds, l.kind) + '</select></label>' +
-      '<label class="f" data-c="method">' + esc(L('ขบ_รายการ', 6)) + '<select data-f="method"' + dis + '>' + plainOpts(S.schema.payMethods, l.method) + '</select></label>' +
       '<label class="f" data-c="gross">' + esc(L('ขบ_รายการ', 7)) + '<input class="money' + (l.bad && l.bad.indexOf('gross') >= 0 ? ' bad' : '') + '" data-f="gross" inputmode="decimal" value="' + (l.gross ? esc(l.gross) : '') + '" placeholder="0.00"' + dis + '></label>' +
-      '<label class="f" data-c="tax">' + esc(L('ขบ_รายการ', 8)) + ' <span class="autotag" data-autotag' + (l.taxAuto ? '' : ' hidden') + '>ตามทะเบียน</span><span class="taxrow"><input class="money" data-f="tax" inputmode="decimal" value="' + (l.tax ? esc(l.tax) : '') + '" placeholder="0.00"' + dis + '>' +
-      (locked ? '' : '<select data-f="quick" aria-label="คิดภาษีอัตโนมัติ">' + TAX_QUICK.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select>') + '</span></label>' +
-      '<label class="f" data-c="taxType">' + esc(L('ขบ_รายการ', 9)) + '<select data-f="taxType"' + dis + '>' + plainOpts(S.schema.taxTypes, l.taxType || 'ไม่มีภาษี') + '</select></label>' +
-      '<div class="f" data-c="net"><span style="font-size:13px;font-weight:600;color:var(--ink2)">จ่ายจริง (หลังหักภาษี)</span><span class="net" data-net>' + money(r2(cleanNum(l.gross) - cleanNum(l.tax))) + '</span>' +
-      (l.state ? badge(l.state) + (l.khjNo ? ' <span class="meta" style="font-size:12.5px">ขจ.' + l.khjNo + '</span>' : '') : '') +
-      (l.warn ? '<span class="warnnote" title="' + esc(l.warn) + '">ผู้รับใหม่ ตรวจภาษี</span>' : '') + '</div>' +
-      (locked ? '' : '<button class="del" type="button" data-del aria-label="ลบรายการ" data-c="del">×</button>') + '</div>';
+      '<div class="f" data-c="net"><span class="nl">จ่ายจริง</span><span class="net" data-net>' + money(r2(cleanNum(l.gross) - taxN)) + '</span></div>' +
+      (locked ? '' : '<button class="del" type="button" data-del aria-label="ลบรายการ" data-c="del">×</button>') +
+      '<details class="more" data-c="more"' + (l.warn ? ' open' : '') + '><summary><span data-sum></span>' +
+      (l.state ? ' ' + badge(l.state) + (l.khjNo ? ' <span class="meta" style="font-size:12.5px">ขจ.' + l.khjNo + '</span>' : '') : '') +
+      (l.warn ? ' <span class="warnnote" title="' + esc(l.warn) + '">ผู้รับใหม่ ตรวจภาษี</span>' : '') + '</summary>' + more + '</details></div>';
+  }
+  /** สรุปสั้น ๆ ของช่องที่ยุบอยู่ */
+  function sumText(row) {
+    var f = function (k) { return row.querySelector('[data-f="' + k + '"]').value; };
+    var t = cleanNum(f('tax'));
+    return f('kind') + ' · ' + f('method') + ' · ' + (t ? 'หักภาษี ' + money(t) + ' (' + f('taxType') + ')' : 'ไม่หักภาษี') + ' ';
   }
   function readLines(box) {
     return Array.prototype.map.call(box.querySelectorAll('[data-line]'), function (row) {
@@ -181,6 +191,7 @@ var Docs = (function () {
       gross += Math.round(g * 100); tax += Math.round(t * 100); net += Math.round((g - t) * 100);
       row.querySelector('[data-net]').textContent = money(r2(g - t));
       row.querySelector('.i').textContent = i + 1;
+      row.querySelector('[data-sum]').textContent = sumText(row);
     });
     var tot = box.parentNode.querySelector('[data-tot]');
     if (tot) tot.innerHTML = '<span>ขอเบิกเงิน <b>' + money(net / 100) + '</b></span><span>ภาษี <b>' + money(tax / 100) + '</b></span>' +

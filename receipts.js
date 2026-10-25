@@ -79,19 +79,19 @@ var Receipts = (function () {
     dv.innerHTML =
       '<div class="card glass reveal"><h2>ใบเสร็จใบใหม่</h2>' +
       (d ? '<div class="draftbar" id="rDraft"><span>กู้ฉบับร่างที่ค้างไว้เมื่อ ' + esc(clockText(dr.at)) + ' กลับมาแล้ว</span><button class="link" type="button" id="rDraftDel">ทิ้งฉบับร่าง</button></div>' : '') +
-      '<div class="form-head r4"><label class="f">เล่มที่<input id="rBook" value="' + esc(data.book) + '" placeholder="เช่น 1"></label>' +
+      '<div class="form-head r3"><label class="f">เล่มที่<input id="rBook" value="' + esc(data.book) + '" placeholder="เช่น 1"></label>' +
       '<label class="f">เลขที่<input id="rNo" value="' + esc(data.no) + '" placeholder="เช่น 101"></label>' +
-      '<label class="f">วันที่รับเงิน<input type="date" id="rDate" value="' + esc(data.date) + '" min="' + S.st.fyStart + '" max="' + S.st.fyEnd + '"></label>' +
-      '<label class="f">ผู้ชำระ (ถ้ามี)<input id="rPayer" value="' + esc(data.payer || '') + '"></label></div>' +
+      '<label class="f">วันที่รับเงิน<input type="date" id="rDate" value="' + esc(data.date) + '" min="' + S.st.fyStart + '" max="' + S.st.fyEnd + '"></label></div>' +
+      '<details class="more rpayer"' + (data.payer ? ' open' : '') + '><summary>ผู้ชำระ (ไม่บังคับ)</summary><label class="f"><input id="rPayer" value="' + esc(data.payer || '') + '" placeholder="ชื่อผู้ชำระเงิน"></label></details>' +
       '<div id="rLines">' + data.lines.map(lineHtml).join('') + '</div>' +
       '<div class="toolbar"><button class="btn soft" type="button" id="rAdd">' + ICON.plus + ' เพิ่มบรรทัด</button><span class="grow"></span>' +
       '<span class="hint" style="margin:0">รวม <b class="money" id="rSum">0.00</b> บาท · Ctrl+Enter เพื่อบันทึก</span>' +
       '<button class="btn" type="button" id="rSave">บันทึกใบเสร็จ</button></div></div>' +
-      '<div class="card glass reveal"><h2>วางจาก Excel ทีเดียวทั้งก้อน</h2>' +
+      '<details class="card glass reveal pastecard"' + (pasted ? ' open' : '') + '><summary><h2>วางจาก Excel ทีเดียวทั้งก้อน</h2></summary>' +
       '<p class="hint">คัดลอกแถวจากไฟล์ใบเสร็จเดิม (หัวตาราง: ' + esc(Paste.RECEIPT_HEADER.join(' | ')) + ') แล้ววางด้านล่าง ระบบจะตรวจให้ก่อนบันทึกเสมอ — ใบที่มีอยู่แล้วจะไม่ถูกบันทึกซ้ำ</p>' +
       '<textarea id="rPaste" rows="4" placeholder="วางข้อมูลจาก Excel ที่นี่ (Ctrl+V)"></textarea>' +
       '<div class="actions"><button class="btn soft" type="button" id="rCheck">ตรวจข้อมูลที่วาง</button><button class="link" type="button" id="rCopyHead">คัดลอกหัวตาราง</button></div>' +
-      '<div id="rPrev"></div></div>';
+      '<div id="rPrev"></div></details>';
     var el = dv, box = el.querySelector('#rLines'), saveT = 0;
     thaiDateHint(el.querySelector('#rDate'));
     function readLines() {

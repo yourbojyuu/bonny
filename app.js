@@ -177,6 +177,7 @@ function movePill() {
 /** เปลี่ยนหน้าแบบลื่น (View Transition ถ้ารองรับ) */
 function go(tab, opt, instant) {
   var run = function () {
+    if (window.GFUnmount) Array.prototype.forEach.call(document.querySelectorAll('.gfhost'), GFUnmount);
     if (window.Docs) Docs.leave();
     if (window.Receipts) Receipts.leave();
     S.tab = tab; S.opt = opt || {};
@@ -379,25 +380,79 @@ function inboxItems() {
   }
   return items;
 }
+/** ลิ้นชักงาน: แฟ้มแก้ว 4 แฟ้ม กดแฟ้มเดียวเห็นงานในนั้นทั้งหมด กดงานเพื่อไปทำต่อ */
+function drawerFolders() {
+  var d = S.docs, rc = S.rcv ? S.rcv.rows : [], out = [];
+  var dk = Draft.get('khb'), dr = Draft.get('rcv'), drafts = [];
+  if (dk && dk.data && can.khb()) {
+    var n = (dk.data.lines || []).filter(function (l) { return l.payee || l.gross; }).length;
+    if (n) drafts.push({ name: 'ฉบับร่าง ขบ.', meta: n + ' รายการ', go: ['expense', { seg: 'khb', draft: 1 }] });
+  }
+  if (dr && dr.data && can.fin() && (dr.data.lines || []).some(function (l) { return l.amount; })) drafts.push({ name: 'ฉบับร่างใบเสร็จ ' + (dr.data.book || '-') + '/' + (dr.data.no || '-'), meta: clockText(dr.at), go: ['income', { seg: 'enter' }] });
+  out.push({ key: 'draft', label: 'ฉบับร่าง', art: 'aurora', seed: 3, meta: drafts.length ? drafts.length + ' ฉบับ · ทำต่อได้เลย' : 'ไม่มีฉบับร่าง', files: drafts });
+
+  var wait = [], waitSum = 0, pay = [];
+  (d.khbs || []).forEach(function (h) {
+    if (h.status === 'ยกเลิก') return;
+    h.lines.forEach(function (l) { if (l.state === 'รอจ่าย') { wait.push({ name: l.payee || typeName(l.type), meta: money(l.net), go: ['expense', { seg: 'pending' }] }); waitSum += Math.round(l.net * 100); } });
+  });
+  out.push({ key: 'wait', label: 'ขบ. รอทำ ขจ.', art: 'ember', seed: 11, meta: wait.length ? wait.length + ' รายการ · ' + money(waitSum / 100) : 'ไม่มีรายการรอ', files: wait });
+  (d.khjs || []).forEach(function (j) {
+    if (j.status === 'ยกเลิก' || j.paid >= j.count) return;
+    pay.push({ name: 'ขจ.' + j.no + ' · ' + thaiDate(j.date), meta: 'เหลือ ' + (j.count - j.paid) + '/' + j.count, khj: j.no });
+  });
+  out.push({ key: 'pay', label: 'รอจ่ายเงิน', art: 'glacier', seed: 5, meta: pay.length ? pay.length + ' ใบ ขจ.' : 'จ่ายครบแล้ว', files: pay });
+
+  var live = rc.filter(function (r) { return !r[8]; }).sort(function (x, y) { return x[3] < y[3] ? -1 : x[3] > y[3] ? 1 : 0; });
+  var last = live.length ? live[live.length - 1][3] : '', ago = last ? daysBetween(last, defaultDate()) : 0;
+  out.push({ key: 'rcv', label: 'รายรับล่าสุด', art: 'verdant', seed: 7,
+    meta: !live.length ? 'ยังไม่มีใบเสร็จ' : ago > 0 ? 'ล่าสุด ' + thaiDate(last) + ' · ' + ago + ' วันก่อน' : 'บันทึกวันนี้แล้ว',
+    files: live.slice(-6).map(function (r) { return { name: 'ใบเสร็จ ' + r[0] + '/' + r[1], meta: money(r[7]), go: ['income', { seg: 'list' }] }; }) });
+  return out;
+}
 function renderInbox() {
   var box = $('inbox'); if (!box) return;
-  var items = inboxItems();
-  var h = '<h2>งานที่ต้องทำต่อ' + (items.length ? ' <span class="cnt">' + items.length + '</span>' : '') + '</h2>';
-  if (!items.length) h += '<div class="empty" style="padding:18px"><b>ไม่มีงานค้าง</b>ทุกรายการถูกจ่ายและบันทึกครบแล้ว</div>';
-  else h += '<div class="rows stagger">' + items.map(function (x, i) {
-    return '<div class="todo ' + x.cls + '" style="--i:' + i + '"><span class="dot" aria-hidden="true"></span><span class="tx"><b>' + esc(x.t) + '</b>' + (x.s ? '<br><span class="tag">' + esc(x.s) + '</span>' : '') +
-      '</span><button class="btn sm" type="button" data-todo="' + i + '">' + esc(x.b) + '</button></div>';
-  }).join('') + '</div>';
-  box.innerHTML = h;
-  Array.prototype.forEach.call(box.querySelectorAll('[data-todo]'), function (b) {
+  if (window.GFUnmount) Array.prototype.forEach.call(document.querySelectorAll('.gfhost'), GFUnmount);
+  var fs = drawerFolders(), total = 0;
+  fs.forEach(function (f) { if (f.key !== 'rcv') total += f.files.length; });
+  var h = '<h2>งานที่ต้องทำต่อ' + (total ? ' <span class="cnt">' + total + '</span>' : '') + '</h2>' +
+    '<div class="quick">' +
+    (can.khb() ? '<button class="btn sm" type="button" data-q="khb">' + ICON.plus + ' ขบ. ใหม่</button>' : '') +
+    (can.fin() ? '<button class="btn sm soft" type="button" data-q="rcv">' + ICON.plus + ' บันทึกใบเสร็จ</button>' : '') +
+    (can.fin() ? '<button class="btn sm ghost" type="button" data-q="pending">ทำ ขจ. จากรายการรอ</button>' : '') + '</div>';
+  if (!window.GFMount) {
+    h += '<div class="rows">' + fs.map(function (f) {
+      return f.files.length ? '<div class="todo ' + f.key + '"><span class="dot"></span><span class="tx"><b>' + esc(f.label) + '</b><br><span class="tag">' + esc(f.meta) + '</span></span></div>' : '';
+    }).join('') + '</div>';
+    box.innerHTML = h; wireQuick(box); return;
+  }
+  h += '<div class="drawer" id="drawer">' + fs.map(function (f, i) { return '<div class="gfhost" data-f="' + i + '"></div>'; }).join('') + '</div>';
+  box.innerHTML = h; wireQuick(box);
+  var dw = $('drawer'), cols = dw.clientWidth < 560 ? 2 : 4, gap = cols === 2 ? 10 : 20;
+  var wd = Math.max(140, Math.min(300, Math.floor((dw.clientWidth - gap * (cols - 1)) / cols)));
+  Array.prototype.forEach.call(dw.querySelectorAll('.gfhost'), function (el, i) {
+    var f = fs[i];
+    el.style.setProperty('--k', (wd / 340).toFixed(3));
+    GFMount(el, {
+      label: f.label, meta: f.meta, art: f.art, seed: f.seed, width: wd, action: 'none', appearDelay: i * 120, defaultOpen: false,
+      files: f.files.map(function (x) { return { name: x.name, meta: x.meta }; }),
+      onFileSelect: function (file, idx) {
+        var x = f.files[idx]; if (!x) return;
+        if (x.khj) go('expense', { seg: 'khj', openKhj: x.khj }); else go(x.go[0], x.go[1]);
+      }
+    });
+  });
+}
+function wireQuick(box) {
+  Array.prototype.forEach.call(box.querySelectorAll('[data-q]'), function (b) {
     b.onclick = function () {
-      var x = items[Number(b.getAttribute('data-todo'))];
-      if (x.khj) { go('expense', { seg: 'khj', openKhj: x.khj }); return; }
-      go(x.go[0], x.go[1]);
+      var q = b.getAttribute('data-q');
+      if (q === 'khb') go('expense', { seg: 'khb', draft: 1 });
+      else if (q === 'rcv') go('income', { seg: 'enter' });
+      else go('expense', { seg: 'pending' });
     };
   });
 }
-
 function renderOverview() {
   var pa = pendingAmount();
   $('view').innerHTML =
