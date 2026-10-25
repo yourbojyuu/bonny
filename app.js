@@ -428,43 +428,53 @@ function hbadge(x, y, size, icon, cls, f, delay) {
   return '<g transform="translate(' + x + ' ' + y + ')"><g class="gbadge ' + (cls || '') + '"' + (delay ? ' style="animation-delay:' + delay + 's"' : '') + '><rect width="' + size + '" height="' + size + '" rx="' + (size * 0.3) + '" fill="' + f + '"/>' +
     '<path class="hl" d="M' + (size * 0.2) + ' 3 H' + (size * 0.8) + '"/><g transform="translate(' + o + ' ' + o + ') scale(' + (size * 0.52 / 24) + ')"><path class="ic" d="' + HI[icon] + '"/></g></g></g>';
 }
-/** ฉากตกแต่ง hero: แต่ละแท็บมีเรื่องและไอคอนของตัวเอง (เรขาคณิต + abstract + กระจกเหลวแบบแบน) */
+/** รูปทรงเรขาคณิตกระจกใส (ไม่มีไอคอน): t = วงกลม/วงแหวน/สี่เหลี่ยม/สามเหลี่ยม/ครึ่งวง/หกเหลี่ยม/แคปซูล/เสี้ยววง */
+function gshape(t, x, y, r, rot, fill, cls, delay) {
+  var p, st = '';
+  if (t === 'c') p = '<circle r="' + r + '" fill="' + fill + '"/>';
+  else if (t === 'ring') p = '<circle r="' + r + '" fill="none" class="ln"/>';
+  else if (t === 'dash') p = '<circle r="' + r + '" fill="none" class="ln dash"/>';
+  else if (t === 'sq') p = '<rect x="' + (-r) + '" y="' + (-r) + '" width="' + (2 * r) + '" height="' + (2 * r) + '" rx="' + (r * 0.34) + '" fill="' + fill + '"/>';
+  else if (t === 'tri') p = '<path d="M0 ' + (-r) + ' L' + (r * 0.95) + ' ' + (r * 0.7) + ' L' + (-r * 0.95) + ' ' + (r * 0.7) + 'Z" fill="' + fill + '" stroke-linejoin="round" style="stroke-width:' + (r * 0.16) + 'px"/>';
+  else if (t === 'semi') p = '<path d="M' + (-r) + ' 0 A' + r + ' ' + r + ' 0 0 1 ' + r + ' 0Z" fill="' + fill + '"/>';
+  else if (t === 'quart') p = '<path d="M' + (-r) + ' ' + r + ' L' + (-r) + ' ' + (-r) + ' A' + (2 * r) + ' ' + (2 * r) + ' 0 0 1 ' + r + ' ' + r + 'Z" fill="' + fill + '"/>';
+  else if (t === 'hex') { var q = '', k; for (k = 0; k < 6; k++) q += (k ? ' ' : '') + (r * Math.cos(Math.PI / 3 * k)).toFixed(1) + ',' + (r * Math.sin(Math.PI / 3 * k)).toFixed(1); p = '<polygon points="' + q + '" fill="' + fill + '" stroke-linejoin="round" style="stroke-width:' + (r * 0.08) + 'px"/>'; }
+  else if (t === 'pill') p = '<rect x="' + (-r * 0.42) + '" y="' + (-r) + '" width="' + (r * 0.84) + '" height="' + (2 * r) + '" rx="' + (r * 0.42) + '" fill="' + fill + '"/>';
+  else if (t === 'dia') p = '<rect x="' + (-r * 0.7) + '" y="' + (-r * 0.7) + '" width="' + (r * 1.4) + '" height="' + (r * 1.4) + '" rx="' + (r * 0.22) + '" transform="rotate(45)" fill="' + fill + '"/>';
+  else p = '<circle r="' + r + '" fill="' + fill + '"/>';
+  return '<g transform="translate(' + x + ' ' + y + ') rotate(' + (rot || 0) + ')"><g class="gs ' + (cls || '') + '"' + (delay ? ' style="animation-delay:' + delay + 's"' : '') + '>' + p + '</g></g>';
+}
+/** ฉากตกแต่ง hero: เรขาคณิต abstract ผสมหลายรูปทรง · กระจกใสที่มีของเหลวไหลช้า ๆ อยู่ข้างใน (แต่ละแท็บจัดองค์ประกอบไม่เหมือนกัน) */
 function heroDeco(kind) {
-  var G = '<defs><linearGradient id="hg-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity=".07"/></linearGradient>' +
-    '<linearGradient id="hv-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient></defs>';
-  var s = '', f = 'url(#hg-' + kind + ')', v = 'url(#hv-' + kind + ')', i;
-  if (kind === 'income') {            // เงินเข้า: แท่งโต ใบเสร็จ ถาดรับ เหรียญลอยขึ้น
-    var hs = [58, 92, 126, 168, 214];
-    for (i = 0; i < 5; i++) s += '<rect class="gbar" style="animation-delay:' + (i * 0.35) + 's" x="' + (330 + i * 52) + '" y="' + (286 - hs[i]) + '" width="38" height="' + hs[i] + '" rx="14" fill="' + v + '"/>';
-    s += '<path class="ln trend" pathLength="1" d="M300 232 C350 214 372 176 420 162 S500 96 580 40"/>' +
-      '<circle class="ln dash spin2" cx="300" cy="118" r="74" fill="none"/>' +
-      hbadge(262, 80, 76, 'receipt', 'b1', f, 0) + hbadge(468, 52, 50, 'tray', 'b2', f, -2) + hbadge(560, 120, 44, 'coin', 'b3', f, -4) +
-      '<circle class="drop d1" cx="330" cy="40" r="7" fill="' + f + '"/><circle class="drop d2" cx="515" cy="190" r="5" fill="' + f + '"/><circle class="drop d3" cx="445" cy="120" r="10" fill="' + f + '"/>';
-  } else if (kind === 'expense') {    // ขบ. → ขจ. → จ่าย: เอกสารสามใบต่อกันด้วยลูกศรไหล
-    for (i = 0; i < 4; i++) s += '<path class="slat" style="animation-delay:' + (i * -1.6) + 's" fill="' + f + '" d="M' + (340 + i * 54) + ' 300 L' + (390 + i * 54) + ' 20 L' + (410 + i * 54) + ' 20 L' + (360 + i * 54) + ' 300Z" opacity="' + (0.3 + i * 0.08) + '"/>';
-    s += '<path class="ln gflow" d="M294 84 C340 84 340 144 390 144 S440 204 486 204"/><path class="ln gflow gf2" d="M300 90 C360 70 400 120 440 120 S520 170 590 150"/>' +
-      hbadge(262, 52, 64, 'doc', 'b1', f, 0) + hbadge(358, 112, 64, 'doc', 'b2', f, -2) + hbadge(454, 172, 64, 'send', 'b3', f, -4) +
-      '<rect class="gpill" x="440" y="40" width="120" height="24" rx="12" fill="' + f + '"/><rect class="gpill" style="animation-delay:-2s" x="480" y="74" width="80" height="20" rx="10" fill="' + f + '"/>' +
-      '<circle class="ln dash spin2" cx="540" cy="250" r="44" fill="none"/>';
-  } else if (kind === 'settings') {   // ปรับแต่ง/ปลอดภัย: เฟือง แถบเลื่อน โล่ กุญแจ
-    s += '<g class="rays">'; for (i = 0; i < 12; i++) s += '<line x1="470" y1="140" x2="470" y2="-40" transform="rotate(' + (i * 30) + ' 470 140)"/>'; s += '</g>' +
-      '<circle class="gear" cx="470" cy="140" r="70" fill="none" stroke="' + f + '" stroke-width="24" stroke-dasharray="13.7 13.7"/><circle cx="470" cy="140" r="56" fill="' + f + '"/>' +
-      '<g transform="translate(446 116) scale(2)"><path class="ic" d="' + HI.sliders + '"/></g>' +
-      '<circle class="gear rev" cx="352" cy="232" r="38" fill="none" stroke="' + f + '" stroke-width="16" stroke-dasharray="9.9 9.9"/><circle cx="352" cy="232" r="29" fill="' + f + '"/>';
-    for (i = 0; i < 3; i++) s += '<line class="trk" x1="' + (240 + i * 12) + '" x2="' + (330 + i * 12) + '" y1="' + (40 + i * 30) + '" y2="' + (40 + i * 30) + '"/><circle class="knob k' + i + '" cx="' + (262 + i * 12) + '" cy="' + (40 + i * 30) + '" r="8" fill="' + f + '"/>';
-    s += hbadge(552, 62, 54, 'shield', 'b2', f, -1) + hbadge(560, 190, 46, 'key', 'b3', f, -3);
-  } else {                            // ภาพรวม: กระเป๋าเงินกลางวงเกจ ล้อมด้วยธนาคาร กราฟ เหรียญ
-    s += '<circle class="gl" cx="440" cy="150" r="108" fill="' + f + '"/><circle cx="440" cy="150" r="74" fill="' + f + '" opacity=".6"/>' +
-      '<circle class="ln dash spin" cx="440" cy="150" r="138" fill="none"/><path class="ln gauge" pathLength="1" d="M350 150 A90 90 0 1 1 440 240" fill="none"/>' +
-      '<g class="orbit"><circle class="dotw" cx="440" cy="12" r="6"/></g>' +
-      '<path class="ln dash" d="M440 150 L318 78 M440 150 L548 214 M440 150 L292 226"/>' +
-      hbadge(404, 114, 72, 'wallet', 'b1', f, 0) + hbadge(292, 58, 54, 'bank', 'b2', f, -2) + hbadge(522, 190, 54, 'chart', 'b3', f, -4) + hbadge(262, 204, 46, 'coin', 'b2', f, -1) +
-      '<rect class="gcard c3" x="540" y="50" width="62" height="62" rx="20" fill="' + f + '"/><path class="ln spark" pathLength="1" d="M552 100 L566 82 L576 92 L592 66" fill="none"/>';
+  var G = '<defs><linearGradient id="hg-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".46"/><stop offset="1" stop-color="#fff" stop-opacity=".06"/></linearGradient>' +
+    '<linearGradient id="ha-' + kind + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--h3)" stop-opacity=".85"/><stop offset="1" style="stop-color:var(--h2)" stop-opacity=".35"/></linearGradient>' +
+    '<linearGradient id="hb-' + kind + '" x1="1" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--h4)" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient></defs>';
+  var f = 'url(#hg-' + kind + ')', a = 'url(#ha-' + kind + ')', b = 'url(#hb-' + kind + ')', S = gshape, s = '', i;
+  if (kind === 'income') {            // ไล่ขึ้นเป็นขั้นบันได: ผสมสี่เหลี่ยม เสี้ยววง แคปซูล และเพชร
+    s += S('quart', 318, 258, 46, 0, a, 'g1', 0) + S('sq', 392, 222, 34, 12, f, 'g2', -2) + S('pill', 458, 190, 52, 0, b, 'g3', -4) +
+      S('dia', 520, 138, 40, 0, a, 'g1', -1) + S('c', 566, 80, 34, 0, f, 'g2', -3) + S('dash', 480, 120, 120, 0, 0, 'sp') +
+      S('tri', 350, 140, 30, -20, f, 'g3', -5) + S('ring', 420, 60, 26, 0, 0, 'g2') + S('semi', 560, 250, 38, 180, b, 'g1', -2) + S('c', 300, 70, 8, 0, f, 'g3');
+  } else if (kind === 'expense') {    // ตัดผ่านเป็นเส้นทแยง: สามเหลี่ยม ลิ่ม แท่งเอียง วงแหวน
+    for (i = 0; i < 4; i++) s += '<g transform="translate(' + (340 + i * 56) + ' 0) skewX(-18)"><rect class="gs slat" style="animation-delay:' + (i * -1.8) + 's" width="' + (22 + i * 6) + '" height="320" y="-10" rx="11" fill="' + (i % 2 ? b : f) + '"/></g>';
+    s += S('tri', 300, 90, 52, 15, a, 'g1', 0) + S('hex', 470, 120, 46, 0, a, 'g2', -3) + S('semi', 420, 252, 50, 0, f, 'g3', -1) +
+      S('ring', 540, 210, 40, 0, 0, 'g2') + S('dash', 470, 120, 92, 0, 0, 'sp') + S('dia', 566, 66, 28, 0, f, 'g1', -4) + S('c', 330, 240, 26, 0, b, 'g3', -2);
+  } else if (kind === 'settings') {   // วงซ้อนวง + เวนน์: หกเหลี่ยม วงกลมทับกัน เสี้ยววง
+    s += S('c', 430, 140, 78, 0, a, 'g1', 0) + S('c', 500, 170, 78, 0, b, 'g2', -3) + S('c', 466, 100, 40, 0, f, 'g3', -1) +
+      S('dash', 465, 150, 128, 0, 0, 'sp') + S('ring', 465, 150, 100, 0, 0, 'sp rev') + S('hex', 316, 82, 40, 0, f, 'g2', -2) + S('hex', 354, 222, 26, 0, a, 'g3', -4) +
+      S('quart', 562, 52, 34, 90, f, 'g1', -2) + S('pill', 270, 168, 34, 30, b, 'g3', -1) + S('dia', 566, 246, 24, 0, a, 'g2');
+  } else {                            // ภาพรวม: ดวงกลมใหญ่กลาง โคจรด้วยวง ล้อมรูปทรงต่าง ๆ
+    s += S('c', 440, 150, 96, 0, f, 'g1', 0) + S('c', 440, 150, 56, 0, a, 'g2', -2) + S('dash', 440, 150, 136, 0, 0, 'sp') + S('ring', 440, 150, 116, 0, 0, 'sp rev') +
+      '<g class="orbit"><circle class="dotw" cx="440" cy="14" r="6"/></g>' +
+      S('hex', 320, 72, 36, 0, b, 'g3', -1) + S('tri', 296, 226, 34, 10, a, 'g1', -3) + S('sq', 560, 70, 30, 18, f, 'g2', -2) + S('semi', 548, 236, 40, 180, b, 'g3', -4) + S('dia', 536, 150, 18, 0, f, 'g1');
   }
-  var wv = function (ph) { var d = 'M0 ' + (200 + ph); for (var x = 0; x < 2400; x += 600) d += 'C' + (x + 150) + ' ' + (150 + ph) + ',' + (x + 450) + ' ' + (250 + ph) + ',' + (x + 600) + ' ' + (200 + ph); return d + 'L2400 300L0 300Z'; };
-  return '<div class="deco k-' + kind + '" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i>' +
-    '<svg class="wave w1" viewBox="0 0 2400 300" preserveAspectRatio="none"><defs><linearGradient id="wg-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs><path d="' + wv(0) + '" fill="url(#wg-' + kind + ')"/></svg>' +
-    '<svg class="wave w2" viewBox="0 0 2400 300" preserveAspectRatio="none"><path d="' + wv(40) + '" fill="url(#wg-' + kind + ')"/></svg>' +
+  var wv = function (ph, amp) { var d = 'M0 ' + (200 + ph); for (var x = 0; x < 2400; x += 600) d += 'C' + (x + 150) + ' ' + (200 + ph - amp) + ',' + (x + 450) + ' ' + (200 + ph + amp) + ',' + (x + 600) + ' ' + (200 + ph); return d + 'L2400 320L0 320Z'; };
+  var lq = function (cls, id, ph, amp) { return '<svg class="wave ' + cls + '" viewBox="0 0 2400 300" preserveAspectRatio="none"><path d="' + wv(ph, amp) + '" fill="url(#' + id + '-' + kind + ')"/></svg>'; };
+  return '<div class="deco k-' + kind + '" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i>' +
+    '<svg width="0" height="0" style="position:absolute"><defs>' +
+    '<linearGradient id="lq1-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--h3)" stop-opacity=".55"/><stop offset="1" style="stop-color:var(--h1)" stop-opacity=".08"/></linearGradient>' +
+    '<linearGradient id="lq2-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--h2)" stop-opacity=".5"/><stop offset="1" style="stop-color:var(--h4)" stop-opacity=".06"/></linearGradient>' +
+    '<linearGradient id="lq3-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs></svg>' +
+    lq('w1', 'lq2', 20, 70) + lq('w2', 'lq1', 60, 56) + lq('w3', 'lq3', 100, 44) +
     '<svg class="scene" viewBox="200 -20 420 340" preserveAspectRatio="xMaxYMid meet">' + G + '<g class="par">' + s + '</g></svg></div>';
 }
 function pendingAmount() {

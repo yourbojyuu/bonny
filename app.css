@@ -12,8 +12,8 @@
   color-scheme: light;
 }
 body[data-tab="income"] { --c1: #079a55; --c2: #2edc86; --c3: #c2f5dc; --c4: #04703c; }
-body[data-tab="expense"] { --c1: #e8173f; --c2: #ff5c7c; --c3: #ffc6d1; --c4: #a50e2c; }
-body[data-tab="settings"] { --c1: #ee7000; --c2: #ffbf00; --c3: #ffe69a; --c4: #b04a00; }
+body[data-tab="expense"] { --c1: #f26a00; --c2: #ffa63d; --c3: #ffd9a8; --c4: #b04800; }
+body[data-tab="settings"] { --c1: #7a4dff; --c2: #5aa2ff; --c3: #f3c4ff; --c4: #4a22c4; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -575,7 +575,7 @@ html { scroll-behavior: smooth; }
 .side.mini .slb, .side.mini .stx, .side.mini .ssec { opacity: 0; pointer-events: none; }
 .side.mini .ssec { height: 0; margin: 6px 0; }
 .sopt[aria-current="page"] { background: color-mix(in srgb, var(--c2) 15%, #fff); color: var(--c1); box-shadow: inset 3px 0 0 var(--c1), 0 8px 18px -14px var(--c1); }
-.sopt[data-tab="overview"] { --t: #1262f0; } .sopt[data-tab="income"] { --t: #079a55; } .sopt[data-tab="expense"] { --t: #e8173f; } .sopt[data-tab="settings"] { --t: #ee7000; }
+.sopt[data-tab="overview"] { --t: #1262f0; } .sopt[data-tab="income"] { --t: #079a55; } .sopt[data-tab="expense"] { --t: #f26a00; } .sopt[data-tab="settings"] { --t: #7a4dff; }
 .sopt[data-tab] .sic { color: var(--t); }
 .sopt[data-tab][aria-current="page"] { background: color-mix(in srgb, var(--t) 12%, #fff); color: var(--t); box-shadow: inset 3px 0 0 var(--t); }
 .sopt.q .sic { color: var(--c1); }
@@ -666,7 +666,7 @@ html { scroll-behavior: smooth; }
 .wchip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: rgba(255,255,255,.8); border-radius: 999px; padding: 6px 14px 6px 11px; font-weight: 700; font-size: 14px; cursor: pointer; transition: transform .35s var(--spring), box-shadow .3s; }
 .wchip:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -14px var(--c1); }
 .wchip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c1); }
-.wchip.draft i { background: #ffb020; } .wchip.wait i { background: #ff5c7c; } .wchip.pay i { background: #3b9bff; }
+.wchip.draft i { background: #ffb020; } .wchip.wait i { background: #ffa63d; } .wchip.pay i { background: #3b9bff; }
 .rseg { margin-top: 0; }
 .rhead { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; } .rhead h2 { margin: 0 !important; }
 .rfil { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -805,7 +805,7 @@ body[data-tab="settings"] { --h1: #ffd000; --h2: #ff6b3d; --h3: #fff0a0; --h4: #
     border: 1px solid rgba(255,255,255,.9); box-shadow: 0 18px 40px -18px rgba(20,27,45,.45), 0 0 0 1px var(--line); }
   .bn { position: relative; flex: 1; min-width: 0; border: 0; background: none; border-radius: 16px; padding: 8px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted); transition: background .35s, color .3s, transform .35s var(--spring); }
   .bn svg { width: 22px; height: 22px; } .bn:active { transform: scale(.94); }
-  .bn[data-tab="overview"] { --t: #1262f0; } .bn[data-tab="income"] { --t: #079a55; } .bn[data-tab="expense"] { --t: #e8173f; } .bn[data-tab="settings"] { --t: #ee7000; }
+  .bn[data-tab="overview"] { --t: #1262f0; } .bn[data-tab="income"] { --t: #079a55; } .bn[data-tab="expense"] { --t: #f26a00; } .bn[data-tab="settings"] { --t: #7a4dff; }
   .bn[aria-current="page"] { color: var(--t); background: color-mix(in srgb, var(--t) 13%, #fff); }
   .bn em { position: absolute; top: 3px; right: calc(50% - 22px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--t); color: #fff; font-style: normal; font-size: 11px; display: grid; place-items: center; }
   main { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
@@ -935,3 +935,37 @@ body.authed .bnav { position: sticky !important; top: max(8px, env(safe-area-ins
 .xlt td.tag input { font-weight: 700; text-align: center; }
 .xlt tr.st-wait td.tag input { color: #a35f00; } .xlt tr.st-in td.tag input { color: #1262f0; } .xlt tr.st-paid td.tag input { color: #079a55; }
 .xlt tr.old td.xc { height: 31px; }
+
+
+/* ================= v5: สีประจำแท็บใหม่ + hero เป็นแก้วใสที่มีของเหลวไหลช้า ๆ ภายใน ================= */
+:root { --h1: #19c3ff; --h2: #6a7cff; --h3: #8fe8ff; --h4: #1d5dff; }
+body[data-tab="income"] { --h1: #12d6a0; --h2: #b5f04a; --h3: #9bffd0; --h4: #0a9b5a; }
+body[data-tab="expense"] { --h1: #ffb12e; --h2: #ff6a3d; --h3: #ffe08a; --h4: #e0480a; }
+body[data-tab="settings"] { --h1: #4fa8ff; --h2: #ff6fc2; --h3: #d7b8ff; --h4: #8a4dff; }
+.hero { background: linear-gradient(125deg, var(--c4) -30%, var(--c1) 38%, color-mix(in srgb, var(--c1) 45%, var(--h1)) 78%, var(--h1) 125%);
+  border: 1px solid rgba(255,255,255,.42);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.65), inset 0 -22px 40px -26px rgba(255,255,255,.35), inset 0 0 0 1px rgba(255,255,255,.12), 0 26px 48px -30px var(--c1); }
+body[data-tab="settings"] .hero { background: linear-gradient(125deg, #5b2fe0 -20%, #7a4dff 30%, #5aa2ff 68%, #ff6fc2 128%); }
+/* น้ำไหลในแก้ว: สามชั้นเลื่อนช้าไม่เท่ากัน + เมชสีไหลวน */
+.hero .deco svg.wave { bottom: -6%; height: 78%; width: 200%; animation: waveMove 48s linear infinite, liqBob 11s ease-in-out infinite alternate; }
+.hero .deco svg.wave path { stroke: rgba(255,255,255,.5); stroke-width: 1.2; }
+.hero .deco svg.wave.w1 { height: 84%; animation-duration: 70s, 14s; animation-direction: reverse, alternate; }
+.hero .deco svg.wave.w1 path { stroke: rgba(255,255,255,.22); }
+.hero .deco svg.wave.w2 { height: 70%; opacity: 1; animation-duration: 56s, 10s; animation-direction: normal, alternate-reverse; }
+.hero .deco svg.wave.w3 { height: 56%; opacity: .9; animation-duration: 40s, 8s; animation-direction: reverse, alternate; }
+.hero .deco svg.wave.w3 path { stroke: rgba(255,255,255,.7); }
+@keyframes liqBob { from { translate: 0 6px; } to { translate: 0 -12px; } }
+.hero::before { animation-duration: 34s; filter: saturate(1.15); }
+.hero .deco .o3 { background: radial-gradient(circle, color-mix(in srgb, var(--h2) 80%, transparent), transparent 70%); opacity: .55; filter: blur(38px); mix-blend-mode: normal; }
+.hero::after { background: linear-gradient(112deg, transparent 30%, rgba(255,255,255,.2) 46%, rgba(255,255,255,.04) 54%, transparent 66%); background-size: 280% 100%; animation-duration: 14s; opacity: 1; }
+/* รูปทรงเรขาคณิตกระจก */
+.hero .deco svg.scene .gs { transform-box: fill-box; transform-origin: center; stroke: rgba(255,255,255,.62); stroke-width: 1.3; animation: gsA 16s ease-in-out infinite alternate; }
+.hero .deco svg.scene .gs.g2 { animation-name: gsB; animation-duration: 21s; } .hero .deco svg.scene .gs.g3 { animation-name: gsC; animation-duration: 25s; }
+.hero .deco svg.scene .gs.sp { animation: heroSpin 90s linear infinite; } .hero .deco svg.scene .gs.sp.rev { animation-direction: reverse; animation-duration: 60s; }
+.hero .deco svg.scene .gs .ln, .hero .deco svg.scene .gs.slat { stroke: rgba(255,255,255,.6); }
+.hero .deco svg.scene .slat { animation: gsB 20s ease-in-out infinite alternate; }
+.hero .deco svg.scene circle.ln { fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1.3; } .hero .deco svg.scene circle.ln.dash { stroke-dasharray: 3 9; stroke-linecap: round; }
+@keyframes gsA { to { transform: translate(-8px, -12px) rotate(8deg); } }
+@keyframes gsB { to { transform: translate(10px, 8px) rotate(-10deg) scale(1.05); } }
+@keyframes gsC { to { transform: translate(-6px, 12px) rotate(14deg) scale(.95); } }
+@media (prefers-reduced-motion: reduce) { .hero .deco svg.wave, .hero .deco svg.scene .gs { animation: none !important; } }
