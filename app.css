@@ -766,3 +766,25 @@ html { scroll-behavior: smooth; }
 .k-income .o2 { background: radial-gradient(circle, #d6ffe9, transparent 70%); } .k-expense .o2 { background: radial-gradient(circle, #ffd2da, transparent 70%); } .k-settings .o2 { background: radial-gradient(circle, #fff2b8, transparent 70%); }
 @media (max-width: 640px) { .hero .deco svg.scene { width: 92%; opacity: .5; } }
 @media (prefers-reduced-motion: reduce) { .hero .deco svg.scene * { animation: none !important; } }
+
+/* ---------- hero: เมชเกรเดียนต์หลายสี + คลื่นกระจกเหลวแบบแบน ---------- */
+:root { --h1: #00b8ff; --h2: #7a5cff; --h3: #64e3ff; --h4: #2e6bff; }
+body[data-tab="income"] { --h1: #00c2a0; --h2: #a6e81c; --h3: #86ffc4; --h4: #00a86b; }
+body[data-tab="expense"] { --h1: #ff3d7f; --h2: #ff8a3d; --h3: #ffa3bd; --h4: #c4116b; }
+body[data-tab="settings"] { --h1: #ffd000; --h2: #ff6b3d; --h3: #fff0a0; --h4: #ff9a00; }
+.hero { background: linear-gradient(115deg, var(--c1) 0%, color-mix(in srgb, var(--c1) 58%, var(--h1)) 58%, var(--h1) 130%); }
+.hero::before { content: ""; position: absolute; inset: -25%; z-index: -2; pointer-events: none; will-change: transform;
+  background:
+    radial-gradient(38% 46% at 82% 18%, color-mix(in srgb, var(--h3) 85%, transparent), transparent 70%),
+    radial-gradient(34% 48% at 66% 92%, color-mix(in srgb, var(--h2) 70%, transparent), transparent 72%),
+    radial-gradient(40% 50% at 96% 78%, color-mix(in srgb, var(--h4) 80%, transparent), transparent 70%),
+    radial-gradient(30% 42% at 30% 105%, color-mix(in srgb, var(--h1) 55%, transparent), transparent 72%);
+  animation: mesh 20s ease-in-out infinite alternate; }
+@keyframes mesh { 0% { transform: translate(0, 0) rotate(0) scale(1); } 50% { transform: translate(-4%, 3%) rotate(5deg) scale(1.08); } 100% { transform: translate(3%, -3%) rotate(-4deg) scale(1.04); } }
+.hero .deco svg.wave { position: absolute; left: 0; bottom: -2px; width: 200%; height: 62%; opacity: 1; animation: waveMove 26s linear infinite; transform: none; }
+.hero .deco svg.wave path { stroke: rgba(255,255,255,.55); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+.hero .deco svg.wave.w2 { height: 52%; opacity: .75; animation-duration: 38s; animation-direction: reverse; }
+.hero .deco svg.wave.w2 path { stroke: rgba(255,255,255,.35); }
+@keyframes waveMove { to { transform: translateX(-50%); } }
+.hero .deco .orb { mix-blend-mode: normal; filter: blur(30px); opacity: .5; }
+@media (prefers-reduced-motion: reduce) { .hero::before, .hero .deco svg.wave { animation: none !important; } }

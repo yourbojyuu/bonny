@@ -402,7 +402,11 @@ function heroDeco(kind) {
       '<rect class="gcard c1" x="250" y="188" width="150" height="66" rx="18" fill="' + f + '"/><rect class="gcard c2" x="300" y="224" width="150" height="56" rx="16" fill="' + f + '"/><rect class="gcard c3" x="500" y="60" width="86" height="86" rx="24" fill="' + f + '"/>' +
       '<path class="ln spark" pathLength="1" d="M350 176 C380 140 400 196 430 150 S480 118 520 96" fill="none"/>';
   }
-  return '<div class="deco k-' + kind + '" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><svg class="scene" viewBox="200 -20 420 340" preserveAspectRatio="xMaxYMid meet">' + G + '<g class="par">' + s + '</g></svg></div>';
+  var wv = function (ph) { var d = 'M0 ' + (200 + ph); for (var x = 0; x < 2400; x += 600) d += 'C' + (x + 150) + ' ' + (150 + ph) + ',' + (x + 450) + ' ' + (250 + ph) + ',' + (x + 600) + ' ' + (200 + ph); return d + 'L2400 300L0 300Z'; };
+  return '<div class="deco k-' + kind + '" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i>' +
+    '<svg class="wave w1" viewBox="0 0 2400 300" preserveAspectRatio="none"><defs><linearGradient id="wg-' + kind + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs><path d="' + wv(0) + '" fill="url(#wg-' + kind + ')"/></svg>' +
+    '<svg class="wave w2" viewBox="0 0 2400 300" preserveAspectRatio="none"><path d="' + wv(40) + '" fill="url(#wg-' + kind + ')"/></svg>' +
+    '<svg class="scene" viewBox="200 -20 420 340" preserveAspectRatio="xMaxYMid meet">' + G + '<g class="par">' + s + '</g></svg></div>';
 }
 function pendingAmount() {
   var w = 0, k = 0;
