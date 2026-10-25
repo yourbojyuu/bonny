@@ -15,7 +15,8 @@ var XlsxExport = (function () {
   function sheetBase(wb, title, widths) {
     var ws = wb.addWorksheet(title, {
       pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true,
-        margins: { left: 0.55, right: 0.55, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } },
+        margins: { left: 0.6, right: 0.6, top: 0.7, bottom: 0.75, header: 0.3, footer: 0.35 } },
+      headerFooter: { oddFooter: '&C&"TH SarabunPSK,Regular"&11หน้า &P / &N' },
       views: [{ showGridLines: false }]
     });
     ws.columns = widths.map(function (w) { return { width: w }; });
@@ -73,12 +74,18 @@ var XlsxExport = (function () {
     return r;
   }
   function directorBlock(ws, r, last, dir) {
-    put(ws, r, 1, last, 'ความเห็นผู้อำนวยการ', { h: 'left', font: font(16, true) }); ws.getRow(r).height = 26; r++;
-    for (var i = 0; i < 2; i++) { put(ws, r, 1, last, '.....................................................................................................................', { h: 'center' }); ws.getRow(r).height = 24; r++; }
-    ws.getRow(r).height = 14; r++;
-    put(ws, r, 1, last, 'ลงชื่อ ......................................................', { h: 'center' }); ws.getRow(r).height = 30; r++;
-    put(ws, r, 1, last, dir.name, { h: 'center' }); ws.getRow(r).height = 22; r++;
-    put(ws, r, 1, last, dir.pos, { h: 'center' }); ws.getRow(r).height = 22;
+    var top = r;
+    put(ws, r, 1, last, 'ความเห็นผู้อำนวยการ', { h: 'left', font: font(16, true), indent: 1 }); ws.getRow(r).height = 28; r++;
+    for (var i = 0; i < 2; i++) { put(ws, r, 1, last, dots(110), { h: 'center' }); ws.getRow(r).height = 25; r++; }
+    ws.getRow(r).height = 10; r++;
+    put(ws, r, 1, last, 'ลงชื่อ ' + dots(46), { h: 'center' }); ws.getRow(r).height = 30; r++;
+    put(ws, r, 1, last, dir.name, { h: 'center' }); ws.getRow(r).height = 24; r++;
+    put(ws, r, 1, last, dir.pos, { h: 'center' }); ws.getRow(r).height = 26; r++;
+    ws.getRow(r).height = 8;
+    for (var rr = top; rr <= r; rr++) for (var cc = 1; cc <= last; cc++) {
+      var b = {}; if (rr === top) b.top = LINE; if (rr === r) b.bottom = LINE; if (cc === 1) b.left = LINE; if (cc === last) b.right = LINE;
+      var cell = ws.getCell(rr, cc); cell.border = Object.assign({}, cell.border || {}, b);
+    }
     return r + 1;
   }
   function sum(rowFrom, rowTo, col) { return 'SUM(' + col + rowFrom + ':' + col + rowTo + ')'; }
@@ -103,10 +110,10 @@ var XlsxExport = (function () {
       for (var c = 1; c <= last; c++) {
         var cell = ws.getCell(r, c);
         cell.font = font(16, c === 8); cell.border = { top: FINE, left: LINE, right: LINE, bottom: FINE };
-        cell.alignment = { vertical: 'middle', wrapText: c === 2 || c === 3, horizontal: c === 1 || c === 2 ? 'center' : c >= 6 ? 'right' : 'left', indent: c === 3 ? 1 : 0 };
+        cell.alignment = { vertical: 'middle', wrapText: c === 2 || c === 3, horizontal: c === 1 || c === 2 ? 'center' : c >= 6 ? 'right' : 'left', indent: c === 3 || c >= 6 ? 1 : 0 };
         if (c >= 6) cell.numFmt = NUM;
       }
-      ws.getRow(r).height = Math.max(25, 22 * Math.max(lines(x.payee, 36), lines(x.type, 16)) + 3);
+      ws.getRow(r).height = Math.max(28, 22 * Math.max(lines(x.payee, 36), lines(x.type, 16)) + 6);
       r++;
     });
     var lastRow = r - 1;
@@ -151,10 +158,10 @@ var XlsxExport = (function () {
           var cell = ws.getCell(r, c);
           cell.font = font(c === 5 && !x.note ? 13 : 16, false, c === 5 && !x.note ? 'FF6B7385' : undefined);
           cell.border = { top: FINE, left: LINE, right: LINE, bottom: FINE };
-          cell.alignment = { vertical: 'middle', wrapText: c === 3 || c === 5, horizontal: c === 3 ? 'left' : c === 4 ? 'right' : 'center', indent: c === 3 ? 1 : 0 };
+          cell.alignment = { vertical: 'middle', wrapText: c === 3 || c === 5, horizontal: c === 3 ? 'left' : c === 4 ? 'right' : 'center', indent: c === 3 || c === 4 ? 1 : 0 };
           if (c === 4) cell.numFmt = NUM;
         }
-        ws.getRow(r).height = Math.max(25, 22 * lines(x.payee, 33) + 3);
+        ws.getRow(r).height = Math.max(28, 22 * lines(x.payee, 33) + 6);
         r++;
       });
       var lastRow = r - 1;
@@ -182,6 +189,44 @@ var XlsxExport = (function () {
     return ws;
   }
 
+  /** ตารางรายการแบบ Excel (ใช้กับหน้าตารางกรอก) cols=[{label,w,type:'text'|'money'|'center'}] rows=[[...]] */
+  function sheetBuild(title, cols, rows, sub) {
+    var wb = new ExcelJS.Workbook(); wb.creator = 'ระบบการเงินโรงเรียน'; wb.created = new Date();
+    var ws = wb.addWorksheet(title.slice(0, 28), { views: [{ state: 'frozen', ySplit: 3, showGridLines: false }],
+      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, margins: { left: 0.4, right: 0.4, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } },
+      headerFooter: { oddFooter: '&C&"TH SarabunPSK,Regular"&11หน้า &P / &N' } });
+    ws.columns = cols.map(function (c) { return { width: c.w || 14 }; });
+    ws.mergeCells(1, 1, 1, cols.length); var t = ws.getCell(1, 1); t.value = title; t.font = font(20, true); t.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }; ws.getRow(1).height = 34;
+    ws.mergeCells(2, 1, 2, cols.length); var u = ws.getCell(2, 1); u.value = sub || ''; u.font = font(13, false, 'FF6B7385'); u.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }; ws.getRow(2).height = 20;
+    cols.forEach(function (c, i) { var h = ws.getCell(3, i + 1); h.value = c.label; h.font = font(15, true); h.fill = HEAD_FILL; h.border = BOX; h.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; });
+    ws.getRow(3).height = 30;
+    rows.forEach(function (row, ri) {
+      var r = 4 + ri;
+      row.forEach(function (v, ci) {
+        var c = cols[ci], cell = ws.getCell(r, ci + 1); cell.value = v === '' ? null : v;
+        cell.font = font(15); cell.border = { top: FINE, left: LINE, right: LINE, bottom: FINE };
+        cell.alignment = { vertical: 'middle', horizontal: c.type === 'money' ? 'right' : c.type === 'center' ? 'center' : 'left', indent: c.type === 'center' ? 0 : 1, wrapText: false };
+        if (c.type === 'money') cell.numFmt = NUM;
+      });
+      ws.getRow(r).height = 26;
+    });
+    var tot = 4 + rows.length;
+    cols.forEach(function (c, i) {
+      var cell = ws.getCell(tot, i + 1); cell.font = font(15, true); cell.fill = TOT_FILL; cell.border = BOX;
+      if (i === 0) { cell.value = 'รวม ' + rows.length + ' รายการ'; cell.alignment = { horizontal: 'left', indent: 1, vertical: 'middle' }; }
+      else if (c.sum) { var L = String.fromCharCode(64 + i + 1); cell.value = { formula: 'SUM(' + L + '4:' + L + (tot - 1) + ')', result: rows.reduce(function (a, r2) { return a + (Number(r2[i]) || 0); }, 0) }; cell.numFmt = NUM; cell.alignment = { horizontal: 'right', indent: 1, vertical: 'middle' }; }
+    });
+    ws.getRow(tot).height = 28;
+    ws.autoFilter = { from: { row: 3, column: 1 }, to: { row: 3, column: cols.length } };
+    ws.pageSetup.printTitlesRow = '3:3';
+    return wb.xlsx.writeBuffer();
+  }
+  function saveBuf(buf, name) {
+    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); return name;
+  }
+  function sheet(title, cols, rows, sub, file) { return sheetBuild(title, cols, rows, sub).then(function (buf) { return saveBuf(buf, file || (title + '.xlsx')); }); }
   function fileName(d) { return d.noText.replace(/[\\\/:*?"<>|]/g, '-') + '.xlsx'; }
   function build(d) {
     var wb = new ExcelJS.Workbook();
@@ -199,6 +244,6 @@ var XlsxExport = (function () {
       return fileName(d);
     });
   }
-  return { build: build, download: download, fileName: fileName };
+  return { build: build, download: download, fileName: fileName, sheet: sheet, sheetBuild: sheetBuild };
 })();
 if (typeof module !== 'undefined') module.exports = XlsxExport;

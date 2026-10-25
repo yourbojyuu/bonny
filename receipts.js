@@ -2,7 +2,7 @@
    รายรับ: บันทึกใบเสร็จต่อเนื่อง · วางจาก Excel ทีเดียวทั้งก้อน · สรุปรายเดือน/วัน · ยกเลิกใบเสร็จ */
 
 var Receipts = (function () {
-  var seg = 'enter', q = '', last = { book: '', no: '', date: '', type: '', method: 'สด' }, pasted = null;
+  var seg = 'grid', q = '', last = { book: '', no: '', date: '', type: '', method: 'สด' }, pasted = null;
 
   function rows() { return (S.rcv && S.rcv.rows) || []; }
   function live() { return rows().filter(function (r) { return !r[8]; }); }
@@ -25,9 +25,9 @@ var Receipts = (function () {
       '<div class="tile"><div class="k">เงินโอน (ทั้งปี)</div><div class="v money">' + money(methodSum(lv, 'โอน')) + '</div><div class="s">เข้าบัญชีหลักของประเภทเงิน</div></div>' +
       '</div></section>' +
       '<div class="seg glass" role="group" aria-label="มุมมอง">' +
-      (can.fin() ? segBtn('enter', 'บันทึกรายรับ') : '') + segBtn('sum', 'สรุปรายเดือน') + segBtn('list', 'รายการใบเสร็จ') + '</div>' +
+      (can.fin() ? segBtn('grid', 'ตาราง Excel') + segBtn('enter', 'ฟอร์มทีละใบ') : '') + segBtn('sum', 'สรุปรายเดือน') + segBtn('list', 'รายการใบเสร็จ') + '</div>' +
       '<div id="rv"></div>';
-    if (seg === 'enter' && !can.fin()) seg = 'sum';
+    if ((seg === 'enter' || seg === 'grid') && !can.fin()) seg = 'sum';
     Array.prototype.forEach.call(v.querySelectorAll('[data-rseg]'), function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-rseg') === seg));
       b.onclick = function () { switchSeg(b.getAttribute('data-rseg')); };
@@ -47,10 +47,85 @@ var Receipts = (function () {
   function renderSeg() {
     var dv = $('rv'); if (!dv) return;
     dv.className = ''; void dv.offsetWidth; dv.className = 'view-in';
-    if (seg === 'enter') renderEnter(dv); else if (seg === 'sum') renderSum(dv); else renderList(dv);
+    if (seg === 'grid') renderGrid(dv); else if (seg === 'enter') renderEnter(dv); else if (seg === 'sum') renderSum(dv); else renderList(dv);
     observeReveal();
   }
   function refresh() { return reloadReceipts().then(function () { if (S.tab === 'income') render($('view'), null); else renderTabs(); }); }
+
+
+  /* ================= ตารางกรอกแบบ Excel ================= */
+  var gRows = null, gMonth = '';
+  function typeIdOfName(name) { return name ? Paste.matchType(name, { types: S.st.types, aliases: S.st.aliases || [] }, true) || '' : ''; }
+  function gBlank(prev) {
+    return { date: prev ? prev.date : defaultDate(), book: prev ? prev.book : last.book, no: prev && prev.no ? nextNo(prev.no) : last.no, type: prev ? prev.type : '', method: prev ? prev.method : 'สด', amount: '', payer: '' };
+  }
+  function renderGrid(dv) {
+    if (!can.fin()) { dv.innerHTML = '<div class="empty"><b>บันทึกรายรับได้เฉพาะเจ้าหน้าที่การเงิน</b></div>'; return; }
+    if (!gMonth) gMonth = (S.date || defaultDate()).slice(0, 7);
+    var mons = []; for (var i = 0; i < 12; i++) { var d0 = new Date(S.st.fyStart + 'T00:00:00'), x = new Date(d0.getFullYear(), d0.getMonth() + i, 1); mons.push([x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2), MONTHS_L[x.getMonth()] + ' ' + (x.getFullYear() + 543)]); }
+    var cols = [
+      { k: 'date', label: 'วันที่', w: 118, type: 'date', ph: 'วว/ดด/ปป' },
+      { k: 'book', label: 'เล่มที่', w: 86 },
+      { k: 'no', label: 'เลขที่', w: 86 },
+      { k: 'type', label: 'ประเภทเงิน', w: 196, list: function () { return S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่'; }).map(function (t) { return t[1]; }); } },
+      { k: 'method', label: 'วิธีรับ', w: 80, list: function () { return ['สด', 'โอน']; } },
+      { k: 'amount', label: 'จำนวนเงิน', w: 128, type: 'money' },
+      { k: 'payer', label: 'ผู้ชำระ (ถ้ามี)', w: 190 },
+      { k: 'status', label: 'สถานะ', w: 80, ro: true }
+    ];
+    var pre = rows().filter(function (x) { return !gMonth || gMonth === '-' ? gMonth !== '-' : String(x[3]).slice(0, 7) === gMonth; }).sort(function (a, b) { return a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : 0; }).map(function (x) {
+      return { date: x[3], book: x[0], no: x[1] + (Number(x[2]) > 1 ? '.' + x[2] : ''), type: typeName(x[5]), method: x[6], amount: x[7], payer: x[4], status: x[8] ? 'ยกเลิก' : '' };
+    });
+    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางกรอกใบเสร็จ (แถวละรายการ)</h2><p class="hint" style="margin:4px 0 0">พิมพ์ต่อท้ายตาราง หรือคัดลอกจากไฟล์ใบเสร็จเดิมแล้ว Ctrl+V · เลขที่เพิ่มให้ทีละ 1 · ระบบตรวจซ้ำและวันที่ที่ปิดแล้วก่อนบันทึก</p></div>' +
+      '<div class="xtools"><label class="f inl">แสดงข้อมูลเดิม<select id="rxMon"><option value="">ทั้งหมด</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '<option value="-"' + (gMonth === '-' ? ' selected' : '') + '>ซ่อน</option></select></label>' +
+      '<button class="btn ghost sm" type="button" id="rxXls">ส่งออก Excel</button><button class="btn ghost sm" type="button" id="rxClear">ล้างแถวใหม่</button><button class="btn" type="button" id="rxSave">บันทึกแถวใหม่</button></div></div><div id="rxHost"></div><div class="xstat" id="rxStat"></div></section>';
+    var g = Grid.create($('rxHost'), {
+      cols: cols, pre: gMonth === '-' ? [] : pre, rows: gRows || [], blank: gBlank,
+      isEmpty: function (r) { return !r.amount && !r.payer; },
+      onRow: function () { stat(); },
+      onPaste: function (text, api) {
+        var res = Paste.receiptRows(Paste.parseTSV(text), { types: S.st.types, aliases: S.st.aliases || [], defaultMethod: 'สด' });
+        if (!res.items.length) return false;
+        api.append(res.items.map(function (it) { var t = S.st.types.filter(function (x) { return x[0] === it.type; })[0]; return { date: Grid.parseDate(it.date) || it.date, book: it.book, no: it.no, type: t ? t[1] : it.type, method: it.method || 'สด', amount: Grid.num(it.amount) || '', payer: it.payer || '' }; }));
+        stat(); toast('วางแล้ว ' + res.items.length + ' แถว — กด "บันทึกแถวใหม่" เพื่อให้ระบบตรวจ', 'good'); return true;
+      },
+      totals: function (rs) { var s = 0; rs.forEach(function (r) { s += Math.round((Number(r.amount) || 0) * 100); }); return '<td colspan="5" class="tl">รวมแถวใหม่ ' + rs.filter(function (r) { return r.amount || r.payer; }).length + ' แถว</td><td class="mn">' + Grid.fmtN(s / 100) + '</td><td colspan="2"></td>'; }
+    });
+    function stat() { var n = g.filled().length; $('rxStat').textContent = n ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + n + ' แถว' : ''; gRows = g.rows(); }
+    stat();
+    $('rxMon').onchange = function () { gMonth = this.value; gRows = g.rows(); renderGrid(dv); };
+    $('rxXls').onclick = function () {
+      if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริงที่วางบน Netlify', 'err'); return; }
+      var all = (gMonth === '-' ? [] : pre).map(function (p) { return [thaiDate(p.date), p.book, p.no, p.type, p.method, p.amount, p.payer, p.status]; });
+      g.filled().forEach(function (x) { all.push([x.date ? thaiDate(x.date) : '', x.book, x.no, x.type, x.method, Number(x.amount) || 0, x.payer, '']); });
+      var cc = [{ label: 'วันที่', w: 14, type: 'center' }, { label: 'เล่มที่', w: 10, type: 'center' }, { label: 'เลขที่', w: 10, type: 'center' }, { label: 'ประเภทเงิน', w: 30 }, { label: 'วิธีรับ', w: 9, type: 'center' }, { label: 'จำนวนเงิน', w: 17, type: 'money', sum: true }, { label: 'ผู้ชำระ', w: 28 }, { label: 'สถานะ', w: 10, type: 'center' }];
+      busy(this, XlsxExport.sheet('ทะเบียนใบเสร็จ ปีงบ ' + S.st.fy, cc, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ใบเสร็จ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
+    };
+    $('rxClear').onclick = function () { gRows = null; g.replace([]); stat(); toast('ล้างแถวใหม่แล้ว'); };
+    $('rxSave').onclick = function () {
+      var rowsAll = g.rows(), items = [], idx = [];
+      rowsAll.forEach(function (r, ri) {
+        if (!r.amount && !r.payer) return;
+        var id = typeIdOfName(r.type); idx.push(ri);
+        if (!id) g.mark(ri, 'type'); if (!(Number(r.amount) > 0)) g.mark(ri, 'amount'); if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) g.mark(ri, 'date'); if (!r.book) g.mark(ri, 'book'); if (!r.no) g.mark(ri, 'no');
+        items.push({ date: r.date, book: r.book, no: r.no, type: id || r.type, method: r.method, amount: String(r.amount), payer: r.payer });
+      });
+      if (!items.length) { toast('ยังไม่มีแถวใหม่ให้บันทึก', 'err'); return; }
+      if (dv.querySelector('td.bad')) { toast('มีช่องที่ยังไม่ครบ (สีแดง)', 'err'); return; }
+      var btn = this;
+      busy(btn, api('importReceipts', { items: items })).then(function (pv) {
+        var badRow = pv.rows.filter(function (x) { return x.status !== 'new'; });
+        if (badRow.length) {
+          badRow.forEach(function (x) { g.markRow(idx[x.n - 1]); });
+          toast('แถวที่ ' + badRow[0].n + ': ' + (badRow[0].status === 'same' ? 'มีเล่ม/เลขที่นี้แล้ว (ข้อมูลเหมือนเดิม)' : badRow[0].status === 'changed' ? 'มีเล่ม/เลขที่นี้แล้วแต่ข้อมูลต่างกัน' : badRow[0].msg) + (badRow.length > 1 ? ' (และอีก ' + (badRow.length - 1) + ' แถว)' : ''), 'err'); return null;
+        }
+        return busy(btn, api('importReceipts', { items: items, commit: true })).then(function (res) {
+          var lastRow = rowsAll[idx[idx.length - 1]]; last = { book: lastRow.book, no: nextNo(lastRow.no), date: lastRow.date, type: lastRow.type, method: lastRow.method };
+          gRows = null; toast('บันทึกใบเสร็จ ' + res.added + ' รายการแล้ว', 'good'); return refresh();
+        });
+      }).catch(handleError);
+    };
+  }
 
   /* ================= บันทึกรายรับ ================= */
   function typeOptions(sel) {

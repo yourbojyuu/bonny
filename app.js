@@ -184,11 +184,19 @@ function renderTabs() {
 }
 var SIDE_ICON = { overview: 'home', income: 'income', expense: 'expense', settings: 'settings' };
 function sideOpen() { try { return localStorage.getItem('fin-side') !== '0'; } catch (e) { return true; } }
-/** แถบนำทางล่างแบบกระจกเหลว (ใช้ทุกขนาดจอ) */
+/** แถบนำทางกระจกเหลว: อยู่ใต้ hero ของทุกหน้า (ย้ายตามเมื่อหน้าถูกวาดใหม่) แล้วค้างด้านบนเมื่อเลื่อน */
+var NAV = null;
+function placeNav() {
+  var v = $('view'); if (!NAV || !v) return;
+  var h = v.querySelector(':scope > .hero');
+  if (h) { if (h.nextElementSibling !== NAV) h.insertAdjacentElement('afterend', NAV); }
+  else if (NAV.parentNode !== document.body) document.body.appendChild(NAV);
+}
 function renderSide() {
   var old = $('side'); if (old) old.parentNode.removeChild(old);
-  var bn = $('bnav');
-  if (!bn) { bn = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); document.body.appendChild(bn); }
+  var bn = NAV;
+  if (!bn) { bn = NAV = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); document.body.appendChild(bn);
+    new MutationObserver(function () { placeNav(); moveDock(); }).observe($('view'), { childList: true }); }
   var canAdd = can.khb() || can.fin();
   bn.innerHTML = '<span class="bpill" aria-hidden="true"></span>' + TABS.map(function (t) {
     if (t.admin && !can.admin()) return '';
@@ -198,6 +206,7 @@ function renderSide() {
   Array.prototype.forEach.call(bn.querySelectorAll('[data-bn]'), function (b) { b.onclick = function () { closeAdd(); go(b.getAttribute('data-bn'), null); }; });
   if (canAdd) $('bAdd').onclick = function (e) { e.stopPropagation(); toggleAdd(); };
   document.body.classList.add('has-dock');
+  placeNav();
   requestAnimationFrame(moveDock);
 }
 function closeAdd() { var m = $('addMenu'); if (m) m.classList.remove('on'); var b = $('bAdd'); if (b) b.setAttribute('aria-expanded', 'false'); }
@@ -215,8 +224,11 @@ function toggleAdd() {
     });
     document.addEventListener('pointerdown', function (e) { if (!e.target.closest('#addMenu') && !e.target.closest('#bAdd')) closeAdd(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAdd(); });
+    window.addEventListener('scroll', closeAdd, { passive: true });
   }
-  var on = !m.classList.contains('on'); m.classList.toggle('on', on); $('bAdd').setAttribute('aria-expanded', String(on));
+  var on = !m.classList.contains('on');
+  if (on) { var r = $('bAdd').getBoundingClientRect(), w = Math.min(330, window.innerWidth - 28); m.style.top = (r.bottom + 10) + 'px'; m.style.left = Math.max(14, Math.min(window.innerWidth - w - 14, r.right - w)) + 'px'; }
+  m.classList.toggle('on', on); $('bAdd').setAttribute('aria-expanded', String(on));
 }
 /** แถบสีเลื่อนไปอยู่หลังแท็บที่เลือก */
 function moveDock() {

@@ -869,3 +869,44 @@ body.authed .bnav::before { content: ""; position: absolute; inset: 0; border-ra
 #toast { bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
 @media (max-width: 420px) { .bnav .bn { font-size: 11.5px; } .bnav .bn.add { flex-basis: 52px; } }
 @media (prefers-reduced-motion: reduce) { body.authed .bnav { animation: none; } }
+
+/* ================= แถบนำทาง: อยู่ใต้ hero แล้วค้างด้านบนตอนเลื่อน ================= */
+main { padding-bottom: 96px !important; }
+body.authed .bnav { position: sticky !important; top: max(8px, env(safe-area-inset-top, 0px)); left: auto !important; right: auto !important; bottom: auto !important; translate: none !important; width: 100% !important; max-width: 780px; margin: 0 auto 18px; animation: navIn .8s cubic-bezier(.22,1,.36,1) both; }
+@keyframes navIn { from { opacity: 0; transform: translateY(-10px); } }
+#toast { bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important; }
+.addmenu { bottom: auto !important; translate: none !important; transform-origin: 100% 0; transform: translateY(-10px) scale(.96); }
+.addmenu.on { transform: none; }
+@media (max-width: 959px) { body.authed .bnav { max-width: none; } main { padding-bottom: 40px !important; } }
+
+/* ================= ตารางกรอกแบบ Excel ================= */
+.xcard { padding: 18px 18px 14px; }
+.xbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.xtools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.xl { overflow: auto; max-height: min(68vh, 760px); border: 1px solid #b9c0cf; border-radius: 10px; background: #fff; }
+.xlt { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 14.5px; table-layout: fixed; }
+.xlt th, .xlt td { border-right: 1px solid #dfe3ec; border-bottom: 1px solid #dfe3ec; padding: 0; height: 33px; }
+.xlt thead th { position: sticky; background: #eef1f7; color: #3f4859; font-weight: 700; z-index: 3; text-align: center; font-size: 13px; }
+.xlt thead tr.ltr th { top: 0; height: 22px; font-weight: 500; color: #8a93a6; font-size: 12px; }
+.xlt thead tr.lbl th { top: 22px; height: 34px; padding: 0 8px; white-space: nowrap; box-shadow: 0 1px 0 #b9c0cf; background: color-mix(in srgb, var(--c2) 10%, #eef1f7); color: var(--ink); }
+.xlt th.rn { position: sticky; left: 0; z-index: 4; background: #eef1f7; color: #8a93a6; font-weight: 500; font-size: 12.5px; text-align: center; width: 46px; }
+.xlt thead th.rn { z-index: 6; }
+.xlt tbody th.rn { z-index: 2; }
+.xlt tr.cur th.rn { background: color-mix(in srgb, var(--c2) 22%, #eef1f7); color: var(--c1); font-weight: 700; }
+.xlt td.xc { position: relative; }
+.xlt td.xc input { display: block; width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; background: transparent; padding: 0 9px; font-size: 14.5px; box-shadow: none; text-overflow: ellipsis; }
+.xlt td.xc input:focus { outline: 2px solid var(--c1); outline-offset: -2px; background: #fff; box-shadow: none; z-index: 1; position: relative; }
+.xlt td.mn input, .xlt td.mn span { text-align: right; font-family: var(--num); font-variant-numeric: tabular-nums; }
+.xlt td.ro { background: #f7f8fb; color: #5b6272; }
+.xlt td.ro span { display: block; padding: 0 9px; line-height: 33px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xlt td.ro input { color: #5b6272; cursor: default; }
+.xlt td.bad { background: #ffe9ed !important; box-shadow: inset 0 0 0 1.5px #e8173f; }
+.xlt tr.cur td.xc:not(.ro):not(.bad) { background: color-mix(in srgb, var(--c2) 6%, #fff); }
+.xlt tr.pre td, .xlt tr.pre th { height: 29px; color: #6c7384; font-size: 13.5px; }
+.xlt tr.pre td.ro { background: #fafbfd; } .xlt tr.pre td.ro span { line-height: 29px; }
+.xlt tr.sepr td { background: color-mix(in srgb, var(--c2) 12%, #fff); color: var(--c1); font-weight: 700; padding: 6px 12px; font-size: 13px; height: 30px; border-top: 2px solid var(--c1); }
+.xlt .rx { position: absolute; inset: 0; opacity: 0; border: 0; background: #ffe9ed; color: #e8173f; cursor: pointer; font-size: 17px; font-weight: 700; transition: opacity .15s; }
+.xlt tbody tr:not(.pre):hover .rx { opacity: 1; } .xlt tbody tr:not(.pre):hover th.rn span { opacity: 0; }
+.xlt tfoot th, .xlt tfoot td { position: sticky; bottom: 0; background: #eef1f7; font-weight: 700; z-index: 3; padding: 0 9px; height: 34px; border-top: 1.5px solid #b9c0cf; border-bottom: 0; }
+.xlt tfoot .mn { text-align: right; font-family: var(--num); } .xlt tfoot .tl { color: var(--muted); font-weight: 600; }
+.xstat { min-height: 22px; margin-top: 8px; font-size: 13.5px; color: var(--c1); font-weight: 700; }
