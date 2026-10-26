@@ -20,7 +20,7 @@ function actionRoles() {
   var ALL = ROLES, STAFF = ['admin', 'การเงิน', 'พัสดุ', 'ผู้บริหาร'], FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
   return {
     ping: null,
-    getSchema: ALL, me: ALL, getSettings: ALL, getBalances: STAFF, getLedger: STAFF,
+    boot: ALL, getSchema: ALL, me: ALL, getSettings: ALL, getBalances: STAFF, getLedger: STAFF,
     getDocs: ALL, khbDoc: ALL, khjDoc: STAFF, getReceipts: STAFF,
     importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN, savePackages: FIN, voidReceipts: FIN,
     saveKhb: KHB.concat(['ครู']), cancelKhb: KHB.concat(['ครู']),
@@ -32,7 +32,7 @@ function actionRoles() {
 
 function handlers() {
   return {
-    getSchema: h_getSchema, me: h_me, getSettings: h_getSettings, getBalances: h_getBalances, getLedger: h_getLedger,
+    boot: h_boot, getSchema: h_getSchema, me: h_me, getSettings: h_getSettings, getBalances: h_getBalances, getLedger: h_getLedger,
     saveStores: h_saveStores, saveTypes: h_saveTypes, saveOpening: h_saveOpening, rebuildLedger: h_rebuildLedger,
     saveDocSettings: h_saveDocSettings,
     getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb, approveKhb: h_approveKhb, receiveKhb: h_receiveKhb,
@@ -41,6 +41,20 @@ function handlers() {
     cancelReceipt: h_cancelReceipt, savePayees: h_savePayees, saveAliases: h_saveAliases, savePackages: h_savePackages, voidReceipts: h_voidReceipts
   };
 }
+
+/** โหลดข้อมูลตอนเข้าระบบในคำขอเดียว: me + schema + settings + docs + receipts (+ ยอดคงเหลือหน้าภาพรวม)
+ *  คำขอเดียว = ตรวจโทเคนครั้งเดียว อ่านชีทซ้ำน้อยลง (io.values จำผลไว้ในรอบเดียวกัน) จึงเร็วกว่าเรียกทีละ action มาก */
+function h_boot(p, io, user) {
+  var out = { me: user, schema: h_getSchema(), settings: h_getSettings(p, io), docs: h_getDocs(p, io, user) };
+  if (user.role !== 'ครู') {
+    out.receipts = h_getReceipts(p, io);
+    if (p.date) { try { out.balances = h_getBalances({ date: p.date }, io); } catch (e) { out.balances = null; } }
+  }
+  return out;
+}
+
+/** ตั้ง Trigger (ทุก 5 นาที) ให้เรียกฟังก์ชันนี้เพื่อลดอาการ "ตื่นช้า" ครั้งแรกหลังไม่มีคนใช้ */
+function keepWarm() { SpreadsheetApp.getActiveSpreadsheet().getName(); return 'ok'; }
 
 function isWriteAction(a) {
   return ['saveTypes', 'saveStores', 'saveOpening', 'rebuildLedger', 'saveDocSettings',

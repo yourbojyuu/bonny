@@ -148,19 +148,19 @@ function signOut(message) {
 }
 function startApp(token) {
   S.token = token;
-  $('loginMsg').textContent = 'กำลังตรวจสิทธิ์…';
-  api('me').then(function (me) {
+  $('loginMsg').textContent = 'กำลังตรวจสิทธิ์และโหลดข้อมูล… (ครั้งแรกหลังไม่ได้ใช้นานอาจใช้เวลา 5–10 วินาที)';
+  var d0 = todayISO();
+  api('boot', { date: d0 }).then(function (r) {
+    var me = r.me;
     if (me.role === 'ครู' && !TEACHER_MODE) throw new Error('ระบบเปิดให้ใช้ภายในฝ่ายการเงินและผู้บริหารก่อน — โหมดครูยังไม่เปิด');
     S.me = me;
     try { S.modeAs = me.role === 'admin' ? (localStorage.getItem('fin-mode') || '') : ''; } catch (e) { S.modeAs = ''; }
-    return Promise.all([api('getSchema'), api('getSettings'), api('getDocs'), me.role === 'ครู' ? null : api('getReceipts')]);
-  }).then(function (r) {
-    S.schema = r[0]; S.st = r[1]; S.docs = r[2]; S.rcv = r[3] || { rows: [] };
+    S.schema = r.schema; S.st = r.settings; S.docs = r.docs; S.rcv = r.receipts || { rows: [] };
+    S.date = defaultDate(); S.preBal = r.balances && S.date === d0 ? r.balances : null;
     try { sessionStorage.setItem('tok', token); } catch (e) {}
     $('login').hidden = true; $('app').hidden = false; document.body.classList.add('authed');
     renderWho();
     $('fyLabel').textContent = 'ปีงบประมาณ ' + S.st.fy;
-    S.date = defaultDate();
     renderTabs();
     go(homeTab(), null, true);
   }).catch(function (e) { signOut(e && e.message ? e.message : String(e)); });
@@ -662,7 +662,8 @@ function renderOverview() {
 }
 function fetchBalances() {
   $('dtTh').textContent = thaiDateLong(S.date);
-  api('getBalances', { date: S.date }).then(function (d) {
+  var pre = S.preBal; S.preBal = null; // ยอดที่มากับ boot ใช้ครั้งแรกครั้งเดียว
+  (pre ? Promise.resolve(pre) : api('getBalances', { date: S.date })).then(function (d) {
     S.bal = d;
     if (S.tab !== 'overview' || !$('kpi')) return;
     countUp($('kpi'), d.grand);

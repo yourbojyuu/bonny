@@ -382,6 +382,16 @@ if (require.main === module) {
   ok(Math.abs(grandOf(io, '2027-09-30').grand - gb0) < 0.005, 'ใบยกเลิกไม่กระทบยอดคงเหลือ');
   ok(!call(io, 'tok-boss', 'voidReceipts', { items: [{ date: '2026-10-17', book: 'V2', no: '1' }] }).ok, 'ผู้บริหารบันทึกใบยกเลิกไม่ได้');
 
+  console.log('14) boot (โหลดครั้งเดียวตอนเข้าระบบ)');
+  r = call(io, 'tok-fin', 'boot', { date: '2026-10-26' });
+  ok(r.ok && r.data.me.role === 'การเงิน' && r.data.schema && r.data.settings.types.length && r.data.docs.khbs && r.data.receipts.rows && r.data.balances && r.data.balances.grand !== undefined, 'boot ส่ง me/schema/settings/docs/receipts/balances ในคำขอเดียว ' + (r.ok ? '' : r.error));
+  ok(Math.abs(r.data.balances.grand - grandOf(io, '2026-10-26').grand) < 0.005, 'ยอดคงเหลือใน boot = getBalances');
+  r = call(io, 'tok-fin', 'boot', { date: '2030-01-01' });
+  ok(r.ok && r.data.balances === null, 'วันที่นอกปีงบ -> balances เป็น null (ไม่ล้มทั้ง boot)');
+  r = call(io, 'tok-t1', 'boot', {});
+  ok(r.ok && !r.data.receipts && !r.data.balances && r.data.me.role === 'ครู', 'ครูได้ boot แบบไม่มีใบเสร็จ/ยอดคงเหลือ');
+  ok(!call(io, 'tok-nobody', 'boot', {}).ok, 'ไม่มีสิทธิ์ -> boot ถูกปฏิเสธ');
+
   console.log('\nผ่าน ' + passed + ' / ' + (passed + failed));
   if (failed) { console.log('มี ' + failed + ' ข้อไม่ผ่าน'); process.exit(1); }
   console.log('ทุกข้อผ่าน');
