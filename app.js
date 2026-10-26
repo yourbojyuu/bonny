@@ -792,6 +792,8 @@ function renderSettings() {
   h += '</div><div class="actions"><button class="btn" type="button" data-act="savedoc">บันทึกหัวเอกสาร</button></div></section>';
   h += '<section class="card glass reveal"><h2>ผู้รับเงินและภาษีหัก ณ ที่จ่าย</h2><p class="hint">ทะเบียนมี <b>' + st.payees.length + '</b> ราย · ภ.ง.ด.53 หัก 1% ทุกยอด · ภ.ง.ด.3 หัก 1% เมื่อตั้งแต่ 10,000 บาท · ผู้รับที่จด VAT ใช้ยอด ÷ 1.07 เป็นฐาน · ผู้รับใหม่ที่เคยกรอกใน ขบ. ระบบจำไว้ให้เอง</p>' +
     '<div class="actions"><button class="btn" type="button" data-act="payees">เปิดทะเบียนผู้รับเงิน (วางจาก Excel / ค้นหา / แก้)</button></div></section>';
+  h += '<section class="card glass reveal"><h2>แพ็กเกจรับเงิน (ใบเสร็จ)</h2><p class="hint">ยอดรวมของใบเสร็จหนึ่งใบ แบ่งเข้าประเภทเงินอะไรบ้าง · ตั้งค่าไว้แล้ว <b>' + (st.packages || []).length + '</b> แบบ · ตอนบันทึกใบเสร็จ ใส่ยอดรวมแล้วระบบเสนอให้</p>' +
+    '<div class="actions"><button class="btn" type="button" data-act="packages">ตั้งค่าแพ็กเกจ (วางตารางจาก Excel)</button></div></section>';
   h += '<section class="card glass reveal"><h2>ชื่อย่อประเภทเงิน</h2><p class="hint">ชื่อที่ใช้ในไฟล์เดิม (เช่น อน.รห. · บกศ. จ/2) ระบบใช้จับคู่ตอนวางจาก Excel</p><div id="aliasRows">';
   (st.aliases || []).forEach(function (r) { h += aliasRow(r); });
   h += '</div><div class="actions"><button class="btn ghost" type="button" data-act="addalias">' + ICON.plus + ' เพิ่มชื่อย่อ</button><button class="btn" type="button" data-act="savealiases">บันทึกชื่อย่อ</button></div></section>';
@@ -840,6 +842,7 @@ function onSettingsClick(ev) {
   if (act === 'addtype') { tmp.innerHTML = typeRow(['', '', '', '', 'ใช่']); $('typeRows').appendChild(tmp.firstChild); return; }
   if (act === 'addalias') { tmp.innerHTML = aliasRow(['', S.st.types[0][0]]); $('aliasRows').appendChild(tmp.firstChild); return; }
   if (act === 'payees') { openPayees(); return; }
+  if (act === 'packages') { Receipts.openPackages(); return; }
   if (act === 'addopen') { tmp.innerHTML = openRow([S.st.types[0][0], S.st.stores[0][0], '']); $('openRows').appendChild(tmp.firstChild); return; }
   var p;
   if (act === 'savestores') p = api('saveStores', { rows: readRows('storeRows') }).then(function () { return refreshSettings('บันทึกที่เก็บเงินแล้ว'); });

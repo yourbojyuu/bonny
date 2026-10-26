@@ -1429,3 +1429,44 @@ textarea.qe-paste { font-family: var(--num); font-size: 13px; border-radius: 16p
 .qe-pstat { margin-top: 10px; font-size: 14px; } .qe-pdoc { margin-top: 10px; }
 @media (max-width: 700px) { .qe-strip { grid-template-columns: 1fr 1fr; } .qe-payee, .qe-add { grid-column: 1 / -1; } .qe-formats { grid-template-columns: 1fr; } .qe-folds { grid-template-columns: 1fr; } .qe-line .del { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .qe-line.drop, .qe-count.roll { animation: none; } .qe-fold:hover .qe-front { transform: none; } }
+
+/* ================= v16: บันทึกใบเสร็จ (แพ็กเกจ) · สรุปรายวัน ================= */
+.qr-card { padding: 18px; margin-bottom: 14px; }
+.qr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 14px; flex-wrap: wrap; margin-bottom: 10px; }
+.qr-head h2, .qr-head h3 { margin: 0; } .qr-head h3 { font-size: 17px; }
+.qr-last { font-size: 13.5px; color: var(--muted); }
+.qr-total { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 18px; align-items: end; margin: 4px 0 10px; }
+.qr-tot input { font-size: 22px; font-weight: 600; min-height: 52px; }
+.qr-cg { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; } .qr-cg > span { font-size: 12.5px; color: var(--muted); font-weight: 700; } .qr-cg > div { display: flex; gap: 6px; }
+.qr-pk { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; min-height: 6px; margin-bottom: 8px; }
+.qr-pkn { font-size: 13.5px; color: var(--ink2); width: 100%; }
+.qchip.pk { text-align: left; border-radius: 14px; padding: 7px 12px; font-weight: 500; line-height: 1.35; }
+.qr-line { grid-template-columns: 26px auto minmax(0, 1.5fr) 82px minmax(0, 1fr) 34px !important; align-items: center; }
+.qr-line .f { margin: 0; } .qr-line > [data-c] { grid-column: auto !important; grid-row: auto !important; }
+.qr-g { display: flex; gap: 4px; } .qr-g .qchip { padding: 4px 10px; font-size: 12.5px; }
+.qr-line.drop { animation: qDrop .6s var(--spring) both; animation-delay: calc(var(--i) * 45ms); }
+.qr-diff { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 10px 2px 4px; font-size: 14.5px; min-height: 26px; }
+.qr-diff .ok { color: #0d7a45; font-weight: 600; } .qr-diff .bad { color: var(--bad); font-weight: 600; }
+.qr-rcs { display: flex; flex-direction: column; }
+.qr-rc { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto 74px; gap: 4px 12px; align-items: center; padding: 8px 4px; border-top: 1px solid var(--line); }
+.qr-rc:first-child { border-top: 0; } .qr-rc .no { font-family: var(--num); color: var(--c1); }
+.qr-rc .sm { font-size: 13px; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qr-rc .am { font-weight: 600; text-align: right; } .qr-rc.cx { opacity: .55; } .qr-rc.cx .sm { text-decoration: line-through; }
+.qr-day { padding: 0; margin-bottom: 12px; } .qr-day > summary { list-style: none; cursor: pointer; padding: 14px 18px; } .qr-day > summary::-webkit-details-marker { display: none; }
+.qr-day[open] > summary { border-bottom: 1px solid var(--line); }
+.qd-top { display: flex; align-items: baseline; gap: 6px 14px; flex-wrap: wrap; } .qd-date { font-size: 16.5px; } .qd-no { font-size: 13.5px; color: var(--ink2); } .qd-n { font-size: 12.5px; color: var(--muted); } .qd-top .sp { flex: 1; } .qd-top .tot { font-size: 18px; }
+.qr-day .qr-gsum, .qr-day .qr-rcs { padding: 12px 18px 4px; } .qr-day .qr-rcs { padding-bottom: 12px; }
+.qr-gsum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.qr-gb { border-radius: 16px; padding: 10px 14px; background: color-mix(in srgb, var(--c2) 7%, #fff); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+.qr-gb.z { opacity: .5; } .qr-gb .gl { font-size: 12.5px; font-weight: 700; color: var(--muted); } .qr-gb b { font-size: 19px; } .qr-gb small { font-size: 12.5px; color: var(--ink2); }
+.qr-mon { padding: 14px 18px; margin-bottom: 14px; } .qr-mon > .gl { display: block; font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.qr-map { margin-top: 12px; } .qr-map h4 { margin: 0 0 8px; }
+.qr-maprows { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px 12px; }
+.qr-mr { display: flex; flex-direction: column; gap: 3px; font-size: 13px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: #fff; } .qr-mr.un { border-color: var(--bad); background: rgba(232,23,63,.05); } .qr-mr select { min-height: 36px; padding: 4px 8px; }
+.qr-pkstat { margin: 12px 0 4px; font-size: 14px; } .qr-pkcur { margin: 6px 0 10px; font-size: 14px; }
+@media (max-width: 700px) {
+  .qr-total { grid-template-columns: 1fr; }
+  .qr-line { grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr) 34px !important; }
+  .qr-line .qr-g { grid-column: 2 / 4; } .qr-line [data-c="type"] { grid-column: 2 / 4 !important; } .qr-line [data-c="method"] { grid-column: 2 !important; } .qr-line [data-c="gross"] { grid-column: 3 !important; }
+  .qr-gsum { grid-template-columns: 1fr; } .qr-rc { grid-template-columns: 64px minmax(0, 1fr) auto; } .qr-rc .btn { grid-column: 1 / -1; justify-self: end; }
+}

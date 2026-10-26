@@ -360,6 +360,18 @@ if (require.main === module) {
   ok(sumL === Math.round(grandOf(io, '2027-09-30').grand * 100), 'ผลรวม Ledger = ยอดคงเหลือรวมสิ้นปีงบ');
   ok(lg.data.rows.every(function (r, i, a) { return !i || a[i - 1][0] <= r[0]; }), 'เรียงตามวันที่');
 
+  console.log('12) แพ็กเกจรับเงิน');
+  var pkOk = [{ total: '525', items: [{ type: 'T03', amount: '225' }, { type: 'T17', amount: '300' }] }, { total: '525', items: [{ type: 'T03', amount: '225' }, { type: 'T17', amount: '300' }] }, { total: 600, name: 'คนละรายการ', items: [{ type: 'T17', amount: 300 }, { type: 'T15', amount: 300 }] }];
+  r = call(io, 'tok-fin', 'savePackages', { rows: pkOk });
+  ok(r.ok && r.data.saved === 2, 'บันทึกแพ็กเกจได้ (ซ้ำทุกอย่างรวมเป็นอันเดียว) ' + (r.ok ? '' : r.error));
+  r = call(io, 'tok-fin', 'getSettings');
+  ok(r.ok && r.data.packages.length === 2 && r.data.packages[0][0] === 525 && r.data.packages[0][2].length === 2 && r.data.packages[1][1] === 'คนละรายการ', 'getSettings ส่งแพ็กเกจกลับ เรียงตามยอด');
+  ok(/ไม่เท่ายอดรวม/.test(call(io, 'tok-fin', 'savePackages', { rows: [{ total: 500, items: [{ type: 'T03', amount: 225 }] }] }).error), 'ผลรวมรายการไม่เท่ายอดรวม -> ปฏิเสธ');
+  ok(/ไม่ตรงกับชีทตั้งค่า/.test(call(io, 'tok-fin', 'savePackages', { rows: [{ total: 10, items: [{ type: 'ZZZ', amount: 10 }] }] }).error), 'ประเภทเงินที่ไม่รู้จัก -> ปฏิเสธ');
+  ok(!call(io, 'tok-boss', 'savePackages', { rows: pkOk }).ok, 'ผู้บริหารแก้แพ็กเกจไม่ได้');
+  var io4 = makeMemIO(); delete io4.sheets['แพ็กเกจรับเงิน'];
+  ok(call(io4, 'tok-fin', 'getSettings').ok && call(io4, 'tok-fin', 'getSettings').data.packages.length === 0, 'ยังไม่มีชีทแพ็กเกจ (ติดตั้งเก่า) -> คืนรายการว่าง ไม่ error');
+
   console.log('\nผ่าน ' + passed + ' / ' + (passed + failed));
   if (failed) { console.log('มี ' + failed + ' ข้อไม่ผ่าน'); process.exit(1); }
   console.log('ทุกข้อผ่าน');

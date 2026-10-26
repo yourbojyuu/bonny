@@ -154,6 +154,37 @@ var Paste = (function () {
     return o;
   }
 
+
+  /** ตารางแพ็กเกจรับเงิน (หัวตาราง: รวม | บกศ. | รายได้ | เงินรายได้ SMS | ... | ก/20 บัตรประจำตัว | ... | ส่วนต่าง)
+      -> { cols:[{i,label,type}], rows:[{total, items:[{ci,amount}], sum}] } หรือ null (ไม่พบหัวตาราง "รวม") */
+  function guessType(label, ctx) {
+    var types = ctx.types || [], code = /([ก-ฮ]\/\d+)/.exec(label);
+    if (code) {
+      var ck = nk(code[1]);
+      for (var i = 0; i < types.length; i++) if (nk(types[i][1]).indexOf(ck) >= 0 && /บกศ/.test(types[i][2] || types[i][1])) return types[i][0];
+    }
+    return matchType(label, ctx, true);
+  }
+  function packageRows(rows, ctx) {
+    rows = rows.filter(function (r) { return r.some(function (c) { return nt(c) !== ''; }); });
+    var hi = -1, i;
+    for (i = 0; i < Math.min(rows.length, 6); i++) if (nk(rows[i][0]) === 'รวม') { hi = i; break; }
+    if (hi < 0) return null;
+    var cols = [];
+    rows[hi].forEach(function (h, ci) {
+      var label = nt(h); if (ci === 0 || !label || /^(ส่วนต่าง|หมายเหตุ|note)/i.test(label)) return;
+      cols.push({ i: ci, label: label, type: guessType(label, ctx) });
+    });
+    var out = [];
+    rows.slice(hi + 1).forEach(function (r) {
+      var total = isNum(r[0]) ? num(r[0]) : 0; if (!(total > 0)) return;
+      var items = [], sum = 0;
+      cols.forEach(function (c, ci) { var v = isNum(r[c.i]) ? num(r[c.i]) : 0; if (v > 0) { items.push({ ci: ci, amount: v }); sum += Math.round(v * 100); } });
+      out.push({ total: total, items: items, sum: sum / 100 });
+    });
+    return { cols: cols, rows: out };
+  }
+
   /** ใบเสร็จที่วางมา -> [{date, book, no, line?, payer, type, method, amount}] (ส่งให้เซิร์ฟเวอร์จัดแถว/ตรวจซ้ำ) */
   function receiptRows(rows, ctx) {
     rows = rows.filter(function (r) { return r.some(function (c) { return nt(c) !== ''; }); });
@@ -222,7 +253,7 @@ var Paste = (function () {
     return out;
   }
 
-  return { parseTSV: parseTSV, calcTax: calcTax, matchType: matchType, khbRows: khbRows, receiptRows: receiptRows, payeeRows: payeeRows, nk: nk, isCompany: isCompany,
+  return { parseTSV: parseTSV, calcTax: calcTax, matchType: matchType, khbRows: khbRows, receiptRows: receiptRows, packageRows: packageRows, payeeRows: payeeRows, nk: nk, isCompany: isCompany,
     RECEIPT_HEADER: ['วันที่', 'เล่มที่', 'เลขที่', 'ประเภทเงิน', 'วิธีรับ', 'จำนวน', 'ผู้ชำระ'],
     KHB_HEADER: ['ประเภทเงิน', 'ผู้รับ', 'ชนิด', 'วิธีจ่าย', 'ยอดรวม', 'ภาษี'] };
 })();

@@ -237,7 +237,8 @@ function h_getSettings(p, io) {
     opening: op,
     docSettings: readDocSettings(io),
     aliases: tableRows(io, 'ชื่อย่อ').map(function (r) { return [normText(r[0]), normText(r[1])]; }),
-    payees: tableRows(io, 'ผู้รับเงิน').map(function (r) { return [normText(r[0]), normText(r[1]) || 'ไม่มีภาษี', normText(r[2]) || 'ไม่', normText(r[3]), normText(r[4])]; })
+    payees: tableRows(io, 'ผู้รับเงิน').map(function (r) { return [normText(r[0]), normText(r[1]) || 'ไม่มีภาษี', normText(r[2]) || 'ไม่', normText(r[3]), normText(r[4])]; }),
+    packages: readPackages(io)
   };
 }
 

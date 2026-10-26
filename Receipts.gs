@@ -224,3 +224,54 @@ function h_saveAliases(p, io) {
   io.write('ชื่อย่อ', out);
   return { saved: out.length };
 }
+
+
+/* ============ แพ็กเกจรับเงิน ============ */
+
+/** "T03=225;T17=300" -> [['T03',225],['T17',300]] */
+function parsePackageItems(s) {
+  return normText(s).split(';').map(function (x) {
+    var p = x.split('='); return [normText(p[0]), round2(Number(p[1]))];
+  }).filter(function (x) { return x[0] && x[1] > 0; });
+}
+
+/** อ่านแพ็กเกจ (ไม่มีชีทนี้ = ยังไม่ตั้งค่า คืนรายการว่าง · หัวคอลัมน์ผิดยัง error ตามกฎ 3) */
+function readPackages(io) {
+  var v = io.values('แพ็กเกจรับเงิน');
+  if (!v) return [];
+  checkHeaders('แพ็กเกจรับเงิน', v[0]);
+  return v.slice(1).filter(function (r) { return !isBlankRow(r); }).map(function (r) {
+    return [round2(sheetNumber(r[0], 'ยอดรวม')), normText(r[1]), parsePackageItems(r[2])];
+  });
+}
+
+/** ตรวจแพ็กเกจที่ส่งมา rows=[{total,name,items:[{type,amount}]}] -> แถวพร้อมเขียนชีท (ผลรวมรายการต้องเท่ายอดรวม) */
+function checkPackages(rows, types, aliases) {
+  var out = [], seen = {};
+  rows.forEach(function (p, i) {
+    var n = i + 1, total = parseAmount(p.total), items = [], sum = 0;
+    if (!Array.isArray(p.items) || !p.items.length) throw new Error('แพ็กเกจแถวที่ ' + n + ': ไม่มีรายการ');
+    p.items.forEach(function (it) {
+      var t = resolveTypeAlias(types, aliases, it.type);
+      if (!t) throw new Error('แพ็กเกจแถวที่ ' + n + ': ประเภทเงิน "' + normText(it.type) + '" ไม่ตรงกับชีทตั้งค่า');
+      var a = parseAmount(it.amount);
+      sum += Math.round(a * 100); items.push([t, a]);
+    });
+    if (sum !== Math.round(total * 100)) throw new Error('แพ็กเกจแถวที่ ' + n + ': ผลรวมรายการ ' + fmtMoney(sum / 100) + ' ไม่เท่ายอดรวม ' + fmtMoney(total));
+    items.sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; });
+    var text = items.map(function (x) { return x[0] + '=' + x[1]; }).join(';'), key = Math.round(total * 100) + '|' + text;
+    if (seen[key]) return; seen[key] = true;
+    out.push([total, normText(p.name), text]);
+  });
+  out.sort(function (a, b) { return a[0] - b[0]; });
+  return out;
+}
+
+function h_savePackages(p, io) {
+  if (!Array.isArray(p.rows)) throw new Error('ไม่มีข้อมูลแพ็กเกจ');
+  if (p.rows.length > 600) throw new Error('แพ็กเกจมากเกิน 600 แถว');
+  var set = readSettings(io), aliases = tableRows(io, 'ชื่อย่อ');
+  var rows = checkPackages(p.rows, set.types, aliases);
+  io.write('แพ็กเกจรับเงิน', rows);
+  return { saved: rows.length };
+}
