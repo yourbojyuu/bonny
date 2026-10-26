@@ -98,11 +98,10 @@ var Receipts = (function () {
     stat();
     $('rxMon').onchange = function () { gMonth = this.value; stat(); renderGrid(dv); };
     $('rxXls').onclick = function () {
-      if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริงที่วางบน Netlify', 'err'); return; }
       var all = (gMonth === '-' ? [] : pre).map(function (p) { return [thaiDate(p.date), p.book, p.no, p.type, p.method, p.amount, p.payer, p.status]; });
       g.filled().forEach(function (x) { all.push([x.date ? thaiDate(x.date) : '', x.book, x.no, x.type, x.method, Number(x.amount) || 0, x.payer, '']); });
       var cc = [{ label: 'วันที่', w: 14, type: 'center' }, { label: 'เล่มที่', w: 10, type: 'center' }, { label: 'เลขที่', w: 10, type: 'center' }, { label: 'ประเภทเงิน', w: 30 }, { label: 'วิธีรับ', w: 9, type: 'center' }, { label: 'จำนวนเงิน', w: 17, type: 'money', sum: true }, { label: 'ผู้ชำระ', w: 28 }, { label: 'สถานะ', w: 10, type: 'center' }];
-      busy(this, XlsxExport.sheet('ทะเบียนใบเสร็จ ปีงบ ' + S.st.fy, cc, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ใบเสร็จ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
+      previewSheet('ทะเบียนใบเสร็จ ปีงบ ' + S.st.fy, cc, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ใบเสร็จ-' + S.st.fy + '.xlsx');
     };
     $('rxClear').onclick = function () { gRows = null; g.replace(g.rows().filter(function (x) { return x._old; })); stat(); toast('ล้างแถวใหม่แล้ว'); };
     /* บันทึกอัตโนมัติ: แถวที่ครบแล้วจะถูกตรวจ (ซ้ำ/วันที่ปิดแล้ว) และบันทึกทันทีเมื่อออกจากแถว — เข้าคิวทีละงาน ไม่ชนกัน */

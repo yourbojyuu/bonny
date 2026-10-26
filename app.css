@@ -8,7 +8,7 @@
   --ok: #0f9466; --warn: #c26a00; --bad: #d01c3f;
   --c1: #1262f0; --c2: #3b9bff; --c3: #bfe0ff; --c4: #0a3cb0; /* สีประจำแท็บ (ตั้งใหม่ตาม data-tab) */
   --ease: cubic-bezier(.2, .8, .2, 1); --spring: cubic-bezier(.34, 1.36, .5, 1);
-  --r: 22px; --font: "Sarabun", system-ui, sans-serif; --num: "Geist", "Sarabun", system-ui, sans-serif;
+  --r: 22px; --font: "Geist", "Sarabun", system-ui, sans-serif; --num: "Geist", "Sarabun", system-ui, sans-serif;
   color-scheme: light;
 }
 body[data-tab="income"] { --c1: #079a55; --c2: #2edc86; --c3: #c2f5dc; --c4: #04703c; }
@@ -299,7 +299,7 @@ tr.sum-row td { font-weight: 800; background: #f6f7fa; }
 /* ---------- เอกสาร A4 ---------- */
 .paperwrap { background: #e9ebf0; border-radius: 18px; padding: 16px; overflow: auto; }
 .paper { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; color: #000; padding: 14mm 16mm 14mm 26mm; position: relative;
-  font-family: "Sarabun", "TH Sarabun New", serif; font-size: 15.5px; line-height: 1.55; box-shadow: 0 8px 26px rgba(0,0,0,.14); }
+  font-family: "TH SarabunPSK", "TH Sarabun New", "Sarabun", serif; font-size: 17px; line-height: 1.5; box-shadow: 0 8px 26px rgba(0,0,0,.14); }
 .paper h1 { text-align: center; font-size: 27px; margin: 0 0 10px; }
 .paper p { margin: 0; }
 .paper .mh { display: flex; justify-content: space-between; gap: 12px; }
@@ -1347,3 +1347,35 @@ body.scrolled .topdock .bnav, body.scrolled .modesw2 { background: rgba(255,255,
 .modesw2 .tgl { box-shadow: inset 0 1px 1px rgba(150,60,0,.18); }
 .modesw2 .tgl i { box-shadow: 0 1px 3px rgba(80,30,0,.25); }
 body.scrolled .topdock .bnav, body.scrolled .modesw2 { background: rgba(255,255,255,.78) !important; -webkit-backdrop-filter: blur(26px) saturate(1.6); backdrop-filter: blur(26px) saturate(1.6); }
+
+/* ================= v14: หน้ารายจ่ายให้เรียบ · ตัวอย่างไฟล์ Excel (ฟอนต์ราชการ) ================= */
+/* ปุ่มเลือก ขบ./ขจ./สายโยง: แถบเล็กแถวเดียว (เลิกการ์ดใหญ่ 3 ใบ) */
+.segbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 4px 0 12px; }
+.seg2 { display: inline-flex; grid-template-columns: none; gap: 4px; margin: 0; padding: 4px; border-radius: 16px; background: rgba(255,255,255,.7); border: 1px solid var(--line); }
+.seg2 button { flex-direction: row; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 12px; border: 0; background: none; box-shadow: none; }
+.seg2 button:hover { transform: none; background: color-mix(in srgb, var(--c2) 10%, transparent); }
+.seg2 button b { font-size: 15px; } .seg2 button small { display: none; }
+.seg2 button[aria-selected="true"] { background: linear-gradient(135deg, var(--c1), color-mix(in srgb, var(--c1) 60%, var(--h1))); box-shadow: 0 8px 18px -12px var(--c1); }
+.seg2 em { position: static; min-width: 20px; height: 20px; font-size: 11.5px; }
+.subseg { margin: 0; }
+.xcard { padding: 16px 18px 14px; }
+.xcard .xbar { align-items: center; margin-bottom: 10px; }
+.xcard .xbar h2 { font-size: 19px; }
+.xcard .xhint { margin: 3px 0 0; font-size: 13.5px; color: var(--muted); }
+.xflow { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 10px 0 0; margin: 0 0 8px; }
+.fchip { padding: 5px 12px; font-size: 13.5px; }
+.xmore { position: relative; }
+.xmore > summary { list-style: none; cursor: pointer; } .xmore > summary::-webkit-details-marker { display: none; }
+.xmenu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 230px; padding: 8px; border-radius: 16px; display: flex; flex-direction: column; gap: 2px; background: #fff; border: 1px solid var(--line); box-shadow: 0 18px 40px -20px rgba(20,27,45,.45); }
+.xmenu .btn, .xmenu .chkline { width: 100%; justify-content: flex-start; text-align: left; border: 0; background: none; box-shadow: none; padding: 9px 12px; border-radius: 10px; color: var(--ink); }
+.xmenu .btn:hover, .xmenu .chkline:hover { background: color-mix(in srgb, var(--c2) 10%, transparent); }
+.xmenu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+/* ตัวอย่างไฟล์ Excel: ฟอนต์ TH SarabunPSK เท่านั้น (ส่วนอื่นของแอปใช้ Geist) */
+.paper.land { width: 297mm; min-height: 0; padding: 10mm 12mm; }
+.paper.land h1 { text-align: left; font-size: 26px; margin: 0; }
+.paper.land .xsub { color: #6b7385; font-size: 15px; margin: 0 0 8px; }
+.paper.land table { font-size: 15.5px; } .paper.land th, .paper.land td { font-size: 15.5px; padding: 3px 8px; }
+.paper.land td.l { text-align: left; }
+.paper.land tr.tot td { background: #f1f2f5; }
+.xpnote { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.paper.land { width: max-content; min-width: 100%; box-sizing: border-box; } .paper.land td, .paper.land th { white-space: nowrap; }

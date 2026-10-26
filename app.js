@@ -445,6 +445,24 @@ function openModal(o) {
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && modalStack.length) modalStack[modalStack.length - 1].close();
 });
+/** ตัวอย่างไฟล์ Excel ก่อนดาวน์โหลด (หน้าตาและฟอนต์เดียวกับไฟล์: TH SarabunPSK) */
+function previewSheet(title, cols, rows, sub, file) {
+  var MAXR = 300, tot = cols.map(function (c, i) { return c.sum ? rows.reduce(function (s, r) { return s + (Number(r[i]) || 0); }, 0) : null; });
+  var h = '<table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c.label) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    rows.slice(0, MAXR).map(function (r) { return '<tr>' + r.map(function (v, i) { var c = cols[i]; return '<td class="' + (c.type === 'money' ? 'r' : c.type === 'center' ? 'c' : 'l') + '">' + (c.type === 'money' ? (Number(v) ? Grid.fmtN(Number(v)) : '') : esc(v)) + '</td>'; }).join('') + '</tr>'; }).join('') +
+    '<tr class="tot">' + cols.map(function (c, i) { return i === 0 ? '<td>รวม ' + rows.length + ' รายการ</td>' : '<td class="r">' + (tot[i] !== null ? Grid.fmtN(tot[i]) : '') + '</td>'; }).join('') + '</tr></tbody></table>';
+  var m = openModal({
+    title: 'ตัวอย่างไฟล์ Excel', width: 1240,
+    body: '<div class="paperwrap"><div class="paper land"><h1>' + esc(title) + '</h1><p class="xsub">' + esc(sub || '') + '</p>' + h + '</div></div>' +
+      (rows.length > MAXR ? '<p class="xpnote">ตัวอย่างแสดง ' + MAXR + ' แถวแรก จากทั้งหมด ' + rows.length + ' แถว — ไฟล์ที่ดาวน์โหลดมีครบทุกแถว</p>' : '') +
+      '<p class="xpnote">ไฟล์จริงใช้ฟอนต์ TH SarabunPSK ตามแบบราชการ (ตัวอย่างนี้แสดงด้วยฟอนต์ใกล้เคียงถ้าเครื่องยังไม่มี TH SarabunPSK)</p>',
+    footer: '<button class="btn ghost" type="button" data-close>ปิด</button><button class="btn" type="button" id="xpGo">ดาวน์โหลด Excel</button>'
+  });
+  m.el.querySelector('#xpGo').onclick = function () {
+    if (!window.XlsxExport || !window.ExcelJS) { toast('ดาวน์โหลดใช้ได้ในเว็บจริง (หน้าตัวอย่างนี้ปิดการดาวน์โหลด)', 'err'); return; }
+    busy(this, XlsxExport.sheet(title, cols, rows, sub, file)).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); m.close(); }).catch(handleError);
+  };
+}
 /** ถามเหตุผล (ใช้แทน prompt) */
 function askReason(title, okText, cb) {
   var m = openModal({

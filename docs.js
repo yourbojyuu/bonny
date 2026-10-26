@@ -64,7 +64,7 @@ var Docs = (function () {
       flowTile(segOk('khj') ? 'khj' : 'khjdoc', 'รอทำ ขจ. / รอจ่าย', s.wait.a + s['in'].a, s.wait.n + ' + ' + s['in'].n + ' รายการ') + arrow() +
       flowTile('khjdoc', 'จ่ายแล้ว', s.paid.a, s.paid.n + ' รายการ') +
       '</div></section>' +
-      '<div class="seg2" role="tablist" aria-label="ขบ. หรือ ขจ." id="seg1"></div><div class="subseg" id="seg2"></div>' +
+      '<div class="segbar"><div class="seg2" role="tablist" aria-label="ขบ. หรือ ขจ." id="seg1"></div><div class="subseg" id="seg2"></div></div>' +
       '<div id="dv"></div>';
     drawSegs(s);
     Array.prototype.forEach.call(v.querySelectorAll('.hero [data-seg]'), function (b) { b.onclick = function () { switchSeg(b.getAttribute('data-seg')); }; });
@@ -271,17 +271,18 @@ var Docs = (function () {
     olds.forEach(function (r) { cnt[r._st] = (cnt[r._st] || 0) + 1; });
     cnt.taken = (cnt.wait || 0) + (cnt['in'] || 0) + (cnt.paid || 0);
     function chip(c) { return '<button type="button" class="fchip" data-f="' + c[0] + '" aria-pressed="' + (gridFilter[md] === c[0]) + '">' + c[1] + (c[0] === 'all' ? '' : ' <b>' + (cnt[c[0]] || 0) + '</b>') + '</button>'; }
-    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">' + (khb ? 'ขบ. ขอเบิก — กรอกแบบ Excel แล้วส่งผู้บริหาร' : 'ทำ ขจ. และบันทึกการจ่าย') + '</h2>' +
-      '<ol class="steps3">' + (khb ? '<li>พิมพ์หรือวางแถวจาก Excel ท้ายตาราง</li><li>กด "บันทึก · ส่งผู้บริหาร" ระบบออกเลข ขบ. ให้</li><li>ผู้บริหารอนุมัติแล้ว เรื่องจะไปรอที่แท็บ ขจ.</li>'
-        : '<li>ติ๊กแถว "รอทำ ขจ." แล้วกดสร้าง ขจ.</li><li>กรอกเลขเช็ค ที่เก็บ วันที่จ่ายในแถวเดิม (Ctrl+D คัดลอกลงล่าง)</li><li>กดบันทึกการจ่าย ยอดเข้า Ledger ตามวันที่จ่ายจริง</li>') + '</ol></div>' +
+    var hint = khb ? 'พิมพ์หรือวางจาก Excel ท้ายตาราง → กดบันทึก → ผู้บริหารอนุมัติ → ไปรอที่แท็บ ขจ.' : 'ติ๊กแถว "รอทำ ขจ." → สร้าง ขจ. → กรอกเลขเช็ค/วันที่จ่ายในแถวเดิม → บันทึกการจ่าย';
+    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">' + (khb ? 'กรอก ขบ. แบบ Excel' : 'ทำ ขจ. และบันทึกการจ่าย') + '</h2><p class="xhint">' + hint + '</p></div>' +
       '<div class="xtools"><label class="f inl">เดือน<select id="xMon"><option value="">ทั้งปีงบ</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gridMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '</select></label>' +
-      (khb ? '<button class="btn ghost sm" type="button" id="xReg">ทะเบียนผู้รับ / ภาษี</button>' : '') + '<button class="btn ghost sm" type="button" id="xXls">ส่งออก Excel</button></div></div>' +
+      '<details class="xmore"><summary class="btn ghost sm">เพิ่มเติม ▾</summary><div class="xmenu">' +
+        (khb ? '<button class="btn sm" type="button" id="xReg">ทะเบียนผู้รับ / ภาษี</button>' + (fin ? '<label class="chkline" title="ใช้กับข้อมูลย้อนหลังที่ผู้บริหารเซ็นอนุมัติบนกระดาษแล้ว"><input type="checkbox" id="xPaper"> อนุมัติบนกระดาษแล้ว</label>' : '') + '<hr><button class="btn sm" type="button" id="xClear">ล้างแถวใหม่</button>' : '') +
+        '<button class="btn sm" type="button" id="xXls">ดูตัวอย่าง / ส่งออก Excel</button></div></details>' +
+      (khb ? '<button class="btn" type="button" id="xSave">บันทึก · ส่งผู้บริหาร</button>' : '') + '</div></div>' +
       '<div class="xflow"><div class="fchips" role="group" aria-label="กรองสถานะ">' + CHIPS[md].map(chip).join('') + '</div>' +
       '<div class="fact"><span class="fstep" id="fSel"></span>' +
-      (khb ? (fin ? '<label class="chkline" title="ใช้กับข้อมูลย้อนหลังที่ผู้บริหารเซ็นอนุมัติบนกระดาษแล้ว"><input type="checkbox" id="xPaper"> อนุมัติบนกระดาษแล้ว</label>' : '') +
-          '<button class="btn ghost sm" type="button" id="xClear">ล้างแถวใหม่</button><button class="btn" type="button" id="xSave">บันทึก · ส่งผู้บริหาร</button>'
-        : '<label class="f inl">วันที่ ขจ.<input type="date" id="xKhjDate" value="' + esc(defaultDate()) + '" min="' + esc(S.st.fyStart) + '" max="' + esc(S.st.fyEnd) + '"></label><button class="btn soft sm" type="button" id="xAllWait">ติ๊กทั้งหมดที่รอ</button><button class="btn sm" type="button" id="xMake" disabled>สร้าง ขจ.</button><button class="btn sm" type="button" id="xPay" disabled>บันทึกการจ่าย</button>') +
+      (khb ? '' : '<label class="f inl">วันที่ ขจ.<input type="date" id="xKhjDate" value="' + esc(defaultDate()) + '" min="' + esc(S.st.fyStart) + '" max="' + esc(S.st.fyEnd) + '"></label><button class="btn soft sm" type="button" id="xAllWait">ติ๊กทั้งหมดที่รอ</button><button class="btn sm" type="button" id="xMake" disabled>สร้าง ขจ.</button><button class="btn sm" type="button" id="xPay" disabled>บันทึกการจ่าย</button>') +
       '</div></div><div id="xHost"></div><div class="xstat" id="xStat"></div></section>';
+    var mm = dv.querySelector('.xmore'); if (mm) document.addEventListener('pointerdown', function cl(e) { if (!mm.isConnected) { document.removeEventListener('pointerdown', cl); return; } if (!mm.contains(e.target)) mm.open = false; });
     function hide(r) {
       var f = gridFilter[md];
       if (f !== 'all' && !(f === 'taken' ? /^(wait|in|paid)$/.test(r._st) : r._st === f)) return true;
@@ -337,7 +338,6 @@ var Docs = (function () {
     $('xMon').onchange = function () { gridMonth = this.value; redraw(); };
     if ($('xReg')) $('xReg').onclick = function () { openPayees(); };
     $('xXls').onclick = function () {
-      if (!window.XlsxExport || !window.ExcelJS) { toast('ส่งออก Excel ใช้ได้ในเว็บจริง (หน้าตัวอย่างนี้ปิดการดาวน์โหลด)', 'err'); return; }
       var all = [];
       g.rows().forEach(function (r) {
         if (r._old ? hide(r) : !(r.payee || r.gross)) return;
@@ -345,7 +345,7 @@ var Docs = (function () {
         all.push([r.date ? thaiDate(r.date) : '', r.grp || '', r.khj || '', r.kind, r.payee, gv, tv, gv - tv, r.type, id ? typeGroup(id) : '', r.taxType, r.method, r.ref || '', r.store || '', r.paid ? thaiDate(r.paid) : '', r._old ? r.status : 'ยังไม่บันทึก']);
       });
       var cols = [{ label: 'วันที่เบิก', w: 14, type: 'center' }, { label: 'ขบ.', w: 10, type: 'center' }, { label: 'ขจ.', w: 8, type: 'center' }, { label: 'ชนิด', w: 10, type: 'center' }, { label: 'รายชื่อผู้รับ', w: 38 }, { label: 'จำนวนที่ขอเบิก', w: 16, type: 'money', sum: true }, { label: 'ภาษี', w: 12, type: 'money', sum: true }, { label: 'จำนวนเงินที่จ่าย', w: 16, type: 'money', sum: true }, { label: 'ประเภทเงิน', w: 22 }, { label: 'รายการเงิน', w: 12, type: 'center' }, { label: 'ประเภทภาษี', w: 13, type: 'center' }, { label: 'วิธีจ่าย', w: 9, type: 'center' }, { label: 'เลขเช็ค/อ้างอิง', w: 15, type: 'center' }, { label: 'จ่ายจากที่เก็บ', w: 24 }, { label: 'วันที่จ่ายจริง', w: 14, type: 'center' }, { label: 'สถานะ', w: 12, type: 'center' }];
-      busy(this, XlsxExport.sheet('ทะเบียนรายการ ขบ.-ขจ. ปีงบ ' + S.st.fy, cols, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ทะเบียน-ขบ-ขจ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
+      previewSheet('ทะเบียนรายการ ขบ.-ขจ. ปีงบ ' + S.st.fy, cols, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ทะเบียน-ขบ-ขจ-' + S.st.fy + '.xlsx');
     };
     function afterSave(toastText, kind) {
       return Promise.all([reloadDocs(), reloadSettings()]).then(function () { rerender(); toast(toastText, kind || 'good'); });
