@@ -8,7 +8,7 @@
   --ok: #0f9466; --warn: #c26a00; --bad: #d01c3f;
   --c1: #1262f0; --c2: #3b9bff; --c3: #bfe0ff; --c4: #0a3cb0; /* สีประจำแท็บ (ตั้งใหม่ตาม data-tab) */
   --ease: cubic-bezier(.2, .8, .2, 1); --spring: cubic-bezier(.34, 1.36, .5, 1);
-  --r: 22px; --font: "Anuphan", "Sarabun", system-ui, sans-serif; --num: "Anuphan", "Sarabun", system-ui, sans-serif;
+  --r: 22px; --font: "Sarabun", system-ui, sans-serif; --num: "Geist", "Sarabun", system-ui, sans-serif;
   color-scheme: light;
 }
 body[data-tab="income"] { --c1: #079a55; --c2: #2edc86; --c3: #c2f5dc; --c4: #04703c; }
@@ -1314,3 +1314,36 @@ html[data-vt="back"]::view-transition-new(root) { animation-name: vtSimpInB; }
 .topdock { align-items: stretch; }
 .modesw2 { min-height: 0; }
 @media (max-width: 640px) { .modesw2 { min-height: 52px; } }
+
+/* ================= v13: เปลี่ยนหน้าต่อเนื่อง (ครอสเฟดซ้อนกัน) · เฟดตอนเลื่อนเอาออก (ข้อความอยู่ตลอด) · liquid glass แบบแบน ================= */
+/* ครอสเฟดจริง: หน้าเก่าจางลงพร้อมกับหน้าใหม่ค่อยขึ้น (ผลรวมความทึบคงที่) ไม่มีจังหวะจอว่างหรือ "ตัดหน้า" */
+html { --vt-d: .7s; --vt-e: cubic-bezier(.4, 0, .2, 1); }
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: plus-lighter; will-change: auto; }
+::view-transition-old(root) { animation: vtXOut var(--vt-d) var(--vt-e) both; }
+::view-transition-new(root) { animation: vtXIn var(--vt-d) var(--vt-e) both; }
+html[data-vt="back"]::view-transition-old(root) { animation-name: vtXOut; }
+html[data-vt="back"]::view-transition-new(root) { animation-name: vtXInB; }
+@keyframes vtXOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes vtXIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes vtXInB { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+/* เมนู/สวิตช์อยู่กับที่ ไม่ถูกครอสเฟดไปด้วย (มีชื่อของตัวเอง) */
+.topdock { view-transition-name: topdock; }
+::view-transition-group(topdock) { animation-duration: 0s; }
+::view-transition-old(topdock) { display: none; } ::view-transition-new(topdock) { animation: none; }
+::view-transition-old(hero) { animation: vtXOut var(--vt-d) var(--vt-e) both; }
+::view-transition-new(hero) { animation: vtXInH var(--vt-d) var(--vt-e) both; }
+@keyframes vtXInH { from { opacity: 0; } to { opacity: 1; } }
+::view-transition-group(hero) { animation-duration: var(--vt-d); animation-timing-function: var(--vt-e); }
+/* เลื่อนหน้า: ข้อความไม่เฟดหายอีกแล้ว มีแต่แถบเมนูที่ตอบสนอง */
+@supports (animation-timeline: view()) {
+  #view > :not(.hero):not(#bnav):not(#dv):not(.apbar), #dv > *, .rqlist > *, .aplist > *, .mgrp .grid > *, .cl-cards, .hero { animation: none; opacity: 1; transform: none; }
+}
+/* liquid glass แบบแบน: ใสนุ่ม ขอบบาง ไม่นูน (ไม่มีไฮไลต์หนา/เงาลึก) */
+body.authed .topdock .bnav, .modesw2 { background: rgba(255,255,255,.34) !important; -webkit-backdrop-filter: blur(20px) saturate(1.7); backdrop-filter: blur(20px) saturate(1.7);
+  border: 1px solid rgba(255,255,255,.6); box-shadow: 0 4px 18px -12px rgba(20,27,45,.3), inset 0 1px 0 rgba(255,255,255,.35) !important; transition: background .45s ease, box-shadow .45s ease, border-color .45s ease; }
+body.authed .topdock .bnav::before { display: none; }
+body.scrolled .topdock .bnav, body.scrolled .modesw2 { background: rgba(255,255,255,.58) !important; box-shadow: 0 10px 26px -16px rgba(20,27,45,.38), inset 0 1px 0 rgba(255,255,255,.4) !important; }
+.bnav .bpill { background: linear-gradient(180deg, color-mix(in srgb, var(--c2) 78%, #fff), var(--c1)); box-shadow: 0 3px 10px -7px var(--c1); }
+.modesw2 .tgl { box-shadow: inset 0 1px 1px rgba(150,60,0,.18); }
+.modesw2 .tgl i { box-shadow: 0 1px 3px rgba(80,30,0,.25); }
+body.scrolled .topdock .bnav, body.scrolled .modesw2 { background: rgba(255,255,255,.78) !important; -webkit-backdrop-filter: blur(26px) saturate(1.6); backdrop-filter: blur(26px) saturate(1.6); }

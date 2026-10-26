@@ -411,6 +411,7 @@ function observeReveal() {
   }
   window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
   window.addEventListener('resize', function () { movePill(); moveDock(); });
+  var scT = 0; window.addEventListener('scroll', function () { if (scT) return; scT = requestAnimationFrame(function () { scT = 0; document.body.classList.toggle('scrolled', window.scrollY > 12); }); }, { passive: true });
 })();
 
 /* ================= โมดัล ================= */
