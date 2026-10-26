@@ -185,7 +185,9 @@ function renderWho() {
   w.textContent = S.me.name + ' · ' + MODES[mode()];
   var old = $('modeSw'); if (old) old.parentNode.removeChild(old);
   var ml = modeList();
+  $('topdock').classList.remove('hasSw');
   if (!can.admin() || ml.length !== 2) return;
+  $('topdock').classList.add('hasSw');
   var on = mode() === ml[1], sw = document.createElement('div'); sw.id = 'modeSw'; sw.className = 'modesw2';
   sw.innerHTML = '<span class="ml' + (on ? '' : ' on') + '" data-m="' + ml[0] + '">' + esc(MODES[ml[0]].replace('โหมด', '')) + '</span>' +
     '<button type="button" class="tgl" role="switch" aria-checked="' + on + '" aria-label="สลับโหมด ' + esc(MODES[ml[0]].replace('โหมด', '')) + ' / ' + esc(MODES[ml[1]].replace('โหมด', '')) + '"><i></i></button>' +

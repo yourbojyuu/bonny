@@ -1293,3 +1293,21 @@ html[data-vt="back"]::view-transition-new(root) { animation-name: vtSimpInB; }
 ::view-transition-old(hero) { animation: vtFadeOut .4s ease both; }
 ::view-transition-new(hero) { animation: vtFadeIn var(--vt-d) var(--vt-e) both; }
 ::view-transition-group(hero) { animation-duration: var(--vt-d); }
+
+/* ================= v11: แถบเมนูกับสวิตช์โค้งมนโอบรับกัน (เป็นแก้วก้อนเดียวกัน คอคอดโค้งตรงรอยต่อ) ================= */
+.topdock { --sw: 214px; gap: 8px; isolation: isolate; }
+.dockgoo { position: absolute; inset: 0; z-index: 0; pointer-events: none; display: grid; grid-template-columns: 1fr; gap: 8px; filter: url(#goo) drop-shadow(0 14px 22px rgba(20,27,45,.16)); }
+.topdock.hasSw .dockgoo { grid-template-columns: 1fr var(--sw); }
+.dockgoo i { display: block; border-radius: 28px; background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.74)); }
+.topdock:not(.hasSw) .dockgoo i:nth-child(2) { display: none; }
+.topdock.hasSw .bnav, .topdock.hasSw .modesw2 { background: none !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.topdock.hasSw .bnav::before { display: none; }
+.topdock .bnav, .topdock .modesw2 { z-index: 1; }
+.topdock.hasSw .modesw2 { flex: 0 0 var(--sw); justify-content: center; padding: 0 10px; }
+/* ฟองเล็ก ๆ บนสวิตช์เพื่อให้คอคอดดูไหลต่อกัน */
+@media (min-width: 641px) and (max-width: 860px) { .topdock { --sw: 92px; } }
+@media (max-width: 640px) {
+  .dockgoo { display: none; }
+  .topdock.hasSw .modesw2 { background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.34)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 10px 24px -16px rgba(20,27,45,.5) !important; flex: none; }
+  .topdock.hasSw .bnav { background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.34)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 14px 34px -20px rgba(20,27,45,.5) !important; -webkit-backdrop-filter: blur(22px) saturate(1.8) !important; backdrop-filter: blur(22px) saturate(1.8) !important; }
+}
