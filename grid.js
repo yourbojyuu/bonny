@@ -27,6 +27,7 @@ var Grid = (function () {
    * cfg = { cols:[{k,label,w,type:'text'|'date'|'money'|'chk',list:fn,ro,calc:fn(row),ph}],
    *         rows:[{...}] (แถวเดิมมี _old:true), blank:fn(prev), onRow:fn(row,k,api), onPaste:fn(text,api,r,c)->bool,
    *         cellRo:fn(row,col)->bool, hide:fn(row)->bool, onChk:fn(row,on,api), rowCls:fn(row)->string, totals:fn(rows)->html, isEmpty:fn(row)->bool,
+   *         onLeaveRow:fn(row,ri,api) = ออกจากแถวใหม่แล้ว (ใช้บันทึกอัตโนมัติ) · api.lock(row) = ล็อกแถวที่บันทึกแล้ว
    *         noNew:true = ไม่มีแถวใหม่ (ตารางทำงานกับแถวเดิมอย่างเดียว) }
    */
   function create(host, cfg) {
@@ -128,6 +129,13 @@ var Grid = (function () {
       if (String(i.value) !== '' || rows[ri][c.k]) setCell(ri, c.k, i.value);
       refreshRow(ri); if (!rows[ri]._old) addTail();
       if (rows[ri]._badDate && c.type === 'date') i.parentNode.classList.add('bad');
+      if (cfg.onLeaveRow) { // ออกจากแถวใหม่ (ไปแถวอื่น/คลิกนอกตาราง) -> ให้เจ้าของตารางบันทึกอัตโนมัติ
+        var row = rows[ri];
+        setTimeout(function () {
+          var a = document.activeElement, tr = a && a.closest ? a.closest('tr[data-r]') : null;
+          if (row && !row._old && rows.indexOf(row) >= 0 && !empty(row) && !(tr && host.contains(tr) && rows[Number(tr.getAttribute('data-r'))] === row)) cfg.onLeaveRow(row, rows.indexOf(row), api);
+        }, 60);
+      }
     });
     host.addEventListener('input', function (e) { var i = e.target; if (i.parentNode && i.getAttribute && i.getAttribute('data-r') !== null) i.parentNode.classList.remove('bad'); });
     host.addEventListener('change', function (e) {
@@ -178,6 +186,15 @@ var Grid = (function () {
       replace: function (list) { rows = list.slice(); bad = {}; ensureTail(); draw(); },
       append: function (list) { var l = rows[rows.length - 1]; if (l && !l._old && empty(l)) rows.pop(); rows = rows.concat(list); ensureTail(); draw(); },
       focus: function (ri, ci) { focusCell(ri === undefined ? rows.length - 1 : ri, ci || 0); },
+      /** ล็อกแถวที่บันทึกแล้วให้กลายเป็นแถวเดิม (แก้ในที่ ไม่วาดทั้งตารางใหม่ เพื่อไม่ให้เคอร์เซอร์หลุด) */
+      lock: function (r) {
+        var ri = rows.indexOf(r); if (ri < 0) return; r._old = true; r._dirty = false; r._fresh = true;
+        var tr = host.querySelector('tr[data-r="' + ri + '"]'); if (!tr) return;
+        if (tr.contains(document.activeElement)) return;
+        var no = tr.querySelector('th.rn span'), t = document.createElement('tbody'); t.innerHTML = rowHtml(r, ri, no ? no.textContent : '');
+        tr.parentNode.replaceChild(t.firstChild, tr);
+        if (cfg.totals) { var tf = host.querySelector('tfoot tr'); if (tf) tf.innerHTML = '<th class="rn">Σ</th>' + cfg.totals(rows); }
+      },
       redraw: draw
     };
     draw();

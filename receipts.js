@@ -76,22 +76,25 @@ var Receipts = (function () {
     var pre = rows().filter(function (x) { return !gMonth || gMonth === '-' ? gMonth !== '-' : String(x[3]).slice(0, 7) === gMonth; }).sort(function (a, b) { return a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : 0; }).map(function (x) {
       return { _old: true, date: x[3], book: x[0], no: x[1] + (Number(x[2]) > 1 ? '.' + x[2] : ''), type: typeName(x[5]), method: x[6], amount: x[7], payer: x[4], status: x[8] ? 'ยกเลิก' : '' };
     });
-    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางกรอกใบเสร็จ (แถวละรายการ)</h2><p class="hint" style="margin:4px 0 0">พิมพ์ต่อท้ายตาราง หรือคัดลอกจากไฟล์ใบเสร็จเดิมแล้ว Ctrl+V · เลขที่เพิ่มให้ทีละ 1 · ระบบตรวจซ้ำและวันที่ที่ปิดแล้วก่อนบันทึก</p></div>' +
+    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางกรอกใบเสร็จ (แถวละรายการ)</h2><p class="hint" style="margin:4px 0 0">พิมพ์ต่อท้ายตาราง หรือคัดลอกจากไฟล์ใบเสร็จเดิมแล้ว Ctrl+V · เลขที่เพิ่มให้ทีละ 1 · แถวที่ครบจะบันทึกอัตโนมัติเมื่อออกจากแถว (ระบบตรวจซ้ำและวันที่ที่ปิดแล้วให้ก่อนเสมอ)</p></div>' +
       '<div class="xtools"><label class="f inl">แสดงข้อมูลเดิม<select id="rxMon"><option value="">ทั้งหมด</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '<option value="-"' + (gMonth === '-' ? ' selected' : '') + '>ซ่อน</option></select></label>' +
-      '<button class="btn ghost sm" type="button" id="rxXls">ส่งออก Excel</button><button class="btn ghost sm" type="button" id="rxClear">ล้างแถวใหม่</button><button class="btn" type="button" id="rxSave">บันทึกแถวใหม่</button></div></div><div id="rxHost"></div><div class="xstat" id="rxStat"></div></section>';
+      '<button class="btn ghost sm" type="button" id="rxXls">ส่งออก Excel</button><button class="btn ghost sm" type="button" id="rxClear">ล้างแถวใหม่</button><button class="btn" type="button" id="rxSave">บันทึกตอนนี้</button></div></div><div id="rxHost"></div><div class="xstat" id="rxStat"></div></section>';
+    var cfgLeave = function () {};
     var g = Grid.create($('rxHost'), {
       cols: cols, rows: (gMonth === '-' ? [] : pre).concat(gRows || []), blank: gBlank,
       isEmpty: function (r) { return !r.amount && !r.payer; },
       onRow: function () { stat(); },
+      onLeaveRow: function () { cfgLeave(); },
+      rowCls: function (r) { return r._fresh ? 'fresh' : ''; },
       onPaste: function (text, api) {
         var res = Paste.receiptRows(Paste.parseTSV(text), { types: S.st.types, aliases: S.st.aliases || [], defaultMethod: 'สด' });
         if (!res.items.length) return false;
         api.append(res.items.map(function (it) { var t = S.st.types.filter(function (x) { return x[0] === it.type; })[0]; return { date: Grid.parseDate(it.date) || it.date, book: it.book, no: it.no, type: t ? t[1] : it.type, method: it.method || 'สด', amount: Grid.num(it.amount) || '', payer: it.payer || '' }; }));
-        stat(); toast('วางแล้ว ' + res.items.length + ' แถว — กด "บันทึกแถวใหม่" เพื่อให้ระบบตรวจ', 'good'); return true;
+        stat(); toast('วางแล้ว ' + res.items.length + ' แถว — กำลังตรวจและบันทึกอัตโนมัติ', 'good'); cfgLeave(); return true;
       },
       totals: function (rs) { var s = 0; rs.forEach(function (r) { s += Math.round((Number(r.amount) || 0) * 100); }); return '<td colspan="5" class="tl">รวมแถวใหม่ ' + rs.filter(function (r) { return r.amount || r.payer; }).length + ' แถว</td><td class="mn">' + Grid.fmtN(s / 100) + '</td><td colspan="2"></td>'; }
     });
-    function stat() { var n = g.filled().length; $('rxStat').textContent = n ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + n + ' แถว' : ''; gRows = g.rows().filter(function (x) { return !x._old; }); }
+    function stat() { var n = g.filled().length; $('rxStat').textContent = rxMsg && !n ? rxMsg : n ? (rxMsg && /^กำลัง/.test(rxMsg) ? rxMsg : 'แถวที่ยังไม่ครบ/รอบันทึก ' + n + ' แถว — แถวที่ครบจะบันทึกให้เองเมื่อออกจากแถว') : ''; gRows = g.rows().filter(function (x) { return !x._old; }); }
     stat();
     $('rxMon').onchange = function () { gMonth = this.value; stat(); renderGrid(dv); };
     $('rxXls').onclick = function () {
@@ -102,29 +105,41 @@ var Receipts = (function () {
       busy(this, XlsxExport.sheet('ทะเบียนใบเสร็จ ปีงบ ' + S.st.fy, cc, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ใบเสร็จ-' + S.st.fy + '.xlsx')).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); }).catch(handleError);
     };
     $('rxClear').onclick = function () { gRows = null; g.replace(g.rows().filter(function (x) { return x._old; })); stat(); toast('ล้างแถวใหม่แล้ว'); };
-    $('rxSave').onclick = function () {
-      var rowsAll = g.rows(), items = [], idx = [];
+    /* บันทึกอัตโนมัติ: แถวที่ครบแล้วจะถูกตรวจ (ซ้ำ/วันที่ปิดแล้ว) และบันทึกทันทีเมื่อออกจากแถว — เข้าคิวทีละงาน ไม่ชนกัน */
+    var q = Promise.resolve(), rxMsg = '';
+    function ready(r) { return Number(r.amount) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') && !!r.book && !!r.no && !!typeIdOfName(r.type); }
+    function sigOf(r) { return JSON.stringify([r.date, r.book, r.no, r.type, r.method, r.amount, r.payer]); }
+    function flush(manual) { q = q.then(function () { return doFlush(manual); }).catch(function (e) { rxMsg = ''; stat(); handleError(e); }); return q; }
+    function doFlush(manual) {
+      var rowsAll = g.rows(), pend = [], incomplete = 0;
       rowsAll.forEach(function (r, ri) {
         if (r._old || (!r.amount && !r.payer)) return;
-        var id = typeIdOfName(r.type); idx.push(ri);
-        if (!id) g.mark(ri, 'type'); if (!(Number(r.amount) > 0)) g.mark(ri, 'amount'); if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) g.mark(ri, 'date'); if (!r.book) g.mark(ri, 'book'); if (!r.no) g.mark(ri, 'no');
-        items.push({ date: r.date, book: r.book, no: r.no, type: id || r.type, method: r.method, amount: String(r.amount), payer: r.payer });
-      });
-      if (!items.length) { toast('ยังไม่มีแถวใหม่ให้บันทึก', 'err'); return; }
-      if (dv.querySelector('td.bad')) { toast('มีช่องที่ยังไม่ครบ (สีแดง)', 'err'); return; }
-      var btn = this;
-      busy(btn, api('importReceipts', { items: items })).then(function (pv) {
-        var badRow = pv.rows.filter(function (x) { return x.status !== 'new'; });
-        if (badRow.length) {
-          badRow.forEach(function (x) { g.markRow(idx[x.n - 1]); });
-          toast('แถวที่ ' + badRow[0].n + ': ' + (badRow[0].status === 'same' ? 'มีเล่ม/เลขที่นี้แล้ว (ข้อมูลเหมือนเดิม)' : badRow[0].status === 'changed' ? 'มีเล่ม/เลขที่นี้แล้วแต่ข้อมูลต่างกัน' : badRow[0].msg) + (badRow.length > 1 ? ' (และอีก ' + (badRow.length - 1) + ' แถว)' : ''), 'err'); return null;
+        if (!ready(r)) {
+          if (manual) { incomplete++; if (!typeIdOfName(r.type)) g.mark(ri, 'type'); if (!(Number(r.amount) > 0)) g.mark(ri, 'amount'); if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) g.mark(ri, 'date'); if (!r.book) g.mark(ri, 'book'); if (!r.no) g.mark(ri, 'no'); }
+          return;
         }
-        return busy(btn, api('importReceipts', { items: items, commit: true })).then(function (res) {
-          var lastRow = rowsAll[idx[idx.length - 1]]; last = { book: lastRow.book, no: nextNo(lastRow.no), date: lastRow.date, type: lastRow.type, method: lastRow.method };
-          gRows = null; toast('บันทึกใบเสร็จ ' + res.added + ' รายการแล้ว', 'good'); return refresh();
+        if (!manual && r._badSig === sigOf(r)) return; // เคยถูกปฏิเสธและยังไม่ได้แก้ — ไม่ส่งซ้ำ
+        pend.push(r);
+      });
+      if (!pend.length) { if (manual) toast(incomplete ? 'มี ' + incomplete + ' แถวที่ยังไม่ครบ (ช่องสีแดง)' : 'ไม่มีแถวใหม่ที่ต้องบันทึก — แถวที่ครบจะบันทึกให้เองเมื่อออกจากแถว', incomplete ? 'err' : ''); return null; }
+      var items = pend.map(function (r) { return { date: r.date, book: r.book, no: r.no, type: typeIdOfName(r.type), method: r.method, amount: String(r.amount), payer: r.payer }; });
+      rxMsg = 'กำลังบันทึกอัตโนมัติ ' + pend.length + ' แถว…'; stat();
+      return api('importReceipts', { items: items }).then(function (pv) {
+        var okI = [], okR = [], bad = [];
+        pv.rows.forEach(function (x, n) { if (x.status === 'new') { okI.push(items[n]); okR.push(pend[n]); } else { bad.push(x); pend[n]._badSig = sigOf(pend[n]); g.markRow(rowsAll.indexOf(pend[n])); } });
+        if (bad.length) { var x0 = bad[0]; toast('แถว ' + (x0.n || '') + ' ไม่ถูกบันทึก: ' + (x0.status === 'same' ? 'มีเล่ม/เลขที่นี้แล้ว (ข้อมูลเหมือนเดิม)' : x0.status === 'changed' ? 'มีเล่ม/เลขที่นี้แล้วแต่ข้อมูลต่างกัน' : x0.msg) + (bad.length > 1 ? ' (และอีก ' + (bad.length - 1) + ' แถว)' : ''), 'err'); }
+        if (!okI.length) { rxMsg = ''; stat(); return null; }
+        return api('importReceipts', { items: okI, commit: true }).then(function (res) {
+          var lr = okR[okR.length - 1]; last = { book: lr.book, no: nextNo(lr.no), date: lr.date, type: lr.type, method: lr.method };
+          okR.forEach(function (r) { r.status = ''; g.lock(r); });
+          rxMsg = '✓ บันทึกอัตโนมัติแล้ว ' + res.added + ' รายการ'; stat();
+          return reloadReceipts();
         });
-      }).catch(handleError);
-    };
+      });
+    }
+    var leaveT = 0;
+    cfgLeave = function () { clearTimeout(leaveT); leaveT = setTimeout(function () { flush(false); }, 250); };
+    $('rxSave').onclick = function () { var b = this; busy(b, flush(true)); };
   }
 
   /* ================= บันทึกรายรับ ================= */

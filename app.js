@@ -329,7 +329,7 @@ function go(tab, opt, instant) {
     else if (tab === 'approve') Flow.exec(v, S.opt);
     else renderSettings();
     if (!document.startViewTransition || REDUCE) { void v.offsetWidth; v.className = 'view-in'; }
-    observeReveal();
+    observeReveal(); watchHero();
   };
   if (vt) {
     try {
@@ -337,6 +337,14 @@ function go(tab, opt, instant) {
     } catch (e) { run(); }
   } else run();
   if (!instant && !vt) window.scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });
+}
+/** หยุดภาพเคลื่อนไหวของ hero เมื่อพ้นจอ (ประหยัดเครื่อง) */
+var heroIO = null;
+function watchHero() {
+  if (!window.IntersectionObserver) return;
+  if (!heroIO) heroIO = new IntersectionObserver(function (es) { es.forEach(function (e) { e.target.classList.toggle('off', !e.isIntersecting); }); });
+  heroIO.disconnect();
+  var h = document.querySelector('#view > .hero'); if (h) heroIO.observe(h);
 }
 function jumpTop() {
   var h = document.documentElement, old = h.style.scrollBehavior;

@@ -266,6 +266,7 @@ var Docs = (function () {
     if (!gridMonth) gridMonth = (S.date || defaultDate()).slice(0, 7);
     var fin = can.fin(), mons = [], khb = md === 'khb';
     for (var i = 0; i < 12; i++) { var d0 = new Date(S.st.fyStart + 'T00:00:00'), x = new Date(d0.getFullYear(), d0.getMonth() + i, 1); mons.push([x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2), MONTHS_L[x.getMonth()] + ' ' + (x.getFullYear() + 543)]); }
+    if (khb && !gridRows) { var dg = Draft.get('khbgrid'); if (dg && dg.data && dg.data.length) gridRows = dg.data; } // กู้ร่างแถวใหม่ที่บันทึกอัตโนมัติไว้
     var olds = oldRows(md), cnt = {};
     olds.forEach(function (r) { cnt[r._st] = (cnt[r._st] || 0) + 1; });
     cnt.taken = (cnt.wait || 0) + (cnt['in'] || 0) + (cnt.paid || 0);
@@ -319,10 +320,18 @@ var Docs = (function () {
       if ($('xMake')) { $('xMake').disabled = !sel.length; $('xMake').textContent = sel.length ? 'สร้าง ขจ. จาก ' + sel.length + ' รายการ' : 'สร้าง ขจ.'; }
       if ($('xPay')) { $('xPay').disabled = !dr.length; $('xPay').textContent = dr.length ? 'บันทึกการจ่าย ' + dr.length + ' แถว' : 'บันทึกการจ่าย'; }
       if ($('xSave')) $('xSave').textContent = nw ? 'บันทึก · ส่งผู้บริหาร ' + nw + ' แถว' : 'บันทึก · ส่งผู้บริหาร';
-      $('xStat').textContent = nw ? 'มีแถวใหม่ที่ยังไม่บันทึก ' + nw + ' แถว' : '';
-      if (khb) gridRows = g.rows().filter(function (r) { return !r._old; });
+      $('xStat').textContent = nw ? 'ร่างบันทึกอัตโนมัติแล้ว ' + nw + ' แถว (ยังไม่ส่งผู้บริหาร) — กด "บันทึก · ส่งผู้บริหาร" เมื่อพร้อม' : '';
+      if (khb) { gridRows = g.rows().filter(function (r) { return !r._old; }); keepDraft(); }
     }
     bar();
+    var draftT = 0;
+    function keepDraft() { // ร่างแถวใหม่เก็บในเครื่องอัตโนมัติ (การส่งผู้บริหารยังต้องกดเอง เพราะเป็นการส่งขออนุมัติ)
+      clearTimeout(draftT);
+      draftT = setTimeout(function () {
+        var rs = (gridRows || []).filter(function (r) { return r.payee || r.gross; });
+        if (rs.length) Draft.set('khbgrid', rs); else Draft.del('khbgrid');
+      }, 500);
+    }
     function redraw() { if (khb) gridRows = g.rows().filter(function (r) { return !r._old; }); renderGrid(dv, md); }
     Array.prototype.forEach.call(dv.querySelectorAll('[data-f]'), function (b) { b.onclick = function () { gridFilter[md] = b.getAttribute('data-f'); redraw(); }; });
     $('xMon').onchange = function () { gridMonth = this.value; redraw(); };
@@ -342,7 +351,7 @@ var Docs = (function () {
       return Promise.all([reloadDocs(), reloadSettings()]).then(function () { rerender(); toast(toastText, kind || 'good'); });
     }
     if (khb) {
-      $('xClear').onclick = function () { gridRows = null; g.replace(g.rows().filter(function (r) { return r._old; })); bar(); toast('ล้างแถวใหม่แล้ว'); };
+      $('xClear').onclick = function () { gridRows = null; Draft.del('khbgrid'); g.replace(g.rows().filter(function (r) { return r._old; })); bar(); toast('ล้างแถวใหม่แล้ว'); };
       /* บันทึกแถวใหม่ -> ขบ. (ส่งผู้บริหารอนุมัติทันที) */
       $('xSave').onclick = function () {
         var rows = g.rows(), groups = {}, order = [], bad = 0, errMsg = '', paper = !!($('xPaper') && $('xPaper').checked);
@@ -370,7 +379,7 @@ var Docs = (function () {
           });
         });
         busy(this, p).then(function () {
-          gridRows = keep;
+          gridRows = keep; if (!keep.some(function (r) { return r.payee || r.gross; })) Draft.del('khbgrid'); else keepDraft();
           return afterSave(paper ? 'บันทึก ' + done.join(', ') + ' แล้ว (อนุมัติบนกระดาษ) — ไปทำ ขจ. ที่แท็บ ขจ. ได้เลย' : 'ส่ง ' + done.join(', ') + ' ให้ผู้บริหารแล้ว — อนุมัติเมื่อไรจะไปรอที่แท็บ ขจ.');
         }).catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
       };
