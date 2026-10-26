@@ -1215,3 +1215,39 @@ html[data-vt="back"]::view-transition-group(veil) { animation-name: veilSweepB; 
 @keyframes hueSlow { from { filter: saturate(1.15) hue-rotate(-14deg); } to { filter: saturate(1.3) hue-rotate(16deg); } }
 .hero .deco .orb { animation-duration: 28s; } .hero .deco .o2 { animation-duration: 36s; }
 @media (prefers-reduced-motion: reduce) { #vtveil { display: none; } .hero::before { animation: none !important; } }
+
+/* ================= v9: เปลี่ยนหน้าให้นุ่มขึ้น — ไม่มีจังหวะสะดุดกลางทาง ================= */
+/* เดิมใช้ keyframe หลายช่วงแล้วใส่ easing ทุกช่วง ความเร็วจึงชะงักตรงกลาง และเบลอหนัก ๆ ทั้งจอทำให้กระตุก
+   ตอนนี้ใช้ 2 keyframe (from→to) กับ easing เดียวต่อเนื่อง เบลอน้อยลง และซ้อนกันแบบไม่มีช่วงจอว่าง */
+html { --vt-d: 1.25s; --vt-e: cubic-bezier(.45, 0, .15, 1); --vt-soft: cubic-bezier(.33, 0, .2, 1); }
+::view-transition-group(*) { animation-duration: var(--vt-d); animation-timing-function: var(--vt-e); }
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; will-change: transform, opacity, filter; }
+::view-transition-old(root) { animation: vtSoftOut calc(var(--vt-d) * .8) var(--vt-soft) both; }
+::view-transition-new(root) { animation: vtSoftIn var(--vt-d) var(--vt-soft) both; }
+html[data-vt="back"]::view-transition-old(root) { animation-name: vtSoftOutB; }
+html[data-vt="back"]::view-transition-new(root) { animation-name: vtSoftInB; }
+@keyframes vtSoftOut { from { opacity: 1; filter: blur(0); transform: scale(1); } to { opacity: 0; filter: blur(7px); transform: scale(1.035); } }
+@keyframes vtSoftIn { from { opacity: 0; filter: blur(7px); transform: scale(.965); } to { opacity: 1; filter: blur(0); transform: scale(1); } }
+@keyframes vtSoftOutB { from { opacity: 1; filter: blur(0); transform: scale(1); } to { opacity: 0; filter: blur(7px); transform: scale(.965); } }
+@keyframes vtSoftInB { from { opacity: 0; filter: blur(7px); transform: scale(1.035); } to { opacity: 1; filter: blur(0); transform: scale(1); } }
+::view-transition-old(hero) { animation: vtFadeOut calc(var(--vt-d) * .9) var(--vt-soft) both; }
+::view-transition-new(hero) { animation: vtFadeIn var(--vt-d) var(--vt-soft) both; }
+::view-transition-old(hero-big), ::view-transition-old(hero-lbl) { animation: vtFadeOut calc(var(--vt-d) * .6) var(--vt-soft) both; }
+::view-transition-new(hero-big), ::view-transition-new(hero-lbl) { animation: vtFadeIn var(--vt-d) var(--vt-soft) both; }
+::view-transition-group(hero) { animation-duration: var(--vt-d); }
+::view-transition-group(nav), ::view-transition-group(navpill) { animation-duration: var(--vt-d); }
+#vtveil { background: linear-gradient(90deg, transparent, rgba(255,255,255,.16) 35%, rgba(255,255,255,.34) 50%, rgba(255,255,255,.16) 65%, transparent); filter: blur(6px); }
+::view-transition-new(veil) { opacity: .7; }
+::view-transition-group(veil) { animation-duration: calc(var(--vt-d) * 1.2); animation-timing-function: cubic-bezier(.4, 0, .4, 1); }
+
+/* เลื่อนขึ้นลง: ใช้หลายจุดไล่แบบ smoothstep ให้ค่อย ๆ เฟดเนียน ไม่เป็นเส้นตรงแข็ง ๆ และช่วงเฟดยาวขึ้น */
+@supports (animation-timeline: view()) {
+  #view > :not(.hero):not(#bnav):not(#dv):not(.apbar), #dv > *, .rqlist > *, .aplist > *, .mgrp .grid > *, .cl-cards {
+    animation-range: cover 0px cover 220px, cover calc(100% - 240px) cover 100%;
+  }
+  .hero { animation-range: cover calc(100% - 340px) cover 100%; }
+  @keyframes sfIn { 0% { opacity: 0; transform: translateY(22px) scale(.99); } 20% { opacity: .06; transform: translateY(17px) scale(.9925); } 50% { opacity: .5; transform: translateY(8px) scale(.9955); } 80% { opacity: .94; transform: translateY(1px) scale(.999); } 100% { opacity: 1; transform: none; } }
+  @keyframes sfOut { 0% { opacity: 1; transform: none; } 20% { opacity: .94; transform: translateY(-1px); } 50% { opacity: .5; transform: translateY(-5px) scale(.992); } 80% { opacity: .06; transform: translateY(-9px) scale(.988); } 100% { opacity: 0; transform: translateY(-10px) scale(.987); } }
+  @keyframes heroOut { 0% { opacity: 1; transform: none; } 20% { opacity: .94; } 50% { opacity: .5; transform: translateY(-6px) scale(.985); } 80% { opacity: .06; transform: translateY(-11px) scale(.975); } 100% { opacity: 0; transform: translateY(-12px) scale(.972); } }
+}
+@media (prefers-reduced-motion: reduce) { #vtveil { display: none; } }
