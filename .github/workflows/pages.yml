@@ -1,0 +1,46 @@
+# เผยแพร่หน้าเว็บขึ้น GitHub Pages อัตโนมัติทุกครั้งที่ push เข้า main (ใช้เวลาประมาณ 1 นาที)
+# ตั้งค่า: Settings → Pages → Source = GitHub Actions · Settings → Secrets and variables → Actions → Variables: API_URL, CLIENT_ID
+# คัดลอกเฉพาะไฟล์ที่หน้าเว็บใช้จริง (ไม่เอา .gs / test.js / dashboard-bento.html / ไฟล์อื่นขึ้นเว็บ)
+name: deploy-pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: เตรียมไฟล์หน้าเว็บ
+        env:
+          API_URL: ${{ vars.API_URL }}
+          CLIENT_ID: ${{ vars.CLIENT_ID }}
+        run: |
+          test -n "$API_URL" && test -n "$CLIENT_ID" || { echo "ยังไม่ได้ตั้งค่า Variables API_URL / CLIENT_ID"; exit 1; }
+          mkdir _site
+          cp index.html app.css app.js paste.js grid.js docs.js flow.js receipts.js bento.js report.js export.js logo.png _site/
+          cp -r vendor _site/vendor
+          python3 - <<'PY'
+          import os
+          p = '_site/index.html'
+          s = open(p, encoding='utf-8').read()
+          s = s.replace("'ใส่ URL ของ Web App ที่นี่'", repr(os.environ['API_URL']))
+          s = s.replace("'ใส่ CLIENT_ID ของคุณที่นี่'", repr(os.environ['CLIENT_ID']))
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
