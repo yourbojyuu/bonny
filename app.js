@@ -184,15 +184,21 @@ function renderWho() {
   var w = $('who');
   w.textContent = S.me.name + ' · ' + MODES[mode()];
   var old = $('modeSw'); if (old) old.parentNode.removeChild(old);
-  if (!can.admin()) return;
-  var sw = document.createElement('div'); sw.id = 'modeSw'; sw.className = 'modesw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'สลับโหมด');
-  sw.innerHTML = modeList().map(function (m) { return '<button type="button" data-mode="' + m + '" aria-pressed="' + (mode() === m) + '">' + MODES[m].replace('โหมด', '') + '</button>'; }).join('');
-  w.parentNode.insertBefore(sw, w);
+  var ml = modeList();
+  if (!can.admin() || ml.length !== 2) return;
+  var on = mode() === ml[1], sw = document.createElement('div'); sw.id = 'modeSw'; sw.className = 'modesw2';
+  sw.innerHTML = '<span class="ml' + (on ? '' : ' on') + '" data-m="' + ml[0] + '">' + esc(MODES[ml[0]].replace('โหมด', '')) + '</span>' +
+    '<button type="button" class="tgl" role="switch" aria-checked="' + on + '" aria-label="สลับโหมด ' + esc(MODES[ml[0]].replace('โหมด', '')) + ' / ' + esc(MODES[ml[1]].replace('โหมด', '')) + '"><i></i></button>' +
+    '<span class="ml' + (on ? ' on' : '') + '" data-m="' + ml[1] + '">' + esc(MODES[ml[1]].replace('โหมด', '')) + '</span>';
+  $('topdock').appendChild(sw);
   sw.onclick = function (e) {
-    var b = e.target.closest('[data-mode]'); if (!b) return;
-    S.modeAs = b.getAttribute('data-mode') === 'fin' ? '' : b.getAttribute('data-mode');
+    var l = e.target.closest('[data-m]'), t = e.target.closest('.tgl');
+    var m = l ? l.getAttribute('data-m') : t ? (on ? ml[0] : ml[1]) : null; if (!m || m === mode()) return;
+    S.modeAs = m === 'fin' ? '' : m;
     try { localStorage.setItem('fin-mode', S.modeAs); } catch (er) {}
-    renderWho(); renderTabs(); go(homeTab(), null);
+    sw.querySelector('.tgl').setAttribute('aria-checked', String(m === ml[1]));
+    Array.prototype.forEach.call(sw.querySelectorAll('.ml'), function (x) { x.classList.toggle('on', x.getAttribute('data-m') === m); });
+    setTimeout(function () { renderWho(); renderTabs(); go(homeTab(), null); }, 260); // ให้เห็นปุ่มสไลด์ก่อนเปลี่ยนหน้า
   };
 }
 
@@ -232,18 +238,13 @@ function renderTabs() {
 }
 var SIDE_ICON = { overview: 'home', income: 'income', expense: 'expense', settings: 'settings', request: 'request', approve: 'approve' };
 function sideOpen() { try { return localStorage.getItem('fin-side') !== '0'; } catch (e) { return true; } }
-/** แถบนำทางกระจกเหลว: อยู่ใต้ hero ของทุกหน้า (ย้ายตามเมื่อหน้าถูกวาดใหม่) แล้วค้างด้านบนเมื่อเลื่อน */
+/** แถบนำทางกระจกเหลว: อยู่บนสุดของหน้า (ข้างตัวสลับโหมด) และค้างอยู่เมื่อเลื่อน */
 var NAV = null;
-function placeNav() {
-  var v = $('view'); if (!NAV || !v) return;
-  var h = v.querySelector(':scope > .hero');
-  if (h) { if (h.nextElementSibling !== NAV) h.insertAdjacentElement('afterend', NAV); }
-  else if (NAV.parentNode !== document.body) document.body.appendChild(NAV);
-}
+function placeNav() { var d = $('topdock'); if (NAV && d && NAV.parentNode !== d) d.insertBefore(NAV, d.firstChild); }
 function renderSide() {
   var old = $('side'); if (old) old.parentNode.removeChild(old);
   var bn = NAV;
-  if (!bn) { bn = NAV = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); document.body.appendChild(bn);
+  if (!bn) { bn = NAV = document.createElement('nav'); bn.id = 'bnav'; bn.className = 'bnav'; bn.setAttribute('aria-label', 'เมนูหลัก'); $('topdock').appendChild(bn);
     new MutationObserver(function () { placeNav(); moveDock(); }).observe($('view'), { childList: true }); }
   var md = mode(), canAdd = md === 'teacher' ? can.ask() : md === 'fin' && (can.khb() || can.fin());
   tabsNow();
@@ -301,8 +302,6 @@ function go(tab, opt, instant) {
   if (vt) { // ทิศทาง: ไปแท็บถัดไป = ซูมเข้าหาเรา · ย้อนกลับ = ซูมออก
     var ids = tabsNow().map(function (t) { return t.id; });
     document.documentElement.setAttribute('data-vt', ids.indexOf(tab) >= ids.indexOf(S.tab) ? 'fwd' : 'back');
-    var vl = $('vtveil'); if (!vl) { vl = document.createElement('div'); vl.id = 'vtveil'; vl.setAttribute('aria-hidden', 'true'); document.body.appendChild(vl); }
-    vl.classList.add('on');
   }
   var run = function () {
     if (vt) jumpTop(); // หน้าใหม่เริ่มบนสุดทันที ให้ hero/แถบเมนูจับคู่ย่อขยายจากตำแหน่งเดิมไปตำแหน่งใหม่
@@ -332,9 +331,7 @@ function go(tab, opt, instant) {
   };
   if (vt) {
     try {
-      var tr = document.startViewTransition(run);
-      var off = function () { var vl = $('vtveil'); if (vl) vl.classList.remove('on'); };
-      tr.finished.then(off, off);
+      document.startViewTransition(run);
     } catch (e) { run(); }
   } else run();
   if (!instant && !vt) window.scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });

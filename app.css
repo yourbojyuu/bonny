@@ -1251,3 +1251,45 @@ html[data-vt="back"]::view-transition-new(root) { animation-name: vtSoftInB; }
   @keyframes heroOut { 0% { opacity: 1; transform: none; } 20% { opacity: .94; } 50% { opacity: .5; transform: translateY(-6px) scale(.985); } 80% { opacity: .06; transform: translateY(-11px) scale(.975); } 100% { opacity: 0; transform: translateY(-12px) scale(.972); } }
 }
 @media (prefers-reduced-motion: reduce) { #vtveil { display: none; } }
+
+/* ================= v10: แถบนำทางอยู่บนสุด + ตัวสลับโหมด (สวิตช์สีส้ม) · เปลี่ยนหน้าแบบเรียบ ================= */
+.topdock { position: sticky; top: max(8px, env(safe-area-inset-top, 0px)); z-index: 70; display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; }
+body.authed .topdock .bnav { position: relative !important; top: auto !important; flex: 1 1 auto; order: 1; width: auto !important; max-width: none; margin: 0 !important; }
+body.authed .topdock .bnav.one { flex: 0 1 400px; }
+.modesw2 { order: 2; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 18px; min-height: 78px; border-radius: 26px; font-size: 13.5px; font-weight: 700; white-space: nowrap;
+  background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.34)); -webkit-backdrop-filter: blur(22px) saturate(1.8); backdrop-filter: blur(22px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 0 1px rgba(255,255,255,.55), 0 14px 34px -20px rgba(20,27,45,.5); }
+.modesw2 .ml { color: var(--muted); cursor: pointer; transition: color .4s; user-select: none; }
+.modesw2 .ml.on { color: #d9560a; }
+.modesw2 .tgl { position: relative; width: 56px; height: 32px; padding: 0; border: 0; border-radius: 16px; cursor: pointer; flex: none;
+  background: linear-gradient(180deg, #ffb877, #ff8a2b); box-shadow: inset 0 1px 2px rgba(150,60,0,.25), 0 6px 14px -8px #ff7a1a; transition: filter .4s; }
+.modesw2 .tgl[aria-checked="false"] { filter: saturate(.55) brightness(1.08); }
+.modesw2 .tgl i { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(80,30,0,.32); transition: transform .55s var(--spring); }
+.modesw2 .tgl[aria-checked="true"] i { transform: translateX(24px); }
+.modesw2 .tgl:active i { width: 31px; } .modesw2 .tgl[aria-checked="true"]:active i { transform: translateX(19px); }
+.modesw2 .tgl:focus-visible { outline: 2px solid #d9560a; outline-offset: 3px; }
+@media (max-width: 640px) {
+  .topdock { display: contents; }
+  .modesw2 { order: -1; width: max-content; margin: 8px auto 0; min-height: 52px; padding: 0 16px; }
+  body.authed .topdock .bnav { position: sticky !important; top: max(8px, env(safe-area-inset-top, 0px)) !important; width: 100% !important; margin: 8px 0 4px !important; z-index: 70; }
+  body.authed .topdock .bnav.one { max-width: 400px; }
+}
+@media (min-width: 641px) and (max-width: 860px) { .modesw2 { flex-direction: column; gap: 4px; padding: 8px 12px; } .modesw2 .ml { display: none; } .modesw2 .ml.on { display: block; font-size: 12px; } }
+
+/* เปลี่ยนหน้าแบบเรียบ: เลื่อน+เฟดเบา ๆ ตามทิศ · hero ย่อขยายนุ่ม ๆ · แถบสีบนเมนูสไลด์แบบสปริง (ไม่มีเบลอ/แสงกวาด/ตัวเลขกระโดด) */
+html { --vt-d: .75s; --vt-e: cubic-bezier(.32, .72, 0, 1); }
+#vtveil { display: none !important; }
+.hero .big, .hero .lbl { view-transition-name: none; }
+::view-transition-group(*) { animation-duration: var(--vt-d); animation-timing-function: var(--vt-e); }
+::view-transition-old(root) { animation: vtSimpOut .4s ease both; }
+::view-transition-new(root) { animation: vtSimpIn var(--vt-d) var(--vt-e) both; }
+html[data-vt="back"]::view-transition-old(root) { animation-name: vtSimpOutB; }
+html[data-vt="back"]::view-transition-new(root) { animation-name: vtSimpInB; }
+@keyframes vtSimpOut { to { opacity: 0; transform: translateX(-28px); } }
+@keyframes vtSimpIn { from { opacity: 0; transform: translateX(34px); } }
+@keyframes vtSimpOutB { to { opacity: 0; transform: translateX(28px); } }
+@keyframes vtSimpInB { from { opacity: 0; transform: translateX(-34px); } }
+::view-transition-old(root), ::view-transition-new(root) { filter: none !important; }
+::view-transition-old(hero) { animation: vtFadeOut .4s ease both; }
+::view-transition-new(hero) { animation: vtFadeIn var(--vt-d) var(--vt-e) both; }
+::view-transition-group(hero) { animation-duration: var(--vt-d); }
