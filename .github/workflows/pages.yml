@@ -28,7 +28,7 @@ jobs:
         run: |
           test -n "$API_URL" && test -n "$CLIENT_ID" || { echo "ยังไม่ได้ตั้งค่า Variables API_URL / CLIENT_ID"; exit 1; }
           mkdir _site
-          cp index.html app.css app.js paste.js grid.js docs.js flow.js receipts.js bento.js report.js export.js logo.png _site/
+          cp index.html app.css app.js paste.js grid.js docs.js flow.js receipts.js bento.js report.js export.js import.js logo.png _site/
           cp -r vendor _site/vendor
           python3 - <<'PY'
           import os
