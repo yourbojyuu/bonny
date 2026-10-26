@@ -22,7 +22,7 @@ function actionRoles() {
     ping: null,
     getSchema: ALL, me: ALL, getSettings: ALL, getBalances: STAFF, getLedger: STAFF,
     getDocs: ALL, khbDoc: ALL, khjDoc: STAFF, getReceipts: STAFF,
-    importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN, savePackages: FIN,
+    importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN, savePackages: FIN, voidReceipts: FIN,
     saveKhb: KHB.concat(['ครู']), cancelKhb: KHB.concat(['ครู']),
     approveKhb: ['admin', 'ผู้บริหาร'], receiveKhb: FIN,
     createKhj: FIN, savePayments: FIN, cancelKhj: FIN,
@@ -38,13 +38,13 @@ function handlers() {
     getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb, approveKhb: h_approveKhb, receiveKhb: h_receiveKhb,
     createKhj: h_createKhj, savePayments: h_savePayments, cancelKhj: h_cancelKhj,
     khbDoc: h_khbDoc, khjDoc: h_khjDoc, getReceipts: h_getReceipts, importReceipts: h_importReceipts,
-    cancelReceipt: h_cancelReceipt, savePayees: h_savePayees, saveAliases: h_saveAliases, savePackages: h_savePackages
+    cancelReceipt: h_cancelReceipt, savePayees: h_savePayees, saveAliases: h_saveAliases, savePackages: h_savePackages, voidReceipts: h_voidReceipts
   };
 }
 
 function isWriteAction(a) {
   return ['saveTypes', 'saveStores', 'saveOpening', 'rebuildLedger', 'saveDocSettings',
-    'saveKhb', 'cancelKhb', 'approveKhb', 'receiveKhb', 'createKhj', 'savePayments', 'cancelKhj', 'importReceipts', 'cancelReceipt', 'savePayees', 'saveAliases', 'savePackages'].indexOf(a) >= 0;
+    'saveKhb', 'cancelKhb', 'approveKhb', 'receiveKhb', 'createKhj', 'savePayments', 'cancelKhj', 'importReceipts', 'cancelReceipt', 'savePayees', 'saveAliases', 'savePackages', 'voidReceipts'].indexOf(a) >= 0;
 }
 
 /* ============ ตรวจสิทธิ์ (pure) ============ */

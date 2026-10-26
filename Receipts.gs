@@ -275,3 +275,23 @@ function h_savePackages(p, io) {
   io.write('แพ็กเกจรับเงิน', rows);
   return { saved: rows.length };
 }
+
+
+/** ใบเสร็จที่ยกเลิกทั้งใบโดยไม่เคยมียอด (เลขที่ถูกใช้ไปแล้ว) · บันทึกเป็นบรรทัดยอด 0 สถานะ "ยกเลิก" เพื่อให้เลขที่ไม่ขาดช่วง */
+function h_voidReceipts(p, io) {
+  if (!Array.isArray(p.items) || !p.items.length) throw new Error('ไม่มีใบเสร็จที่จะบันทึก');
+  if (p.items.length > 500) throw new Error('บันทึกครั้งละไม่เกิน 500 ใบ');
+  var existing = tableRows(io, 'ใบเสร็จ'), have = {}, seen = {}, add = [];
+  existing.forEach(function (r) { var x = readReceipt(r); have[normKey(x.book) + '|' + normKey(x.no)] = true; });
+  p.items.forEach(function (it, i) {
+    var book = normText(it.book), no = normText(it.no);
+    if (!book || !no) throw new Error('แถวที่ ' + (i + 1) + ': ต้องมีเล่มที่และเลขที่');
+    var key = normKey(book) + '|' + normKey(no);
+    if (have[key] || seen[key]) throw new Error('แถวที่ ' + (i + 1) + ': เล่ม ' + book + ' เลขที่ ' + no + ' มีในระบบแล้ว');
+    seen[key] = true;
+    var reason = normText(it.reason) || 'ใบเสร็จยกเลิก';
+    add.push(receiptRow({ fy: FISCAL_YEAR, book: book, no: no, line: 1, date: parseFyDate(it.date, FISCAL_YEAR, 'วันที่'), payer: '', type: '', method: 'สด', amount: 0, status: 'ยกเลิก', note: 'ยกเลิก: ' + reason }));
+  });
+  commitChanges(io, { 'ใบเสร็จ': existing.concat(add) });
+  return { added: add.length };
+}

@@ -1470,3 +1470,12 @@ textarea.qe-paste { font-family: var(--num); font-size: 13px; border-radius: 16p
   .qr-line .qr-g { grid-column: 2 / 4; } .qr-line [data-c="type"] { grid-column: 2 / 4 !important; } .qr-line [data-c="method"] { grid-column: 2 !important; } .qr-line [data-c="gross"] { grid-column: 3 !important; }
   .qr-gsum { grid-template-columns: 1fr; } .qr-rc { grid-template-columns: 64px minmax(0, 1fr) auto; } .qr-rc .btn { grid-column: 1 / -1; justify-self: end; }
 }
+
+/* ===== v17: ตารางใบเสร็จบรรทัดเดียว · หน้าต่างแยกกองทุน ===== */
+.xlt tr.cxd td { opacity: .5; } .xlt tr.cxd td input { text-decoration: line-through; }
+.xlt td.xc input[data-k="split"] { font-size: 13px; color: var(--ink2); cursor: pointer; }
+.qs-line { display: grid; grid-template-columns: minmax(0, 2fr) 90px minmax(0, 1fr) 34px; gap: 8px; align-items: center; margin-bottom: 6px; } .qs-line .f { margin: 0; }
+.qs-alts { margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--c2) 7%, #fff); border: 1px solid var(--line); } .qs-alts > b { display: block; font-size: 13px; margin-bottom: 6px; }
+.qs-alt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; } .qs-alt > span { font-size: 12.5px; font-weight: 700; color: var(--muted); min-width: 110px; }
+.qs-diff { margin: 10px 2px; font-size: 14.5px; } .qs-diff .ok { color: #0d7a45; font-weight: 600; } .qs-diff .bad { color: var(--bad); font-weight: 600; }
+@media (max-width: 700px) { .qs-line { grid-template-columns: 1fr 80px; } .qs-line [data-f="amount"] { grid-column: 1 / 2; } }

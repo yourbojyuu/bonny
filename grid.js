@@ -137,7 +137,14 @@ var Grid = (function () {
         }, 60);
       }
     });
-    host.addEventListener('input', function (e) { var i = e.target; if (i.parentNode && i.getAttribute && i.getAttribute('data-r') !== null) i.parentNode.classList.remove('bad'); });
+    host.addEventListener('input', function (e) {
+      var i = e.target; if (!(i.parentNode && i.getAttribute && i.getAttribute('data-r') !== null)) return;
+      i.parentNode.classList.remove('bad');
+      if (cfg.liveCalc) { // ช่องจำนวนเงิน: คอลัมน์คำนวณ (รวม/แยกกองทุน) อัปเดตระหว่างพิมพ์
+        var ri = Number(i.getAttribute('data-r')), c = cols[Number(i.getAttribute('data-c'))];
+        if (c && c.type === 'money' && !c.calc && rows[ri] && !rows[ri]._old) { setCell(ri, c.k, i.value, true); refreshRow(ri); }
+      }
+    });
     host.addEventListener('change', function (e) {
       var i = e.target;
       if (i.id === 'xAll') { rows.forEach(function (r, ri) { if (r._old && !(cfg.hide && cfg.hide(r)) && cfg.chkOk && cfg.chkOk(r)) { r._on = i.checked; var cb = host.querySelector('input[data-chk][data-r="' + ri + '"]'); if (cb) cb.checked = i.checked; } }); if (cfg.onChk) cfg.onChk(null, i.checked, api); return; }

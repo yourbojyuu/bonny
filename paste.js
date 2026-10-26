@@ -253,7 +253,7 @@ var Paste = (function () {
     return out;
   }
 
-  return { parseTSV: parseTSV, calcTax: calcTax, matchType: matchType, khbRows: khbRows, receiptRows: receiptRows, packageRows: packageRows, payeeRows: payeeRows, nk: nk, isCompany: isCompany,
+  return { parseTSV: parseTSV, calcTax: calcTax, matchType: matchType, khbRows: khbRows, receiptRows: receiptRows, packageRows: packageRows, guessType: guessType, payeeRows: payeeRows, nk: nk, isCompany: isCompany,
     RECEIPT_HEADER: ['วันที่', 'เล่มที่', 'เลขที่', 'ประเภทเงิน', 'วิธีรับ', 'จำนวน', 'ผู้ชำระ'],
     KHB_HEADER: ['ประเภทเงิน', 'ผู้รับ', 'ชนิด', 'วิธีจ่าย', 'ยอดรวม', 'ภาษี'] };
 })();

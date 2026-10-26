@@ -372,6 +372,16 @@ if (require.main === module) {
   var io4 = makeMemIO(); delete io4.sheets['แพ็กเกจรับเงิน'];
   ok(call(io4, 'tok-fin', 'getSettings').ok && call(io4, 'tok-fin', 'getSettings').data.packages.length === 0, 'ยังไม่มีชีทแพ็กเกจ (ติดตั้งเก่า) -> คืนรายการว่าง ไม่ error');
 
+  console.log('13) ใบเสร็จยกเลิกทั้งใบ (ไม่เคยมียอด)');
+  r = call(io, 'tok-fin', 'voidReceipts', { items: [{ date: '2026-10-17', book: 'V1', no: '835', reason: 'เขียนผิด' }] });
+  ok(r.ok && r.data.added === 1, 'บันทึกใบยกเลิกได้ ' + (r.ok ? '' : r.error));
+  ok(/มีในระบบแล้ว/.test(call(io, 'tok-fin', 'voidReceipts', { items: [{ date: '2026-10-17', book: 'V1', no: '835' }] }).error), 'เลขที่ซ้ำ -> ปฏิเสธ');
+  var rc = call(io, 'tok-fin', 'getReceipts').data.rows.filter(function (x) { return x[0] === 'V1' && x[1] === '835'; })[0];
+  ok(rc && rc[8] === 1 && rc[7] === 0, 'getReceipts เห็นใบยกเลิกยอด 0');
+  var gb0 = grandOf(io, '2027-09-30').grand; call(io, 'tok-admin', 'rebuildLedger');
+  ok(Math.abs(grandOf(io, '2027-09-30').grand - gb0) < 0.005, 'ใบยกเลิกไม่กระทบยอดคงเหลือ');
+  ok(!call(io, 'tok-boss', 'voidReceipts', { items: [{ date: '2026-10-17', book: 'V2', no: '1' }] }).ok, 'ผู้บริหารบันทึกใบยกเลิกไม่ได้');
+
   console.log('\nผ่าน ' + passed + ' / ' + (passed + failed));
   if (failed) { console.log('มี ' + failed + ' ข้อไม่ผ่าน'); process.exit(1); }
   console.log('ทุกข้อผ่าน');

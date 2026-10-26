@@ -2,7 +2,7 @@
    รายรับ: บันทึกใบเสร็จต่อเนื่อง · วางจาก Excel ทีเดียวทั้งก้อน · สรุปรายเดือน/วัน · ยกเลิกใบเสร็จ */
 
 var Receipts = (function () {
-  var seg = 'enter', q = '', last = { book: '', no: '', date: '', type: '', method: 'สด' }, pasted = null;
+  var seg = 'grid', q = '', last = { book: '', no: '', date: '', type: '', method: 'สด' }, pasted = null;
 
   function rows() { return (S.rcv && S.rcv.rows) || []; }
   function live() { return rows().filter(function (r) { return !r[8]; }); }
@@ -25,7 +25,7 @@ var Receipts = (function () {
       '<div class="tile"><div class="k">เงินโอน (ทั้งปี)</div><div class="v money">' + money(methodSum(lv, 'โอน')) + '</div><div class="s">เข้าบัญชีหลักของประเภทเงิน</div></div>' +
       '</div></section>' +
       '<div class="seg glass" role="group" aria-label="มุมมอง">' +
-      (can.fin() && mode() === 'fin' ? segBtn('enter', 'บันทึกใบเสร็จ') + segBtn('grid', 'ตาราง Excel') : '') + segBtn('day', 'สรุปรายวัน') + segBtn('sum', 'สรุปรายเดือน') + segBtn('list', 'รายการใบเสร็จ') + '</div>' +
+      (can.fin() && mode() === 'fin' ? segBtn('grid', 'กรอกบรรทัดเดียว') + segBtn('enter', 'ฟอร์มทีละใบ') : '') + segBtn('day', 'สรุปรายวัน') + segBtn('sum', 'สรุปรายเดือน') + segBtn('list', 'รายการใบเสร็จ') + '</div>' +
       '<div id="rv"></div>';
     if ((seg === 'enter' || seg === 'grid') && !(can.fin() && mode() === 'fin')) seg = 'day';
     Array.prototype.forEach.call(v.querySelectorAll('[data-rseg]'), function (b) {
@@ -53,97 +53,321 @@ var Receipts = (function () {
   function refresh() { return reloadReceipts().then(function () { if (S.tab === 'income') render($('view'), null); else renderTabs(); }); }
 
 
-  /* ================= ตารางกรอกแบบ Excel ================= */
-  var gRows = null, gMonth = '';
-  function typeIdOfName(name) { return name ? Paste.matchType(name, { types: S.st.types, aliases: S.st.aliases || [] }, true) || '' : ''; }
-  function gBlank(prev) {
-    return { date: prev ? prev.date : defaultDate(), book: prev ? prev.book : last.book, no: prev && prev.no ? nextNo(prev.no) : last.no, type: prev ? prev.type : '', method: prev ? prev.method : 'สด', amount: '', payer: '' };
+  /* ================= ตารางกรอกบรรทัดเดียว: 1 แถว = 1 ใบเสร็จ (คอลัมน์ตามไฟล์ Excel เดิม) =================
+     กรอก บกศ.สด · รด.สด · บกศ.โอน · รด.โอน · อื่น ๆ ระบบแยกเข้าประเภทเงินให้เองจากแพ็กเกจ/ใบเสร็จที่เคยบันทึก
+     ถ้าแยกได้ไม่ชัด (ยอดเดียวกันแต่ต่างรายการ) ดับเบิลคลิกช่อง "แยกกองทุน" หรือกด F2 เพื่อแก้เอง */
+  var gRows = null, gMonth = '', compKey = '', compMap = null;
+  var AMT = ['bsd', 'rsd', 'bto', 'rto', 'oth'], PNAME = { B: 'บกศ.', R: 'รายได้', O: 'อื่น ๆ' }, PCODE = { 'บกศ.': 'B', 'รายได้': 'R', 'อื่น ๆ': 'O' };
+  function c100(v) { var n = Grid.num(v); return isNaN(n) ? 0 : Math.round(n * 100); }
+  function partTotals(r) { return { B: c100(r.bsd) + c100(r.bto), R: c100(r.rsd) + c100(r.rto), O: c100(r.oth) }; }
+  function rowTotal(r) { var p = partTotals(r); return p.B + p.R + p.O; }
+  function shortType(t) { return String(typeName(t)).replace(/^บกศ\.\s*/, ''); }
+  function defaultRType() { var t = S.st.types.filter(function (x) { return /รายได้\s?อื่น/.test(x[1]) && x[4] !== 'ไม่ใช่'; })[0]; return t ? t[0] : ''; }
+  /** รูปแบบการแยกกองทุนของแต่ละส่วน (บกศ./รายได้/อื่น ๆ) ตามยอด · มาจากแพ็กเกจ + ใบเสร็จที่เคยบันทึก เรียงตามที่พบบ่อย */
+  function compIndex() {
+    var sg = rows().length + '|' + (S.st.packages || []).length;
+    if (compMap && compKey === sg) return compMap;
+    var map = {};
+    function add(p, cents, items, w) {
+      var k = p + '|' + cents, list = map[k] || (map[k] = []), sig = items.map(function (x) { return x[0] + '=' + x[1]; }).sort().join(';');
+      var e = list.filter(function (x) { return x.sig === sig; })[0]; if (!e) { e = { sig: sig, items: items, n: 0 }; list.push(e); } e.n += w;
+    }
+    function addReceipt(lines, w) {
+      var by = { B: {}, R: {}, O: {} }, tot = { B: 0, R: 0, O: 0 };
+      lines.forEach(function (l) { var p = PCODE[grpOf(l[0])]; by[p][l[0]] = (by[p][l[0]] || 0) + l[1]; tot[p] += l[1]; });
+      ['B', 'R', 'O'].forEach(function (p) { if (tot[p] > 0) add(p, tot[p], Object.keys(by[p]).map(function (t) { return [t, by[p][t]]; }), w); });
+    }
+    (S.st.packages || []).forEach(function (p) { addReceipt(p[2].map(function (it) { return [it[0], Math.round(it[1] * 100)]; }), 5); });
+    groupReceipts(live()).forEach(function (rc) { addReceipt(rc.lines.filter(function (l) { return !l[8]; }).map(function (l) { return [l[5], Math.round((Number(l[7]) || 0) * 100)]; }), 1); });
+    Object.keys(map).forEach(function (k) { map[k].sort(function (a, b) { return b.n - a.n; }); });
+    compMap = map; compKey = sg; return map;
   }
+  /** แจกสด/โอนลงรายการของส่วนหนึ่ง (สดก่อน เหลือเป็นโอน) -> [{type,method,amount(สตางค์)}] */
+  function allocate(items, cash, tr) {
+    var out = [];
+    items.forEach(function (it) {
+      var a = it[1], take = Math.min(a, cash);
+      if (take > 0) { out.push({ type: it[0], method: 'สด', amount: take }); cash -= take; a -= take; }
+      if (a > 0) { out.push({ type: it[0], method: 'โอน', amount: a }); tr -= a; }
+    });
+    return out;
+  }
+  function partCash(r, p) { return p === 'B' ? c100(r.bsd) : p === 'R' ? c100(r.rsd) : 0; }
+  function partTr(r, p) { return p === 'B' ? c100(r.bto) : p === 'R' ? c100(r.rto) : c100(r.oth); }
+  /** แยกใบเสร็จหนึ่งแถวเป็นบรรทัดตามประเภทเงิน: state = ok | need (ต้องแยกเอง) | none (ไม่มียอด) | void */
+  function splitRow(r) {
+    if (r.st === 'ยกเลิก') return { state: 'void', items: [] };
+    var P = partTotals(r), total = P.B + P.R + P.O;
+    if (r.lines && r.lines.length) {
+      var s = r.lines.reduce(function (a, l) { return a + c100(l.amount); }, 0);
+      return { state: s === total && total > 0 && r.lines.every(function (l) { return l.type; }) ? 'ok' : 'need', items: r.lines.map(function (l) { return { type: l.type, method: l.method, amount: c100(l.amount) }; }), manual: true, alts: 0, need: [] };
+    }
+    var items = [], need = [], alts = 0;
+    ['B', 'R', 'O'].forEach(function (p) {
+      if (!P[p]) return;
+      var list = compIndex()[p + '|' + P[p]], comp = list && list[(r._alt && r._alt[p]) || 0];
+      if (!comp && p === 'R') { var d = defaultRType(); if (d) comp = { items: [[d, P[p]]] }; }
+      if (!comp) { need.push(PNAME[p]); return; }
+      if (list && list.length > 1) alts += list.length - 1;
+      items = items.concat(allocate(comp.items, partCash(r, p), partTr(r, p)));
+    });
+    return { state: !total ? 'none' : need.length ? 'need' : 'ok', items: items, need: need, alts: alts };
+  }
+  function itemsText(items) {
+    var by = {}, ord = [];
+    items.forEach(function (it) { if (!by[it.type]) { by[it.type] = 0; ord.push(it.type); } by[it.type] += it.amount; });
+    return ord.map(function (t) { return shortType(t) + ' ' + Grid.fmtN(by[t] / 100).replace(/\.00$/, ''); }).join(' + ');
+  }
+  function splitText(r) {
+    if (r._rc) return itemsText(r._rc.lines.filter(function (l) { return !l[8]; }).map(function (l) { return { type: l[5], amount: Math.round((Number(l[7]) || 0) * 100) }; })) || (r.st ? '' : '');
+    var s = splitRow(r);
+    if (s.state === 'void') return 'ใบยกเลิก (เลขที่ถูกใช้ไปแล้ว)';
+    if (s.state === 'none') return '';
+    if (s.state === 'need') return '⚠ ต้องแยกกองทุน' + (s.need && s.need.length ? ' (' + s.need.join(', ') + ')' : '') + ' — ดับเบิลคลิก/F2';
+    return itemsText(s.items) + (s.manual ? ' ✎' : s.alts ? ' · มีอีก ' + s.alts + ' แบบ (F2)' : '');
+  }
+  /** ใบเสร็จที่บันทึกแล้ว -> แถวตาราง */
+  function oldGridRows() {
+    return groupReceipts(rows().filter(function (r) { return !gMonth || gMonth === '-' ? gMonth !== '-' : String(r[3]).slice(0, 7) === gMonth; })).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.book === b.book ? (parseInt(a.no, 10) || 0) - (parseInt(b.no, 10) || 0) : (a.book < b.book ? -1 : 1)); }).map(function (rc) {
+      var s = { B: { 'สด': 0, 'โอน': 0 }, R: { 'สด': 0, 'โอน': 0 }, O: { 'สด': 0, 'โอน': 0 } };
+      rc.lines.forEach(function (l) { if (l[8]) return; s[PCODE[grpOf(l[5])]][l[6] === 'โอน' ? 'โอน' : 'สด'] += Math.round((Number(l[7]) || 0) * 100); });
+      function v(x) { return x ? x / 100 : ''; }
+      return { _old: true, _rc: rc, _cx: rc.cancelled, date: rc.date, book: rc.book, no: rc.no, bsd: v(s.B['สด']), rsd: v(s.R['สด']), bto: v(s.B['โอน']), rto: v(s.R['โอน']), oth: v(s.O['สด'] + s.O['โอน']), st: rc.cancelled ? 'ยกเลิก' : '' };
+    });
+  }
+  function gBlank(prev) {
+    var lt = prev ? null : latestReceipt();
+    return { date: prev ? prev.date : defaultDate(), book: prev ? prev.book : (lt ? lt[0] : last.book || ''), no: prev ? (prev.no ? nextNo(prev.no) : '') : (lt ? nextNo(lt[1]) : last.no || ''), bsd: '', rsd: '', bto: '', rto: '', oth: '', st: '' };
+  }
+  var MONTH_NAMES = /^(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.|มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม)$/;
+  var HEAD_KEY = { 'วันที่': 'date', 'เดือน': 'mon', 'เล่มที่': 'book', 'เลขที่': 'no', 'บกศสด': 'bsd', 'รดสด': 'rsd', 'บกศโอน': 'bto', 'รดโอน': 'rto', 'อื่นๆ': 'oth', 'รวม': 'tot', 'สถานะ': 'st', 'ส่วนต่าง': 'diff', 'บกศ': 'bsum', 'รายได้': 'rsum' };
+  var POS_KEYS = ['date', 'mon', 'book', 'no', 'bsd', 'rsd', 'bto', 'rto', 'oth', 'tot', 'st', 'diff', 'bsum', 'rsum'];
+  /** วางตารางจากไฟล์ Excel เดิม (มีหัวตาราง หรือเรียงคอลัมน์ตามไฟล์) -> { rows, skipped, unmapped } หรือ null */
+  function parseReceiptSheet(text) {
+    var tsv = Paste.parseTSV(text); if (!tsv.length) return null;
+    var map = [], hasHead = false, fund = [];
+    var h0 = tsv[0].map(Paste.nk);
+    if (h0.indexOf('เล่มที่') >= 0 && h0.indexOf('เลขที่') >= 0 && h0.indexOf('บกศสด') >= 0) {
+      hasHead = true;
+      tsv[0].forEach(function (label, i) {
+        var k = HEAD_KEY[Paste.nk(label)];
+        if (k) map[i] = k; else if (Paste.nk(label)) { var t = Paste.guessType(String(label).trim(), { types: S.st.types, aliases: S.st.aliases || [] }); fund.push({ i: i, label: String(label).replace(/\s+/g, ' ').trim(), type: t }); }
+      });
+    } else if (tsv[0].length >= 12 && MONTH_NAMES.test(String(tsv[0][1] || '').trim())) { POS_KEYS.forEach(function (k, i) { map[i] = k; }); }
+    else return null;
+    var out = [], skipped = 0, unmapped = {}, mism = 0;
+    tsv.slice(hasHead ? 1 : 0).forEach(function (c) {
+      var o = {}; map.forEach(function (k, i) { if (k) o[k] = c[i] === undefined ? '' : String(c[i]).trim(); });
+      var date = Grid.parseDate(o.date), book = o.book || '', no = o.no || '';
+      if (!date || !book || !no || /ยอดยกมา/.test(book)) { skipped++; return; }
+      var r = { date: date, book: book, no: no, st: /ยกเลิก/.test(o.st || '') ? 'ยกเลิก' : '' };
+      AMT.forEach(function (k) { var n = Grid.num(o[k]); r[k] = n > 0 ? n : ''; });
+      var lines = [], usable = true;
+      fund.forEach(function (f) {
+        var n = Grid.num(String(c[f.i] === undefined ? '' : c[f.i]).trim()); if (!(n > 0)) return;
+        if (!f.type) { unmapped[f.label] = 1; usable = false; return; }
+        lines.push([f.type, Math.round(n * 100)]);
+      });
+      if (lines.length && usable && r.st !== 'ยกเลิก') {
+        var byP = { B: [], R: [], O: [] }; lines.forEach(function (l) { byP[PCODE[grpOf(l[0])]].push(l); });
+        var P = partTotals(r), okAll = true, res = [];
+        ['B', 'R', 'O'].forEach(function (p) {
+          var s = byP[p].reduce(function (a, l) { return a + l[1]; }, 0);
+          if (s !== P[p]) okAll = false; else if (s) res = res.concat(allocate(byP[p], partCash(r, p), partTr(r, p)));
+        });
+        if (okAll && res.length) r.lines = res.map(function (x) { return { type: x.type, method: x.method, amount: x.amount / 100 }; }); else mism++;
+      }
+      out.push(r);
+    });
+    return { rows: out, skipped: skipped, unmapped: Object.keys(unmapped), mism: mism };
+  }
+
   function renderGrid(dv) {
     if (!can.fin()) { dv.innerHTML = '<div class="empty"><b>บันทึกรายรับได้เฉพาะเจ้าหน้าที่การเงิน</b></div>'; return; }
     if (!gMonth) gMonth = (S.date || defaultDate()).slice(0, 7);
     var mons = []; for (var i = 0; i < 12; i++) { var d0 = new Date(S.st.fyStart + 'T00:00:00'), x = new Date(d0.getFullYear(), d0.getMonth() + i, 1); mons.push([x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2), MONTHS_L[x.getMonth()] + ' ' + (x.getFullYear() + 543)]); }
     var cols = [
-      { k: 'date', label: 'วันที่', w: 118, type: 'date', ph: 'วว/ดด/ปป' },
-      { k: 'book', label: 'เล่มที่', w: 86 },
-      { k: 'no', label: 'เลขที่', w: 86 },
-      { k: 'type', label: 'ประเภทเงิน', w: 196, list: function () { return S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่'; }).map(function (t) { return t[1]; }); } },
-      { k: 'method', label: 'วิธีรับ', w: 80, list: function () { return ['สด', 'โอน']; } },
-      { k: 'amount', label: 'จำนวนเงิน', w: 128, type: 'money' },
-      { k: 'payer', label: 'ผู้ชำระ (ถ้ามี)', w: 190 },
-      { k: 'status', label: 'สถานะ', w: 80, ro: true }
+      { k: 'chk', label: '', w: 40, type: 'chk' },
+      { k: 'date', label: 'วันที่', w: 112, type: 'date', ph: 'วว/ดด/ปป' },
+      { k: 'book', label: 'เล่มที่', w: 84 }, { k: 'no', label: 'เลขที่', w: 84 },
+      { k: 'bsd', label: 'บกศ.สด', w: 104, type: 'money' }, { k: 'rsd', label: 'รด.สด', w: 104, type: 'money' },
+      { k: 'bto', label: 'บกศ.โอน', w: 108, type: 'money' }, { k: 'rto', label: 'รด.โอน', w: 104, type: 'money' }, { k: 'oth', label: 'อื่น ๆ', w: 112, type: 'money' },
+      { k: 'tot', label: 'รวม', w: 112, type: 'money', calc: function (r) { return rowTotal(r) / 100; } },
+      { k: 'split', label: 'แยกกองทุน (ดับเบิลคลิก / F2 เพื่อแก้เอง)', w: 330, calc: splitText },
+      { k: 'st', label: 'สถานะ', w: 92, list: function () { return ['', 'ยกเลิก']; } }
     ];
-    var pre = rows().filter(function (x) { return !gMonth || gMonth === '-' ? gMonth !== '-' : String(x[3]).slice(0, 7) === gMonth; }).sort(function (a, b) { return a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : 0; }).map(function (x) {
-      return { _old: true, date: x[3], book: x[0], no: x[1] + (Number(x[2]) > 1 ? '.' + x[2] : ''), type: typeName(x[5]), method: x[6], amount: x[7], payer: x[4], status: x[8] ? 'ยกเลิก' : '' };
-    });
-    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">ตารางกรอกใบเสร็จ (แถวละรายการ)</h2><p class="hint" style="margin:4px 0 0">พิมพ์ต่อท้ายตาราง หรือคัดลอกจากไฟล์ใบเสร็จเดิมแล้ว Ctrl+V · เลขที่เพิ่มให้ทีละ 1 · แถวที่ครบจะบันทึกอัตโนมัติเมื่อออกจากแถว (ระบบตรวจซ้ำและวันที่ที่ปิดแล้วให้ก่อนเสมอ)</p></div>' +
+    var pre = gMonth === '-' ? [] : oldGridRows();
+    dv.innerHTML = '<section class="card glass xcard"><div class="xbar"><div><h2 style="margin:0">กรอกใบเสร็จบรรทัดเดียว</h2><p class="xhint">1 แถว = 1 ใบเสร็จ · พิมพ์ยอดช่อง บกศ./รด. สด-โอน แล้วระบบแยกกองทุนให้ · วางตารางจาก Excel เดิมได้ · แถวที่ครบบันทึกให้เองเมื่อออกจากแถว</p></div>' +
       '<div class="xtools"><label class="f inl">แสดงข้อมูลเดิม<select id="rxMon"><option value="">ทั้งหมด</option>' + mons.map(function (m) { return '<option value="' + m[0] + '"' + (m[0] === gMonth ? ' selected' : '') + '>' + esc(m[1]) + '</option>'; }).join('') + '<option value="-"' + (gMonth === '-' ? ' selected' : '') + '>ซ่อน</option></select></label>' +
-      '<button class="btn ghost sm" type="button" id="rxXls">ส่งออก Excel</button><button class="btn ghost sm" type="button" id="rxClear">ล้างแถวใหม่</button><button class="btn" type="button" id="rxSave">บันทึกตอนนี้</button></div></div><div id="rxHost"></div><div class="xstat" id="rxStat"></div></section>';
-    var cfgLeave = function () {};
-    var g = Grid.create($('rxHost'), {
-      cols: cols, rows: (gMonth === '-' ? [] : pre).concat(gRows || []), blank: gBlank,
-      isEmpty: function (r) { return !r.amount && !r.payer; },
-      onRow: function () { stat(); },
+      '<details class="xmore"><summary class="btn ghost sm">เพิ่มเติม ▾</summary><div class="xmenu"><button class="btn sm" type="button" id="rxSplit">แยกกองทุนแถวที่เลือก (F2)</button><button class="btn sm" type="button" id="rxPk">แพ็กเกจรับเงิน</button><hr><button class="btn sm" type="button" id="rxXls">ดูตัวอย่าง / ส่งออก Excel</button><button class="btn sm" type="button" id="rxClear">ล้างแถวใหม่</button></div></details>' +
+      '<button class="btn soft" type="button" id="rxCx" disabled>ยกเลิกใบที่เลือก</button><button class="btn" type="button" id="rxSave">บันทึกตอนนี้</button></div></div>' +
+      '<div id="rxHost"></div><div class="xstat" id="rxStat" aria-live="polite"></div></section>';
+    var mm = dv.querySelector('.xmore'); if (mm) document.addEventListener('pointerdown', function cl(e) { if (!mm.isConnected) { document.removeEventListener('pointerdown', cl); return; } if (!mm.contains(e.target)) mm.open = false; });
+    var cfgLeave = function () {}, g;
+    g = Grid.create($('rxHost'), {
+      cols: cols, rows: pre.concat(gRows || []), blank: gBlank, liveCalc: true,
+      isEmpty: function (r) { return !r.bsd && !r.rsd && !r.bto && !r.rto && !r.oth && r.st !== 'ยกเลิก'; },
+      chkOk: function (r) { return r._old && !r._cx; },
+      rowCls: function (r) { return (r._cx ? 'cxd ' : '') + (r._fresh ? 'fresh' : ''); },
+      onChk: function () { cxBtn(); },
+      onRow: function (r, k) { if (AMT.indexOf(k) >= 0) { delete r.lines; r._alt = null; } r._badSig = ''; stat(); },
       onLeaveRow: function () { cfgLeave(); },
-      rowCls: function (r) { return r._fresh ? 'fresh' : ''; },
       onPaste: function (text, api) {
-        var res = Paste.receiptRows(Paste.parseTSV(text), { types: S.st.types, aliases: S.st.aliases || [], defaultMethod: 'สด' });
-        if (!res.items.length) return false;
-        api.append(res.items.map(function (it) { var t = S.st.types.filter(function (x) { return x[0] === it.type; })[0]; return { date: Grid.parseDate(it.date) || it.date, book: it.book, no: it.no, type: t ? t[1] : it.type, method: it.method || 'สด', amount: Grid.num(it.amount) || '', payer: it.payer || '' }; }));
-        stat(); toast('วางแล้ว ' + res.items.length + ' แถว — กำลังตรวจและบันทึกอัตโนมัติ', 'good'); cfgLeave(); return true;
+        var res = parseReceiptSheet(text); if (!res) return false;
+        if (!res.rows.length) { toast('ไม่พบแถวใบเสร็จในข้อมูลที่วาง (ข้ามแถวยอดยกมา/ไม่มีวันที่)', 'err'); return true; }
+        api.append(res.rows); stat();
+        toast('วางแล้ว ' + res.rows.length + ' ใบ' + (res.skipped ? ' (ข้าม ' + res.skipped + ' แถว)' : '') + (res.unmapped.length ? ' · จับคู่ประเภทเงินไม่ได้: ' + res.unmapped.join(', ') + ' (เพิ่มชื่อย่อในตั้งค่า)' : '') + ' — กำลังตรวจและบันทึกที่ครบ', res.unmapped.length ? 'err' : 'good');
+        cfgLeave(); return true;
       },
-      totals: function (rs) { var s = 0; rs.forEach(function (r) { s += Math.round((Number(r.amount) || 0) * 100); }); return '<td colspan="5" class="tl">รวมแถวใหม่ ' + rs.filter(function (r) { return r.amount || r.payer; }).length + ' แถว</td><td class="mn">' + Grid.fmtN(s / 100) + '</td><td colspan="2"></td>'; }
+      totals: function (rs) {
+        var s = { bsd: 0, rsd: 0, bto: 0, rto: 0, oth: 0 }, n = 0; rs.forEach(function (r) { if (r._old) return; if (rowTotal(r)) n++; AMT.forEach(function (k) { s[k] += c100(r[k]); }); });
+        var tt = s.bsd + s.rsd + s.bto + s.rto + s.oth;
+        return '<td colspan="3" class="tl">รวมแถวใหม่ ' + n + ' ใบ</td>' + AMT.map(function (k) { return '<td class="mn">' + Grid.fmtN(s[k] / 100) + '</td>'; }).join('') + '<td class="mn">' + Grid.fmtN(tt / 100) + '</td><td colspan="2"></td>';
+      }
     });
-    function stat() { var n = g.filled().length; $('rxStat').textContent = rxMsg && !n ? rxMsg : n ? (rxMsg && /^กำลัง/.test(rxMsg) ? rxMsg : 'แถวที่ยังไม่ครบ/รอบันทึก ' + n + ' แถว — แถวที่ครบจะบันทึกให้เองเมื่อออกจากแถว') : ''; gRows = g.rows().filter(function (x) { return !x._old; }); }
-    stat();
+    var msg = '';
+    function stat() {
+      var all = g.rows().filter(function (r) { return !r._old; }), w = all.filter(function (r) { return rowTotal(r) || r.st === 'ยกเลิก'; });
+      var need = w.filter(function (r) { return r.st !== 'ยกเลิก' && splitRow(r).state === 'need'; }).length;
+      $('rxStat').textContent = msg && !w.length ? msg : w.length ? (msg && /^กำลัง/.test(msg) ? msg : 'รอบันทึก ' + w.length + ' ใบ' + (need ? ' · ต้องแยกกองทุน ' + need + ' ใบ (ดับเบิลคลิกช่องแยกกองทุน)' : '') + ' — แถวที่ครบบันทึกให้เองเมื่อออกจากแถว') : '';
+      gRows = all;
+    }
+    function cxBtn() { var n = g.selected().length, b = $('rxCx'); b.disabled = !n; b.textContent = n ? 'ยกเลิกใบที่เลือก (' + n + ')' : 'ยกเลิกใบที่เลือก'; }
+    stat(); cxBtn();
     $('rxMon').onchange = function () { gMonth = this.value; stat(); renderGrid(dv); };
+    $('rxPk').onclick = function () { openPackages(); };
+    $('rxClear').onclick = function () { gRows = null; g.replace(g.rows().filter(function (x) { return x._old; })); stat(); toast('ล้างแถวใหม่แล้ว'); };
     $('rxXls').onclick = function () {
-      var all = (gMonth === '-' ? [] : pre).map(function (p) { return [thaiDate(p.date), p.book, p.no, p.type, p.method, p.amount, p.payer, p.status]; });
-      g.filled().forEach(function (x) { all.push([x.date ? thaiDate(x.date) : '', x.book, x.no, x.type, x.method, Number(x.amount) || 0, x.payer, '']); });
-      var cc = [{ label: 'วันที่', w: 14, type: 'center' }, { label: 'เล่มที่', w: 10, type: 'center' }, { label: 'เลขที่', w: 10, type: 'center' }, { label: 'ประเภทเงิน', w: 30 }, { label: 'วิธีรับ', w: 9, type: 'center' }, { label: 'จำนวนเงิน', w: 17, type: 'money', sum: true }, { label: 'ผู้ชำระ', w: 28 }, { label: 'สถานะ', w: 10, type: 'center' }];
+      var all = g.rows().filter(function (r) { return r._old || rowTotal(r) || r.st === 'ยกเลิก'; }).map(function (r) {
+        return [r.date ? thaiDate(r.date) : '', r.book, r.no, c100(r.bsd) / 100, c100(r.rsd) / 100, c100(r.bto) / 100, c100(r.rto) / 100, c100(r.oth) / 100, rowTotal(r) / 100, r.st || ''];
+      });
+      var cc = [{ label: 'วันที่', w: 14, type: 'center' }, { label: 'เล่มที่', w: 10, type: 'center' }, { label: 'เลขที่', w: 10, type: 'center' }, { label: 'บกศ.สด', w: 14, type: 'money', sum: true }, { label: 'รด.สด', w: 14, type: 'money', sum: true }, { label: 'บกศ.โอน', w: 14, type: 'money', sum: true }, { label: 'รด.โอน', w: 14, type: 'money', sum: true }, { label: 'อื่น ๆ', w: 14, type: 'money', sum: true }, { label: 'รวม', w: 16, type: 'money', sum: true }, { label: 'สถานะ', w: 10, type: 'center' }];
       previewSheet('ทะเบียนใบเสร็จ ปีงบ ' + S.st.fy, cc, all, 'ส่งออกจากระบบการเงินโรงเรียน · ' + thaiDateLong(defaultDate()), 'ใบเสร็จ-' + S.st.fy + '.xlsx');
     };
-    $('rxClear').onclick = function () { gRows = null; g.replace(g.rows().filter(function (x) { return x._old; })); stat(); toast('ล้างแถวใหม่แล้ว'); };
-    /* บันทึกอัตโนมัติ: แถวที่ครบแล้วจะถูกตรวจ (ซ้ำ/วันที่ปิดแล้ว) และบันทึกทันทีเมื่อออกจากแถว — เข้าคิวทีละงาน ไม่ชนกัน */
-    var q = Promise.resolve(), rxMsg = '';
-    function ready(r) { return Number(r.amount) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') && !!r.book && !!r.no && !!typeIdOfName(r.type); }
-    function sigOf(r) { return JSON.stringify([r.date, r.book, r.no, r.type, r.method, r.amount, r.payer]); }
-    function flush(manual) { q = q.then(function () { return doFlush(manual); }).catch(function (e) { rxMsg = ''; stat(); handleError(e); }); return q; }
+    /* ---- บันทึกอัตโนมัติ (เข้าคิวทีละงาน ไม่ชนกัน) ---- */
+    var q = Promise.resolve();
+    function ready(r) {
+      if (r._old || !/^\d{4}-\d{2}-\d{2}$/.test(r.date || '') || !r.book || !r.no) return '';
+      if (r.st === 'ยกเลิก') return rowTotal(r) === 0 ? 'void' : '';
+      return rowTotal(r) > 0 && splitRow(r).state === 'ok' ? 'ok' : '';
+    }
+    function sigOf(r) { return JSON.stringify([r.date, r.book, r.no, r.bsd, r.rsd, r.bto, r.rto, r.oth, r.st, r.lines || null]); }
+    function flush(manual) { q = q.then(function () { return doFlush(manual); }).catch(function (e) { msg = ''; stat(); handleError(e); }); return q; }
+    function chunk(arr, n) { var o = []; for (var i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; }
     function doFlush(manual) {
-      var rowsAll = g.rows(), pend = [], incomplete = 0;
-      rowsAll.forEach(function (r, ri) {
-        if (r._old || (!r.amount && !r.payer)) return;
-        if (!ready(r)) {
-          if (manual) { incomplete++; if (!typeIdOfName(r.type)) g.mark(ri, 'type'); if (!(Number(r.amount) > 0)) g.mark(ri, 'amount'); if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) g.mark(ri, 'date'); if (!r.book) g.mark(ri, 'book'); if (!r.no) g.mark(ri, 'no'); }
+      var all = g.rows(), okR = [], voidR = [], incomplete = 0;
+      all.forEach(function (r, ri) {
+        if (r._old || (rowTotal(r) === 0 && r.st !== 'ยกเลิก')) return;
+        var rd = ready(r);
+        if (!rd) {
+          if (manual) { incomplete++; if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) g.mark(ri, 'date'); if (!r.book) g.mark(ri, 'book'); if (!r.no) g.mark(ri, 'no'); }
           return;
         }
-        if (!manual && r._badSig === sigOf(r)) return; // เคยถูกปฏิเสธและยังไม่ได้แก้ — ไม่ส่งซ้ำ
-        pend.push(r);
+        if (!manual && r._badSig === sigOf(r)) return;
+        (rd === 'void' ? voidR : okR).push(r);
       });
-      if (!pend.length) { if (manual) toast(incomplete ? 'มี ' + incomplete + ' แถวที่ยังไม่ครบ (ช่องสีแดง)' : 'ไม่มีแถวใหม่ที่ต้องบันทึก — แถวที่ครบจะบันทึกให้เองเมื่อออกจากแถว', incomplete ? 'err' : ''); return null; }
-      var items = pend.map(function (r) { return { date: r.date, book: r.book, no: r.no, type: typeIdOfName(r.type), method: r.method, amount: String(r.amount), payer: r.payer }; });
-      rxMsg = 'กำลังบันทึกอัตโนมัติ ' + pend.length + ' แถว…'; stat();
-      return api('importReceipts', { items: items }).then(function (pv) {
-        var okI = [], okR = [], bad = [];
-        pv.rows.forEach(function (x, n) { if (x.status === 'new') { okI.push(items[n]); okR.push(pend[n]); } else { bad.push(x); pend[n]._badSig = sigOf(pend[n]); g.markRow(rowsAll.indexOf(pend[n])); } });
-        if (bad.length) { var x0 = bad[0]; toast('แถว ' + (x0.n || '') + ' ไม่ถูกบันทึก: ' + (x0.status === 'same' ? 'มีเล่ม/เลขที่นี้แล้ว (ข้อมูลเหมือนเดิม)' : x0.status === 'changed' ? 'มีเล่ม/เลขที่นี้แล้วแต่ข้อมูลต่างกัน' : x0.msg) + (bad.length > 1 ? ' (และอีก ' + (bad.length - 1) + ' แถว)' : ''), 'err'); }
-        if (!okI.length) { rxMsg = ''; stat(); return null; }
-        return api('importReceipts', { items: okI, commit: true }).then(function (res) {
-          var lr = okR[okR.length - 1]; last = { book: lr.book, no: nextNo(lr.no), date: lr.date, type: lr.type, method: lr.method };
-          okR.forEach(function (r) { r.status = ''; g.lock(r); });
-          rxMsg = '✓ บันทึกอัตโนมัติแล้ว ' + res.added + ' รายการ'; stat();
-          return reloadReceipts();
+      if (!okR.length && !voidR.length) { if (manual) toast(incomplete ? 'มี ' + incomplete + ' ใบที่ยังไม่ครบ (วันที่/เล่ม/เลขที่ หรือยังไม่ได้แยกกองทุน)' : 'ไม่มีแถวใหม่ที่ต้องบันทึก — แถวที่ครบจะบันทึกให้เองเมื่อออกจากแถว', incomplete ? 'err' : ''); return null; }
+      var saved = 0, p = Promise.resolve(), bad = [];
+      msg = 'กำลังบันทึกอัตโนมัติ ' + (okR.length + voidR.length) + ' ใบ…'; stat();
+      chunk(okR, 120).forEach(function (grp) {
+        p = p.then(function () {
+          var items = [], owner = [];
+          grp.forEach(function (r) { splitRow(r).items.forEach(function (it) { items.push({ date: r.date, book: r.book, no: r.no, type: it.type, method: it.method, amount: String(it.amount / 100), payer: '' }); owner.push(r); }); });
+          return api('importReceipts', { items: items }).then(function (pv) {
+            var badR = {}; pv.rows.forEach(function (x, n) { if (x.status !== 'new') { badR[all.indexOf(owner[n])] = (x.status === 'same' ? 'เล่ม/เลขที่นี้มีอยู่แล้ว (ข้อมูลเหมือนเดิม)' : x.status === 'changed' ? 'เล่ม/เลขที่นี้มีอยู่แล้วแต่ข้อมูลต่างกัน' : x.msg); } });
+            var good = grp.filter(function (r) { return badR[all.indexOf(r)] === undefined; }), goodSet = good;
+            Object.keys(badR).forEach(function (ri) { var r = all[ri]; r._badSig = sigOf(r); g.markRow(Number(ri)); bad.push('เล่ม ' + r.book + ' เลขที่ ' + r.no + ': ' + badR[ri]); });
+            if (!good.length) return null;
+            var keep = []; items.forEach(function (it, n) { if (goodSet.indexOf(owner[n]) >= 0) keep.push(it); });
+            return api('importReceipts', { items: keep, commit: true }).then(function () { good.forEach(function (r) { g.lock(r); }); saved += good.length; last = { book: good[good.length - 1].book, no: nextNo(good[good.length - 1].no), date: good[good.length - 1].date, type: '', method: 'สด' }; });
+          });
         });
+      });
+      chunk(voidR, 300).forEach(function (grp) {
+        p = p.then(function () {
+          return api('voidReceipts', { items: grp.map(function (r) { return { date: r.date, book: r.book, no: r.no, reason: 'ยกเลิกตอนออกใบ' }; }) }).then(function () { grp.forEach(function (r) { g.lock(r); }); saved += grp.length; })
+            .catch(function (e) { grp.forEach(function (r) { r._badSig = sigOf(r); g.markRow(all.indexOf(r)); }); bad.push(e.message); });
+        });
+      });
+      return p.then(function () {
+        msg = saved ? '✓ บันทึกอัตโนมัติแล้ว ' + saved + ' ใบ' : ''; stat();
+        if (bad.length) toast(bad[0] + (bad.length > 1 ? ' (และอีก ' + (bad.length - 1) + ' ใบ)' : ''), 'err');
+        return saved ? reloadReceipts().then(function () { compMap = null; }) : null;
       });
     }
     var leaveT = 0;
     cfgLeave = function () { clearTimeout(leaveT); leaveT = setTimeout(function () { flush(false); }, 250); };
     $('rxSave').onclick = function () { var b = this; busy(b, flush(true)); };
+    /* ---- ยกเลิกใบที่เลือก ---- */
+    $('rxCx').onclick = function () {
+      var sel = g.selected(); if (!sel.length) return;
+      askReason('ยกเลิกใบเสร็จ ' + sel.length + ' ใบ (ทุกบรรทัดของแต่ละใบ)', 'ยืนยันยกเลิก', function (reason, am, btn) {
+        var p = Promise.resolve();
+        sel.forEach(function (r) { p = p.then(function () { return api('cancelReceipt', { book: r.book, no: r.no, reason: reason }); }); });
+        busy(btn, p).then(function () { am.close(); toast('ยกเลิก ' + sel.length + ' ใบแล้ว', 'good'); return refresh(); }).catch(function (e) { handleError(e); refresh(); });
+      });
+    };
+    /* ---- แยกกองทุนเอง (ดับเบิลคลิกช่องแยกกองทุน / F2) ---- */
+    function splitOf(el) { var tr = el && el.closest ? el.closest('tr[data-r]') : null; return tr ? g.rows()[Number(tr.getAttribute('data-r'))] : null; }
+    var host = $('rxHost');
+    host.addEventListener('dblclick', function (e) { var r = splitOf(e.target); if (r && !r._old && e.target.getAttribute && e.target.getAttribute('data-k') === 'split') openSplit(r); });
+    host.addEventListener('keydown', function (e) { if (e.key === 'F2') { var r = splitOf(e.target); if (r && !r._old) { e.preventDefault(); openSplit(r); } else if (r) toast('ใบที่บันทึกแล้วแก้ที่นี่ไม่ได้ — ยกเลิกใบแล้วออกใบใหม่', 'err'); } });
+    $('rxSplit').onclick = function () { var r = splitOf(document.activeElement) || splitOf(host.querySelector('tr.cur input')); if (r && !r._old) openSplit(r); else toast('คลิกที่แถวใหม่ก่อน แล้วกดปุ่มนี้', 'err'); };
+    function openSplit(r) {
+      var P = partTotals(r), total = P.B + P.R + P.O, init = splitRow(r).items.map(function (x) { return { type: x.type, method: x.method, amount: x.amount / 100 }; });
+      if (!init.length) init = [{ type: '', method: r.rsd || r.bsd ? 'สด' : 'โอน', amount: '' }];
+      function typeSel(sel) {
+        return '<option value="">— ประเภทเงิน —</option>' + ['บกศ.', 'รายได้', 'อื่น ๆ'].map(function (gname) {
+          return '<optgroup label="' + gname + '">' + S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่' && grpOf(t[0]) === gname; }).map(function (t) { return '<option value="' + esc(t[0]) + '"' + (t[0] === sel ? ' selected' : '') + '>' + esc(t[1]) + '</option>'; }).join('') + '</optgroup>';
+        }).join('');
+      }
+      function lineH(l) { return '<div class="qs-line" data-ql><label class="f"><select data-f="type" aria-label="ประเภทเงิน">' + typeSel(l.type) + '</select></label><label class="f"><select data-f="method" aria-label="สด/โอน">' + plainOpts(['สด', 'โอน'], l.method) + '</select></label><label class="f"><input class="money" data-f="amount" inputmode="decimal" aria-label="จำนวนเงิน" value="' + esc(l.amount === '' ? '' : l.amount) + '" placeholder="0.00"></label><button class="del" type="button" data-del aria-label="ลบ">×</button></div>'; }
+      var alt = '';
+      ['B', 'R', 'O'].forEach(function (p) {
+        var list = P[p] ? compIndex()[p + '|' + P[p]] : null;
+        if (list && list.length) alt += '<div class="qs-alt"><span>' + PNAME[p] + ' ' + money(P[p] / 100) + '</span>' + list.slice(0, 6).map(function (c, i) { return '<button type="button" class="qchip" data-ap="' + p + '" data-ai="' + i + '">' + esc(c.items.map(function (it) { return shortType(it[0]) + ' ' + money(it[1] / 100); }).join(' + ')) + '</button>'; }).join('') + '</div>';
+      });
+      var m = openModal({
+        title: 'แยกกองทุน · เล่ม ' + esc(r.book || '-') + ' เลขที่ ' + esc(r.no || '-'), width: 760,
+        body: '<p class="hint">' + (total ? 'ยอดที่กรอกในตาราง: บกศ. ' + money(P.B / 100) + ' · รายได้ ' + money(P.R / 100) + ' · อื่น ๆ ' + money(P.O / 100) + ' = <b>' + money(total / 100) + '</b> บาท' : 'ยังไม่ได้กรอกยอดในตาราง — แยกเองที่นี่ ระบบจะใส่ยอดลงช่องให้') + '</p>' +
+          (alt ? '<div class="qs-alts"><b>แบบที่เคยใช้กับยอดนี้ (กดเพื่อใช้)</b>' + alt + '</div>' : '') +
+          '<div id="qsLines">' + init.map(lineH).join('') + '</div><div class="qs-diff" id="qsDiff" aria-live="polite"></div><button class="btn soft sm" type="button" id="qsAdd">+ เพิ่มบรรทัด</button>',
+        footer: '<button class="btn ghost" type="button" data-close>ยกเลิก</button><button class="btn" type="button" id="qsOk">ใช้การแยกนี้</button>'
+      });
+      var el = m.el, box = el.querySelector('#qsLines');
+      function read() { return Array.prototype.map.call(box.querySelectorAll('[data-ql]'), function (row) { var o = {}; Array.prototype.forEach.call(row.querySelectorAll('[data-f]'), function (f) { o[f.getAttribute('data-f')] = f.value; }); return o; }); }
+      function diff() {
+        var ls = read(), s = ls.reduce(function (a, l) { return a + c100(l.amount); }, 0), d = el.querySelector('#qsDiff');
+        d.innerHTML = total ? (s === total ? '<span class="ok">✓ ตรงกับยอดในตาราง ' + money(total / 100) + '</span>' : '<span class="bad">รวมรายการ ' + money(s / 100) + ' ไม่เท่ายอดในตาราง ' + money(total / 100) + ' (ต่าง ' + money(Math.abs(total - s) / 100) + ')</span>') : '<span>รวมรายการ <b>' + money(s / 100) + '</b> บาท</span>';
+      }
+      box.addEventListener('input', diff); box.addEventListener('change', diff);
+      box.addEventListener('click', function (e) { var b = e.target.closest('[data-del]'); if (!b) return; if (box.querySelectorAll('[data-ql]').length > 1) { b.closest('[data-ql]').remove(); diff(); } });
+      el.querySelector('#qsAdd').onclick = function () { var t = document.createElement('div'); t.innerHTML = lineH({ type: '', method: 'โอน', amount: '' }); box.appendChild(t.firstChild); box.lastChild.querySelector('select').focus(); };
+      el.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-ap]'); if (!b) return; var p = b.getAttribute('data-ap'), c = compIndex()[p + '|' + P[p]][Number(b.getAttribute('data-ai'))];
+        var keep = read().filter(function (l) { return l.type && PCODE[grpOf(l.type)] !== p; }), mine = allocate(c.items, partCash(r, p), partTr(r, p)).map(function (x) { return { type: x.type, method: x.method, amount: x.amount / 100 }; });
+        box.innerHTML = keep.concat(mine).map(lineH).join(''); diff();
+      });
+      diff();
+      el.querySelector('#qsOk').onclick = function () {
+        var ls = read().filter(function (l) { return l.type || c100(l.amount); });
+        if (ls.some(function (l) { return !l.type || !(c100(l.amount) > 0); })) { toast('ทุกบรรทัดต้องเลือกประเภทเงินและใส่จำนวนเงิน', 'err'); return; }
+        var s = ls.reduce(function (a, l) { return a + c100(l.amount); }, 0);
+        if (total && s !== total) { toast('รวมรายการ ' + money(s / 100) + ' ไม่เท่ายอดในตาราง ' + money(total / 100), 'err'); return; }
+        var sums = { bsd: 0, rsd: 0, bto: 0, rto: 0, oth: 0 };
+        ls.forEach(function (l) { var p = PCODE[grpOf(l.type)], a = c100(l.amount); if (p === 'O') sums.oth += a; else sums[(p === 'B' ? 'b' : 'r') + (l.method === 'โอน' ? 'to' : 'sd')] += a; });
+        var ri = g.rows().indexOf(r);
+        AMT.forEach(function (k) { g.set(ri, k, sums[k] ? sums[k] / 100 : ''); });
+        r.lines = ls.map(function (l) { return { type: l.type, method: l.method, amount: c100(l.amount) / 100 }; }); r._badSig = '';
+        g.set(ri, 'st', r.st || ''); m.close(); stat(); cfgLeave();
+      };
+    }
   }
 
   /* ================= บันทึกใบเสร็จ (กรอกเอง + แพ็กเกจ) ================= */
   var GRPS = ['บกศ.', 'รายได้', 'อื่น ๆ'];
-  function grpOf(tid) { var t = tid ? typeById(tid) : null, g = t ? t[2] : ''; return /บกศ/.test(g) ? 'บกศ.' : /รายได้/.test(g) ? 'รายได้' : 'อื่น ๆ'; }
+  /** ส่วนของเงินตามไฟล์ Excel เดิม: บกศ. · รายได้ (รายได้ SMS/ศูนย์กีฬา/อื่น ๆ) · อื่น ๆ (E-donation บริจาค อุดหนุน ฯลฯ) */
+  function grpOf(tid) { var t = tid ? typeById(tid) : null; if (!t) return 'อื่น ๆ'; if (/บกศ/.test(t[2])) return 'บกศ.'; if (/^รายได้/.test(t[1])) return 'รายได้'; return 'อื่น ๆ'; }
   function typeOpts(g, sel) {
     return '<option value="">— ประเภทเงิน —</option>' + S.st.types.filter(function (t) { return t[4] !== 'ไม่ใช่' && grpOf(t[0]) === g; }).map(function (t) {
       return '<option value="' + esc(t[0]) + '"' + (t[0] === sel ? ' selected' : '') + '>' + esc(t[1]) + '</option>';
