@@ -7,8 +7,13 @@ var Paste = (function () {
   function nt(v) { return String(v === null || v === undefined ? '' : v).replace(/\s+/g, ' ').trim(); }
   function nk(v) { return nt(v).replace(/[\s.\-_,]/g, '').toLowerCase(); }
   function r2(n) { return Math.round(n * 100) / 100; }
-  function isNum(s) { var t = nt(s).replace(/,/g, '').replace(/บาท/g, '').replace(/\s/g, ''); return t !== '' && t !== '-' && isFinite(Number(t)); }
-  function num(s) { var t = nt(s).replace(/,/g, '').replace(/บาท/g, '').replace(/\s/g, ''); var n = Number(t); return isFinite(n) ? n : 0; }
+  /** ตัวแปลงจำนวนเงินตัวเดียวของหน้าเว็บ (grid.js ใช้ Paste.num ด้วย): ว่าง/"-" = 0 · อ่านไม่ออก = NaN (ให้ผู้เรียกเตือน ไม่กลืนเป็น 0) */
+  function num(s) {
+    if (typeof s === 'number') return isFinite(s) ? s : NaN;
+    var t = nt(s).replace(/[,\s]|บาท/g, ''); if (t === '' || t === '-') return 0;
+    var n = Number(t); return isFinite(n) ? n : NaN;
+  }
+  function isNum(s) { var t = nt(s).replace(/[,\s]|บาท/g, ''); return t !== '' && t !== '-' && !isNaN(num(t)); }
   function isCompany(name) { return /บริษัท|บจก|หจก|ห้างหุ้นส่วน|จำกัด|มหาชน|การไฟฟ้า|การประปา/.test(name || ''); }
 
   /** ภาษีหัก ณ ที่จ่าย (ต้องตรงกับ calcTax ใน Util.gs) */
@@ -253,7 +258,7 @@ var Paste = (function () {
     return out;
   }
 
-  return { parseTSV: parseTSV, calcTax: calcTax, matchType: matchType, khbRows: khbRows, receiptRows: receiptRows, packageRows: packageRows, guessType: guessType, payeeRows: payeeRows, nk: nk, isCompany: isCompany,
+  return { num: num, isNum: isNum, parseTSV: parseTSV, calcTax: calcTax, matchType: matchType, khbRows: khbRows, receiptRows: receiptRows, packageRows: packageRows, guessType: guessType, payeeRows: payeeRows, nk: nk, isCompany: isCompany,
     RECEIPT_HEADER: ['วันที่', 'เล่มที่', 'เลขที่', 'ประเภทเงิน', 'วิธีรับ', 'จำนวน', 'ผู้ชำระ'],
     KHB_HEADER: ['ประเภทเงิน', 'ผู้รับ', 'ชนิด', 'วิธีจ่าย', 'ยอดรวม', 'ภาษี'] };
 })();

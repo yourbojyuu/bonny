@@ -19,7 +19,7 @@ var Grid = (function () {
     if (m && MON[m[2]]) return yr(m[3]) + '-' + p2(MON[m[2]]) + '-' + p2(m[1]);
     return '';
   }
-  function num(s) { var t = String(s === null || s === undefined ? '' : s).replace(/[,\s]|บาท/g, ''); if (t === '' || t === '-') return 0; var n = Number(t); return isFinite(n) ? n : NaN; }
+  var num = Paste.num; // ตัวแปลงจำนวนเงินตัวเดียวกับหน้าวางข้อมูล
   function fmtN(n) { return n ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; }
   function letter(i) { return String.fromCharCode(65 + i); }
 

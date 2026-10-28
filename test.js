@@ -392,6 +392,7 @@ if (require.main === module) {
   ok(r.ok && !r.data.receipts && !r.data.balances && r.data.me.role === 'ครู', 'ครูได้ boot แบบไม่มีใบเสร็จ/ยอดคงเหลือ');
   ok(!call(io, 'tok-nobody', 'boot', {}).ok, 'ไม่มีสิทธิ์ -> boot ถูกปฏิเสธ');
 
+  ok(Paste.num('1,234.50 บาท') === 1234.5 && Paste.num('') === 0 && Paste.num('-') === 0 && isNaN(Paste.num('12O')) && Paste.num(7) === 7, 'Paste.num: ตัดคอมมา/บาท · ว่าง=0 · อ่านไม่ออก=NaN');
   var acts = C.actions(), bad = Object.keys(acts).filter(function (a) { var x = acts[a]; return typeof x[0] !== 'function' || !Array.isArray(x[1]) || typeof x[2] !== 'boolean'; });
   ok(!bad.length, 'ทะเบียน action: ทุกแถวมีฟังก์ชัน/บทบาท/ชนิดอ่านเขียนครบ ' + bad.join(','));
   ok(C.isWriteAction('saveKhb') && !C.isWriteAction('getDocs') && !C.isWriteAction('ping'), 'isWriteAction อ่านจากทะเบียนเดียวกัน');
