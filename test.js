@@ -36,14 +36,61 @@ function makeMemIO() {
     'tok-boss': 'boss@example.com', 'tok-off': 'off@example.com', 'tok-stranger': 'stranger@example.com',
     'tok-t1': 't1@example.com', 'tok-t2': 't2@example.com'
   };
+  var verify = function (t) { if (!tokens[t]) throw C.fail('AUTH', 'token ไม่ถูกต้อง'); return tokens[t]; };
+  if (process.env.SHEETIO) return sheetBackedIO(sheets, verify);
   return {
     sheets: sheets,
-    verifyToken: function (t) { if (!tokens[t]) throw C.fail('AUTH', 'token ไม่ถูกต้อง'); return tokens[t]; },
+    verifyToken: verify,
     values: function (n) { return sheets[n] ? sheets[n].map(function (r) { return r.slice(); }) : null; },
     write: function (n, rows) { sheets[n] = [sheets[n][0]].concat(rows.map(function (r) { return r.slice(); })); }
   };
 }
+
+/* ---------- SHEETIO=1 node test.js : รันเทสต์ทั้งชุดผ่าน makeSheetIO จริง (Code.gs) บน Google Sheet จำลอง ----------
+ * จำลองพฤติกรรมของชีทจริงที่สำคัญ: getLastRow ไม่นับแถวว่างท้าย · เซลล์ที่ไม่ได้ตั้งเป็นข้อความ แปลงตัวเลขเป็น number */
+function fakeSpreadsheet(sheets) {
+  var textCols = {};
+  function sheet(name) {
+    var a = sheets[name]; textCols[name] = textCols[name] || {};
+    function lastRow() { for (var i = a.length - 1; i >= 0; i--) if (a[i].some(function (v) { return v !== '' && v !== null && v !== undefined; })) return i + 1; return 0; }
+    function range(r, c, nr, nc) {
+      return {
+        getValues: function () { var o = []; for (var i = 0; i < nr; i++) { var row = []; for (var j = 0; j < nc; j++) { var v = (a[r - 1 + i] || [])[c - 1 + j]; row.push(v === undefined || v === null ? '' : v); } o.push(row); } return o; },
+        setValues: function (v) {
+          for (var i = 0; i < nr; i++) { var row = a[r - 1 + i] = a[r - 1 + i] || []; for (var j = 0; j < nc; j++) {
+            var x = v[i][j], col = c + j;
+            if (typeof x === 'string' && !textCols[name][col] && /^-?\d+(\.\d+)?$/.test(x)) x = Number(x);
+            row[c - 1 + j] = x; fakeSpreadsheet.cells = (fakeSpreadsheet.cells || 0) + 1;
+          } }
+          return this;
+        },
+        clearContent: function () { for (var i = 0; i < nr; i++) { var row = a[r - 1 + i]; if (row) for (var j = 0; j < nc; j++) if (c - 1 + j < row.length) row[c - 1 + j] = ''; } return this; },
+        setNumberFormat: function (f) { if (f === '@') for (var j = 0; j < nc; j++) textCols[name][c + j] = true; return this; }
+      };
+    }
+    return {
+      getLastRow: function () { a = sheets[name]; return lastRow(); },
+      getLastColumn: function () { return a.reduce(function (m, r) { return Math.max(m, r.length); }, 0); },
+      getMaxColumns: function () { return Math.max(26, a.reduce(function (m, r) { return Math.max(m, r.length); }, 0)); },
+      getRange: function (r, c, nr, nc) { a = sheets[name]; return range(r, c, nr || 1, nc || 1); }
+    };
+  }
+  Object.keys(C.TEXT_COLS).forEach(function (n) { textCols[n] = {}; C.TEXT_COLS[n].forEach(function (c) { textCols[n][c] = true; }); });
+  return { getActiveSpreadsheet: function () { return { getSheetByName: function (n) { return sheets[n] ? sheet(n) : null; } }; } };
+}
+function sheetBackedIO(sheets, verify) {
+  var fake = fakeSpreadsheet(sheets), inner = null;
+  var io = {
+    sheets: sheets,
+    verifyToken: verify,
+    reset: function () { C.SpreadsheetApp = fake; inner = C.makeSheetIO(); }, // 1 คำขอ = io ใหม่ (memo ใหม่) เหมือนของจริง
+    values: function (n) { if (!inner) io.reset(); return inner.values(n); },
+    write: function (n, rows) { if (!inner) io.reset(); return inner.write(n, rows); }
+  };
+  return io;
+}
 function call(io, token, action, payload) {
+  if (io.reset) io.reset();
   return C.dispatch({ action: action, idToken: token, payload: payload || {} }, io);
 }
 function grandOf(io, date) { return call(io, 'tok-admin', 'getBalances', { date: date }).data; }
@@ -392,11 +439,20 @@ if (require.main === module) {
   ok(r.ok && !r.data.receipts && !r.data.balances && r.data.me.role === 'ครู', 'ครูได้ boot แบบไม่มีใบเสร็จ/ยอดคงเหลือ');
   ok(!call(io, 'tok-nobody', 'boot', {}).ok, 'ไม่มีสิทธิ์ -> boot ถูกปฏิเสธ');
 
+  var dO = [['a', 1], ['b', 2]], d1 = C.diffRows(dO, [['a', 1], ['b', 2], ['c', 3]], 2);
+  ok(d1.start === 2 && d1.rows.length === 1 && d1.clear === 0, 'diffRows: ต่อท้าย -> เขียนแถวใหม่แถวเดียว');
+  var d2 = C.diffRows(dO, [['a', '1'], ['B', 2]], 2);
+  ok(d2.start === 1 && d2.rows.length === 1, 'diffRows: 1 กับ "1" ถือว่าเท่ากัน · แก้แถวท้าย -> เขียนแถวเดียว');
+  var d3 = C.diffRows(dO, [['a', 1]], 2);
+  ok(d3.start === 1 && d3.rows.length === 0 && d3.clear === 1, 'diffRows: แถวหายไป -> ล้างแถวท้าย');
+  var d4 = C.diffRows(dO, dO.map(function (r) { return r.concat(['x']); }), 2);
+  ok(d4.rows.length === 0 && d4.clear === 0, 'diffRows: ไม่เปลี่ยน -> ไม่เขียนเลย (ไม่สนคอลัมน์เกินหัว)');
   ok(Paste.num('1,234.50 บาท') === 1234.5 && Paste.num('') === 0 && Paste.num('-') === 0 && isNaN(Paste.num('12O')) && Paste.num(7) === 7, 'Paste.num: ตัดคอมมา/บาท · ว่าง=0 · อ่านไม่ออก=NaN');
   var acts = C.actions(), bad = Object.keys(acts).filter(function (a) { var x = acts[a]; return typeof x[0] !== 'function' || !Array.isArray(x[1]) || typeof x[2] !== 'boolean'; });
   ok(!bad.length, 'ทะเบียน action: ทุกแถวมีฟังก์ชัน/บทบาท/ชนิดอ่านเขียนครบ ' + bad.join(','));
   ok(C.isWriteAction('saveKhb') && !C.isWriteAction('getDocs') && !C.isWriteAction('ping'), 'isWriteAction อ่านจากทะเบียนเดียวกัน');
 
+  if (process.env.SHEETIO) console.log('เซลล์ที่เขียนลงชีทจำลองทั้งชุดเทสต์: ' + fakeSpreadsheet.cells);
   console.log('\nผ่าน ' + passed + ' / ' + (passed + failed));
   if (failed) { console.log('มี ' + failed + ' ข้อไม่ผ่าน'); process.exit(1); }
   console.log('ทุกข้อผ่าน');

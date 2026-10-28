@@ -138,15 +138,18 @@ function makeSheetIO() {
       return (memo[name] = sh.getRange(1, 1, lr, Math.max(sh.getLastColumn(), SCHEMA[name].length)).getValues());
     },
     write: function (name, rows) {
-      delete memo[name];
       var sh = ss.getSheetByName(name);
-      var n = SCHEMA[name].length, last = sh.getLastRow();
-      if (last > 1) sh.getRange(2, 1, last - 1, sh.getMaxColumns()).clearContent();
-      if (!rows.length) return;
-      (TEXT_COLS[name] || []).forEach(function (c) { sh.getRange(2, c, rows.length, 1).setNumberFormat('@'); });
-      sh.getRange(2, 1, rows.length, n).setValues(rows.map(function (r) {
-        var x = r.slice(0, n); while (x.length < n) x.push(''); return x;
-      }));
+      var n = SCHEMA[name].length, w = Math.max(sh.getMaxColumns(), n);
+      var fixed = rows.map(function (r) { var x = r.slice(0, n); while (x.length < n) x.push(''); return x; });
+      var cur = this.values(name), d = diffRows(cur ? cur.slice(1) : [], fixed, n);
+      // เขียนเฉพาะตั้งแต่แถวแรกที่ต่าง และล้างเฉพาะแถวที่เกินท้าย (ไม่เขียนทั้งชีทใหม่ทุกครั้ง)
+      if (d.rows.length) {
+        var r0 = 2 + d.start;
+        (TEXT_COLS[name] || []).forEach(function (c) { sh.getRange(r0, c, d.rows.length, 1).setNumberFormat('@'); });
+        sh.getRange(r0, 1, d.rows.length, n).setValues(d.rows);
+      }
+      if (d.clear) sh.getRange(2 + fixed.length, 1, d.clear, w).clearContent();
+      memo[name] = [SCHEMA[name].slice()].concat(fixed); // อ่านซ้ำในคำขอเดียวกันได้โดยไม่ต้องดึงชีทใหม่
     }
   };
 }

@@ -314,3 +314,27 @@ function guessVat(taxType, gross, tax) {
   var withVat = calcTax(taxType, gross, true), noVat = calcTax(taxType, gross, false);
   return Math.abs(withVat - tax) < Math.abs(noVat - tax);
 }
+
+/* ============ เขียนชีทเฉพาะส่วนที่เปลี่ยน (pure) ============ */
+
+/** ค่าในเซลล์สำหรับเทียบ: ว่าง/null = '' · Date = ISO · อื่น ๆ เป็นข้อความ */
+function cellKey(v) {
+  if (v === null || v === undefined) return '';
+  if (v instanceof Date) return isNaN(v.getTime()) ? '' : v.toISOString();
+  return String(v);
+}
+
+/**
+ * เทียบข้อมูลเดิมในชีท (ไม่รวมหัว) กับข้อมูลใหม่ คืนส่วนที่ต้องเขียนจริง
+ * { start: แถวแรกที่ต่าง (0 = แถวข้อมูลแรก), rows: แถวที่ต้องเขียนตั้งแต่ start, clear: จำนวนแถวท้ายที่ต้องล้าง }
+ * งานส่วนใหญ่ (ต่อท้าย / แก้แถวท้าย ๆ) จึงเขียนไม่กี่แถว แทนการเขียนทั้งชีทใหม่ทุกครั้ง
+ */
+function diffRows(oldRows, newRows, n) {
+  var same = Math.min(oldRows.length, newRows.length), start = same;
+  for (var i = 0; i < same && start === same; i++) {
+    for (var j = 0; j < n; j++) {
+      if (cellKey(oldRows[i][j]) !== cellKey(newRows[i][j])) { start = i; break; }
+    }
+  }
+  return { start: start, rows: newRows.slice(start), clear: Math.max(0, oldRows.length - newRows.length) };
+}
