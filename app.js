@@ -312,7 +312,7 @@ function openUsers() {
     var e = openModal({ title: isNew ? 'เพิ่มผู้ใช้' : 'แก้ไข ' + esc(u.user), width: 520,
       body: '<div class="authf">' + authField('ueUser', 'ชื่อผู้ใช้ (ไม่มีช่องว่าง)', 'text', isNew ? 'autocapitalize="off"' : 'readonly value="' + esc(u.user) + '"') +
         authField('ueName', 'ชื่อที่แสดง', 'text', 'value="' + esc(u ? u.name : '') + '"') +
-        '<label class="f">บทบาท<select id="ueRole">' + ['การเงิน', 'พัสดุ', 'ผู้บริหาร', 'ครู', 'admin'].map(function (r) { return '<option' + (u && u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
+        '<label class="f">บทบาท<select id="ueRole">' + ['การเงิน', 'พัสดุ', 'ผู้บริหาร', 'admin'].concat(TEACHER_MODE ? ['ครู'] : []).map(function (r) { return '<option' + (u && u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
         '<label class="remember"><input type="checkbox" id="ueAct"' + (!u || u.active ? ' checked' : '') + '> ใช้งานได้</label>' +
         (isNew ? authField('uePw', 'รหัสผ่านชั่วคราว (บอกผู้ใช้ เขาจะเปลี่ยนเองตอนเข้าครั้งแรก)', 'text', 'value="' + pw + '"') : '') + '</div>',
       footer: '<button class="btn ghost" type="button" data-close>ยกเลิก</button><span class="sp"></span><button class="btn" type="button" id="ueGo">บันทึก</button>' });
