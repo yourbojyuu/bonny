@@ -36,14 +36,21 @@ function makeMemIO() {
     'tok-boss': 'boss@example.com', 'tok-off': 'off@example.com', 'tok-stranger': 'stranger@example.com',
     'tok-t1': 't1@example.com', 'tok-t2': 't2@example.com'
   };
+  var crypto = require('crypto'), clock = { t: Date.UTC(2026, 9, 28, 3, 0, 0) };
+  var cryp = {
+    now: function () { return clock.t; }, clock: clock,
+    random: function () { return crypto.randomBytes(16).toString('hex'); },
+    sha256: function (t) { return crypto.createHash('sha256').update(t, 'utf8').digest('hex'); },
+    hmac: function (t) { return crypto.createHmac('sha256', 'test-secret').update(t, 'utf8').digest('base64url'); }
+  };
   var verify = function (t) { if (!tokens[t]) throw C.fail('AUTH', 'token ไม่ถูกต้อง'); return tokens[t]; };
-  if (process.env.SHEETIO) return sheetBackedIO(sheets, verify);
-  return {
+  if (process.env.SHEETIO) return Object.assign(sheetBackedIO(sheets, verify), cryp);
+  return Object.assign({
     sheets: sheets,
     verifyToken: verify,
     values: function (n) { return sheets[n] ? sheets[n].map(function (r) { return r.slice(); }) : null; },
     write: function (n, rows) { sheets[n] = [sheets[n][0]].concat(rows.map(function (r) { return r.slice(); })); }
-  };
+  }, cryp);
 }
 
 /* ---------- SHEETIO=1 node test.js : รันเทสต์ทั้งชุดผ่าน makeSheetIO จริง (Code.gs) บน Google Sheet จำลอง ----------
@@ -91,7 +98,7 @@ function sheetBackedIO(sheets, verify) {
 }
 function call(io, token, action, payload) {
   if (io.reset) io.reset();
-  return C.dispatch({ action: action, idToken: token, payload: payload || {} }, io);
+  return C.dispatch({ action: action, token: token, payload: payload || {} }, io);
 }
 function grandOf(io, date) { return call(io, 'tok-admin', 'getBalances', { date: date }).data; }
 
@@ -106,9 +113,6 @@ if (require.main === module) {
   ok(threws(function () { C.parseDate('31/2/2569'); }), 'วันที่ที่ไม่มีจริงต้อง error');
   ok(C.parseAmount('1,234.50 บาท') === 1234.5, 'จำนวนเงินตัด , และ บาท');
   ok(threws(function () { C.parseAmount('0'); }) && threws(function () { C.parseAmount('abc'); }), 'จำนวนเงิน 0 / อ่านไม่ได้ ต้อง error');
-  var good = { aud: 'cid', exp: 2000, iss: 'accounts.google.com', email: 'A@x.com', email_verified: 'true' };
-  ok(C.validateClaims(good, 'cid', 1000) === 'a@x.com', 'claims ถูกต้อง');
-  ok(threws(function () { C.validateClaims(good, 'other', 1000); }) && threws(function () { C.validateClaims(good, 'cid', 3000); }), 'aud ผิด / หมดอายุ ถูกปฏิเสธ');
   ok(C.bahtText(52000) === 'ห้าหมื่นสองพันบาทถ้วน', 'ตัวอักษร 52,000');
   ok(C.bahtText(30542.25) === 'สามหมื่นห้าร้อยสี่สิบสองบาทยี่สิบห้าสตางค์', 'ตัวอักษร 30,542.25 ตรงเอกสารจริง');
   ok(C.bahtText(76240.2) === 'เจ็ดหมื่นหกพันสองร้อยสี่สิบบาทยี่สิบสตางค์', 'ตัวอักษร 76,240.20');
@@ -451,11 +455,50 @@ if (require.main === module) {
   var d4 = C.diffRows(dO, dO.map(function (r) { return r.concat(['x']); }), 2);
   ok(d4.rows.length === 0 && d4.clear === 0, 'diffRows: ไม่เปลี่ยน -> ไม่เขียนเลย (ไม่สนคอลัมน์เกินหัว)');
   ok(Paste.num('1,234.50 บาท') === 1234.5 && Paste.num('') === 0 && Paste.num('-') === 0 && isNaN(Paste.num('12O')) && Paste.num(7) === 7, 'Paste.num: ตัดคอมมา/บาท · ว่าง=0 · อ่านไม่ออก=NaN');
-  var acts = C.actions(), bad = Object.keys(acts).filter(function (a) { var x = acts[a]; return typeof x[0] !== 'function' || !Array.isArray(x[1]) || typeof x[2] !== 'boolean'; });
+  var acts = C.actions(), bad = Object.keys(acts).filter(function (a) { var x = acts[a]; return typeof x[0] !== 'function' || !(Array.isArray(x[1]) || x[1] === 'PUBLIC') || typeof x[2] !== 'boolean'; });
   ok(!bad.length, 'ทะเบียน action: ทุกแถวมีฟังก์ชัน/บทบาท/ชนิดอ่านเขียนครบ ' + bad.join(','));
   r = call(io, 'tok-t1', 'saveKhb', { date: '2/11/69', lines: TL });
   ok(r.ok && r.data._fresh && r.data._fresh.docs && r.data._fresh.docs.khbs.every(function (h) { return h.owner === 't1@example.com'; }) && r.data._fresh.settings, 'บันทึกแล้วได้ข้อมูลล่าสุดกลับมา (ครูเห็นเฉพาะของตัวเอง) ' + (r.ok ? '' : r.error));
   ok(!(r.data._fresh || {}).receipts, 'ครูไม่ได้ข้อมูลใบเสร็จติดมา');
+  console.log('16) เข้าระบบด้วยชื่อผู้ใช้/รหัสผ่าน');
+  var ioA = makeMemIO(); delete ioA.verifyToken; // ใช้โทเคนจริง (verifySession)
+  r = call(ioA, null, 'authStatus');
+  ok(r.ok && r.data.needsSetup && r.data.version === C.APP_VERSION, 'ระบบใหม่: ต้องตั้งรหัส admin ครั้งแรก');
+  ok(/ไม่ใช่ admin/.test(call(ioA, null, 'setupAdmin', { user: 'fin@example.com', pass: 'abcd1234' }).error), 'ตั้งครั้งแรกได้เฉพาะ admin');
+  ok(/อย่างน้อย 8/.test(call(ioA, null, 'setupAdmin', { user: 'admin@example.com', pass: 'a1' }).error), 'รหัสสั้นเกินถูกปฏิเสธ');
+  r = call(ioA, null, 'setupAdmin', { user: 'ADMIN@example.com', pass: 'Secret123' });
+  ok(r.ok && r.data.token, 'ตั้งรหัส admin ครั้งแรก (ชื่อผู้ใช้ไม่สนตัวพิมพ์) ' + (r.ok ? '' : r.error));
+  ok(!ioA.sheets['รหัสผ่าน'][1][1].includes('Secret123') && /^1000\$/.test(ioA.sheets['รหัสผ่าน'][1][1]), 'ชีทเก็บแฮช ไม่เก็บรหัสจริง');
+  ok(/ตั้งค่าไปแล้ว/.test(call(ioA, null, 'setupAdmin', { user: 'admin@example.com', pass: 'Other1234' }).error), 'ตั้งครั้งแรกซ้ำไม่ได้ (กันคนอื่นยึดระบบ)');
+  var tokA = r.data.token;
+  ok(call(ioA, tokA, 'getDocs').ok, 'โทเคนที่ได้ใช้งานได้');
+  ok(call(ioA, tokA.slice(0, -2) + 'xx', 'getDocs').code === 'AUTH', 'โทเคนถูกแก้ ลายเซ็นไม่ตรง -> AUTH');
+  ok(call(ioA, 'admin%40example.com|1|99999999999999|abc', 'getDocs').code === 'AUTH', 'ปลอมโทเคนเองไม่ได้');
+  r = call(ioA, tokA, 'saveUser', { user: 'fin@example.com', name: 'การเงิน', role: 'การเงิน', tempPass: 'Temp1234' });
+  ok(r.ok && r.data.users.some(function (u) { return u.user === 'fin@example.com' && u.mustChange; }), 'admin ตั้งรหัสชั่วคราวให้ผู้ใช้ ' + (r.ok ? '' : r.error));
+  ok(call(ioA, tokA, 'getUsers').data.every(function (u) { return u.hash === undefined; }), 'getUsers ไม่ส่งแฮชออกไป');
+  ok(call(ioA, null, 'login', { user: 'fin@example.com', pass: 'wrong123' }).code === 'LOGIN', 'รหัสผิด -> เข้าไม่ได้');
+  r = call(ioA, null, 'login', { user: 'fin@example.com', pass: 'Temp1234' });
+  ok(r.ok && r.data.mustChange, 'เข้าด้วยรหัสชั่วคราว -> ต้องเปลี่ยนรหัส');
+  var tokF = r.data.token;
+  ok(call(ioA, tokF, 'getDocs').code === 'MUSTCHANGE', 'ยังไม่เปลี่ยนรหัส ใช้งานอื่นไม่ได้');
+  ok(/เดิมไม่ถูกต้อง/.test(call(ioA, tokF, 'changePassword', { old: 'x', pass: 'NewPass99' }).error), 'เปลี่ยนรหัสต้องใส่รหัสเดิมถูก');
+  r = call(ioA, tokF, 'changePassword', { old: 'Temp1234', pass: 'NewPass99' });
+  ok(r.ok && call(ioA, r.data.token, 'getDocs').ok, 'เปลี่ยนรหัสแล้วได้โทเคนใหม่ใช้งานได้');
+  ok(call(ioA, tokF, 'getDocs').code === 'AUTH', 'โทเคนเก่าใช้ไม่ได้หลังเปลี่ยนรหัส');
+  for (var lf = 0; lf < 5; lf++) call(ioA, null, 'login', { user: 'fin@example.com', pass: 'bad' + lf + 'xxxx' });
+  ok(/ล็อก/.test(call(ioA, null, 'login', { user: 'fin@example.com', pass: 'NewPass99' }).error), 'ผิด 5 ครั้ง -> ล็อก แม้ใส่ถูกก็ยังเข้าไม่ได้');
+  ioA.clock.t += 16 * 60 * 1000;
+  ok(call(ioA, null, 'login', { user: 'fin@example.com', pass: 'NewPass99' }).ok, 'ครบ 15 นาที ปลดล็อกเอง');
+  r = call(ioA, null, 'login', { user: 'admin@example.com', pass: 'Secret123' });
+  ioA.clock.t += 13 * 3600 * 1000;
+  ok(call(ioA, r.data.token, 'getDocs').code === 'AUTH', 'โทเคนหมดอายุหลัง 12 ชั่วโมง');
+  r = call(ioA, null, 'login', { user: 'admin@example.com', pass: 'Secret123', remember: true });
+  ioA.clock.t += 13 * 3600 * 1000;
+  ok(call(ioA, r.data.token, 'getDocs').ok, '"จำฉันไว้" ใช้ได้นานกว่า 12 ชั่วโมง');
+  ok(/ตัวเอง/.test(call(ioA, r.data.token, 'saveUser', { user: 'admin@example.com', role: 'การเงิน' }).error), 'admin ลดสิทธิ์ตัวเองไม่ได้');
+  ok(call(ioA, null, 'login', { user: 'off@example.com', pass: 'whatever1' }).code !== undefined && !call(ioA, null, 'login', { user: 'nobody', pass: 'x' }).ok, 'ไม่มีบัญชี/ปิดใช้งาน เข้าไม่ได้');
+
   console.log('15) บันทึกเป็นชุด (คำขอเดียว)');
   var ioB = makeMemIO();
   var wr = [{ date: '2/11/69', book: '900', no: '1', type: 'T20', method: 'สด', amount: 10 }, { date: '2/11/69', book: '900', no: '1', line: 2, type: 'ไม่มีประเภทนี้', method: 'สด', amount: 5 },

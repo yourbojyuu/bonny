@@ -9,12 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
-<script>
-/* ===== แก้ 2 ค่านี้เอง ===== */
-var API_URL = 'ใส่ URL ของ Web App ที่นี่';
-var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
-/* ========================== */
-</script>
+<script src="config.js"></script>
 </head>
 <body data-tab="overview">
 <div id="bg" aria-hidden="true"></div>
@@ -24,9 +19,8 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
   <div class="box glass">
     <span class="logo"><img src="logo.png" alt="ตราโรงเรียน"></span>
     <h1>ระบบการเงินโรงเรียน</h1>
-    <p class="hint">เข้าสู่ระบบด้วยบัญชี Google ที่ได้รับสิทธิ์</p>
-    <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
-    <p id="loginMsg" style="color:var(--bad);overflow-wrap:anywhere"></p>
+    <div id="authBox"></div>
+    <p id="loginMsg" class="loginmsg" role="alert"></p>
   </div>
 </section>
 
@@ -39,7 +33,7 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
         <span class="logo"><img src="logo.png" alt="ตราโรงเรียน"></span>
         <div><h1>ระบบการเงิน<b>โรงเรียน</b></h1><small id="fyLabel"></small></div>
       </div>
-      <div class="who"><span class="chip" id="who"></span><button class="btn ghost sm" id="btnOut" type="button">ออก</button></div>
+      <div class="who"><span class="chip" id="who"></span><button class="btn ghost sm" id="btnPw" type="button">รหัสผ่าน</button><button class="btn ghost sm" id="btnOut" type="button">ออก</button></div>
     </header>
     <nav class="tabs glass" id="tabs" role="tablist" aria-label="เมนูหลัก"></nav>
     <main id="view"></main>
@@ -58,6 +52,5 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
 <script src="report.js"></script>
 <script src="export.js"></script>
 <script src="import.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer onload="initGsi()"></script>
 </body>
 </html>

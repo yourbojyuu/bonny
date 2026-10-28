@@ -4,7 +4,8 @@
 
 ## ภาพรวม
 - หลังบ้าน: Google Apps Script Web App (`Code.gs`, `Schema.gs`, `Util.gs`, `Ledger.gs`, `Receipts.gs`, `Docs.gs`) ใช้ Google Sheet เป็นฐานข้อมูล
-- หน้าเว็บ: static vanilla JS (`index.html`, `app.js`, `app.css`, `grid.js`, `paste.js`, `docs.js`, `flow.js`, `receipts.js`, `report.js`, `export.js`, `import.js`, `bento.js`) · `vendor/exceljs.min.js` โหลดเฉพาะตอนส่งออก/นำเข้า (`loadExcel()`)
+- เข้าระบบ: ชื่อผู้ใช้ + รหัสผ่าน (ไม่ใช้ Google Sign-In แล้ว) · ชีท `รหัสผ่าน` เก็บแฮช · โทเคนเซ็น HMAC (กุญแจใน Script Properties) · ติดตั้ง/ใช้งานดู `INSTALL.md`
+- หน้าเว็บ: static vanilla JS (`index.html`, `config.js` (API_URL), `app.js`, `app.css`, `grid.js`, `paste.js`, `docs.js`, `flow.js`, `receipts.js`, `report.js`, `export.js`, `import.js`, `bento.js`) · `vendor/exceljs.min.js` โหลดเฉพาะตอนส่งออก/นำเข้า (`loadExcel()`)
 - ทดสอบหลังบ้านด้วย Node: `node test.js` และ `SHEETIO=1 node test.js` (ชุดเดียวกันแต่ผ่าน `makeSheetIO` จริงบนชีทจำลอง) + `node test_import.js` — ต้องผ่านครบทุกข้อ
 
 ## โครงสร้างที่ควรรู้ (หลังปรับประสิทธิภาพ)
@@ -19,7 +20,7 @@
 2. หัวคอลัมน์ผิดต้อง error ไม่ใช่ค่าศูนย์เงียบ ๆ
 3. ฟังก์ชันหลักเป็น pure ทดสอบใน Node ได้
 4. ปิดวันแล้วแก้ไม่ได้ · ยกเลิกรายการทางเดียวคือคอลัมน์ `สถานะ`
-5. ห้ามมีข้อมูลจริง/รหัสลับในโค้ด
+5. ห้ามมีข้อมูลจริง/รหัสลับในโค้ด · `APP_VERSION` ใน Code.gs กับ app.js ต้องตรงกัน (เปลี่ยนพร้อมกันเมื่อแก้ API)
 6. ภาษีตามทะเบียนผู้รับ: ภ.ง.ด.53 หัก 1% เสมอ · ภ.ง.ด.3 หัก 1% เมื่อ ≥ 10,000 · ผู้รับที่มี VAT คิดจาก gross/1.07
 
 ## กระบวนการเอกสาร

@@ -1371,3 +1371,13 @@ textarea.qe-paste { font-family: var(--num); font-size: 13px; border-radius: 16p
 .im-warn { margin: 10px 0; padding: 10px 14px; border-radius: 14px; background: rgba(255,170,0,.12); border: 1px solid rgba(255,170,0,.4); font-size: 13.5px; } .im-warn ul { margin: 4px 0 0 18px; padding: 0; }
 .im-opts { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
 @media (max-width: 700px) { .im-sum { grid-template-columns: 1fr 1fr; } }
+
+/* ===== v19: เข้าระบบด้วยชื่อผู้ใช้/รหัสผ่าน ===== */
+.authf { display: grid; gap: 12px; text-align: left; margin-top: 14px; }
+.authf .btn { justify-content: center; width: 100%; margin-top: 4px; }
+.remember { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink2); }
+.loginmsg { color: var(--bad); overflow-wrap: anywhere; min-height: 1.6em; margin: 12px 0 0; font-size: 14px; }
+.loginmsg.good { color: var(--muted); }
+.login .small, .authf + .small { font-size: 13px; }
+.login .link.small { margin-top: 6px; }
+.temppw { font-family: var(--num); font-size: 26px; letter-spacing: .08em; text-align: center; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--c2) 10%, #fff); user-select: all; }

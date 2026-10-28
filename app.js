@@ -1,5 +1,5 @@
 /* ระบบการเงินโรงเรียน — app.js (แกนหลัก: เข้าสู่ระบบ เมนู ภาพรวม ตั้งค่า และเครื่องมือร่วม)
-   JS แบบ ES5 · ค่า API_URL / CLIENT_ID อยู่บนสุดของ index.html */
+   JS แบบ ES5 · ค่า API_URL อยู่ใน config.js (หรือถามตอนเปิดครั้งแรก) */
 
 var S = { led: null, token: '', me: null, schema: null, st: null, docs: null, tab: 'overview', date: '', bal: null, opt: {} };
 var MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -63,6 +63,7 @@ var can = {
 };
 /** สามโหมดตามบทบาท: ครู (ส่งคำขอ/ติดตาม) · การเงิน (ทำงานเต็ม) · ผู้บริหาร (อนุมัติ/ดูรายงาน) — admin สลับดูได้ */
 var MODES = { teacher: 'โหมดครู', fin: 'โหมดการเงิน', exec: 'โหมดผู้บริหาร' };
+var APP_VERSION = '2026.10.28'; // ต้องตรงกับ APP_VERSION ใน Code.gs
 var TEACHER_MODE = false; // โหมดครูพับเก็บไว้ก่อน (เริ่มใช้ภายในฝ่าย: การเงิน + ผู้บริหาร) เปลี่ยนเป็น true เมื่อพร้อมให้ครูใช้
 function modeList() { return TEACHER_MODE ? ['fin', 'exec', 'teacher'] : ['fin', 'exec']; }
 function mode() {
@@ -113,7 +114,7 @@ function takeFresh(k, action) {
 }
 function api(action, payload) {
   if (!/^(get|me$|ping|khbDoc|khjDoc)/.test(action)) S.led = null;
-  return apiSend({ action: action, idToken: S.token, payload: payload || {} }).then(function (res) {
+  return apiSend({ action: action, token: S.token, payload: payload || {} }).then(function (res) {
     if (!res.ok) { var e = new Error(res.error || 'เกิดข้อผิดพลาด'); e.code = res.code; throw e; }
     if (res.data && res.data._fresh) { var t = Date.now(); Object.keys(res.data._fresh).forEach(function (k) { FRESH[k] = { d: res.data._fresh[k], t: t }; }); delete res.data._fresh; }
     return res.data;
@@ -121,8 +122,9 @@ function api(action, payload) {
 }
 /** ส่งคำขอไปยัง Web App คืนคำตอบดิบ {ok, data | code, error} */
 function apiSend(req) {
-  if (!API_URL || API_URL.indexOf('ใส่') === 0) return Promise.reject(new Error('ยังไม่ได้ใส่ API_URL ใน index.html'));
-  return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(req) }).then(function (r) {
+  var url = apiUrl();
+  if (!url) return Promise.reject(new Error('ยังไม่ได้ตั้งค่า URL ของระบบ'));
+  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(req) }).then(function (r) {
     if (!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (HTTP ' + r.status + ')');
     return r.json();
   });
@@ -141,6 +143,7 @@ function loadExcel() {
 }
 function handleError(e) {
   if (e && e.code === 'AUTH') { signOut(e.message); return; }
+  if (e && e.code === 'MUSTCHANGE') { signOut(''); authView('change', e.message); return; }
   toast(e && e.message ? e.message : String(e), 'err');
 }
 /** ปุ่มกำลังทำงาน: ปิดปุ่มกันกดซ้ำ แล้วคืนสภาพ */
@@ -151,23 +154,95 @@ function busy(btn, p) {
     function (e) { btn.disabled = false; btn.innerHTML = old; throw e; });
 }
 
-/* ================= เข้าสู่ระบบ ================= */
-function initGsi() {
-  if (!window.google || !google.accounts) return;
-  if (!CLIENT_ID || CLIENT_ID.indexOf('ใส่') === 0) { $('loginMsg').textContent = 'ยังไม่ได้ใส่ CLIENT_ID ใน index.html'; return; }
-  google.accounts.id.initialize({ client_id: CLIENT_ID, callback: function (resp) { startApp(resp.credential); } });
-  google.accounts.id.renderButton($('gbtn'), { theme: 'filled_blue', size: 'large', locale: 'th', shape: 'pill' });
+/* ================= เข้าสู่ระบบ (ชื่อผู้ใช้ + รหัสผ่าน) ================= */
+/** URL ของ Web App: จาก config.js หรือที่ผู้ใช้วางไว้ในเครื่องนี้ */
+function apiUrl() {
+  var u = typeof API_URL === 'string' ? API_URL.trim() : '';
+  if (!u) try { u = localStorage.getItem('api-url') || ''; } catch (e) {}
+  return u;
+}
+function tokSave(tok, remember) {
+  try { sessionStorage.removeItem('tok'); localStorage.removeItem('tok'); (remember ? localStorage : sessionStorage).setItem('tok', tok); } catch (e) {}
+}
+function tokSaved() {
+  try { var l = localStorage.getItem('tok'); if (l) return { tok: l, remember: true }; return { tok: sessionStorage.getItem('tok') || '', remember: false }; } catch (e) { return { tok: '', remember: false }; }
+}
+function loginMsg(t, good) { var m = $('loginMsg'); m.textContent = t || ''; m.className = 'loginmsg' + (good ? ' good' : ''); }
+function authField(id, label, type, extra) {
+  return '<label class="f">' + label + '<input id="' + id + '" type="' + (type || 'text') + '" ' + (extra || '') + '></label>';
+}
+/** หน้าเข้าระบบ: url (ตั้ง URL ครั้งแรก) · setup (ตั้งรหัส admin ครั้งแรก) · login · change (บังคับเปลี่ยนรหัส) */
+function authView(kind, msg) {
+  var box = $('authBox'), h = '';
+  $('app').hidden = true; $('login').hidden = false; document.body.classList.remove('authed');
+  if (kind === 'url') {
+    h = '<p class="hint">ตั้งค่าครั้งแรก: วาง URL ของ Web App (Apps Script → Deploy → Web app)</p><form class="authf" id="af">' +
+      authField('aUrl', 'URL ของระบบ', 'url', 'placeholder="https://script.google.com/macros/s/…/exec" required') +
+      '<button class="btn" type="submit">เชื่อมต่อ</button></form>';
+  } else if (kind === 'setup') {
+    h = '<p class="hint">ติดตั้งครั้งแรก: ตั้งรหัสผ่านให้ผู้ดูแลระบบ (ชื่อผู้ใช้ต้องอยู่ในชีท "ผู้ใช้" บทบาท admin)</p><form class="authf" id="af">' +
+      authField('aUser', 'ชื่อผู้ใช้ (คอลัมน์แรกของชีท ผู้ใช้)', 'text', 'autocomplete="username" required') +
+      authField('aPass', 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัว มีทั้งตัวเลขและตัวอักษร)', 'password', 'autocomplete="new-password" required') +
+      authField('aPass2', 'ยืนยันรหัสผ่าน', 'password', 'autocomplete="new-password" required') +
+      '<button class="btn" type="submit">ตั้งรหัสผ่านและเข้าสู่ระบบ</button></form>';
+  } else if (kind === 'change') {
+    h = '<p class="hint">ตั้งรหัสผ่านใหม่ของคุณก่อนเริ่มใช้งาน</p><form class="authf" id="af">' +
+      authField('aOld', 'รหัสผ่านปัจจุบัน (ที่เพิ่งใช้เข้าระบบ)', 'password', 'autocomplete="current-password" required') +
+      authField('aPass', 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัว มีทั้งตัวเลขและตัวอักษร)', 'password', 'autocomplete="new-password" required') +
+      authField('aPass2', 'ยืนยันรหัสผ่านใหม่', 'password', 'autocomplete="new-password" required') +
+      '<button class="btn" type="submit">บันทึกรหัสใหม่</button></form>';
+  } else {
+    h = '<form class="authf" id="af">' +
+      authField('aUser', 'ชื่อผู้ใช้', 'text', 'autocomplete="username" autocapitalize="off" required') +
+      authField('aPass', 'รหัสผ่าน', 'password', 'autocomplete="current-password" required') +
+      '<label class="remember"><input type="checkbox" id="aRem"> จำฉันไว้ในเครื่องนี้ (30 วัน)</label>' +
+      '<button class="btn" type="submit">เข้าสู่ระบบ</button></form><p class="hint small">ลืมรหัสผ่าน ให้ผู้ดูแลระบบตั้งรหัสชั่วคราวให้</p>';
+  }
+  if (kind !== 'url' && !(typeof API_URL === 'string' && API_URL.trim())) h += '<button class="link small" type="button" id="aReset">เปลี่ยน URL ของระบบ</button>';
+  box.innerHTML = h; loginMsg(msg || '');
+  var f = $('af'), first = f.querySelector('input'); if (first) first.focus();
+  if ($('aReset')) $('aReset').onclick = function () { try { localStorage.removeItem('api-url'); } catch (e) {} authView('url'); };
+  f.onsubmit = function (ev) {
+    ev.preventDefault();
+    var btn = f.querySelector('button[type="submit"]'), v = function (id) { return $(id) ? $(id).value : ''; };
+    if ((kind === 'setup' || kind === 'change') && v('aPass') !== v('aPass2')) { loginMsg('รหัสผ่านทั้งสองช่องไม่ตรงกัน'); return; }
+    loginMsg('');
+    if (kind === 'url') {
+      var url = v('aUrl').trim();
+      try { localStorage.setItem('api-url', url); } catch (e) {}
+      busy(btn, authFlow()).catch(function (e) { try { localStorage.removeItem('api-url'); } catch (x) {} loginMsg('เชื่อมต่อไม่ได้: ' + e.message); });
+    } else if (kind === 'setup') {
+      busy(btn, api('setupAdmin', { user: v('aUser'), pass: v('aPass'), remember: true })).then(function (r) { startApp(r.token, true); }).catch(function (e) { loginMsg(e.message); });
+    } else if (kind === 'change') {
+      var rem = tokSaved().remember;
+      busy(btn, api('changePassword', { old: v('aOld'), pass: v('aPass'), remember: rem })).then(function (r) { tokSave(r.token, rem); startApp(r.token, rem); }).catch(function (e) { if (e.code === 'AUTH') signOut(e.message); else loginMsg(e.message); });
+    } else {
+      var remember = $('aRem').checked;
+      busy(btn, api('login', { user: v('aUser'), pass: v('aPass'), remember: remember })).then(function (r) {
+        S.token = r.token; tokSave(r.token, remember);
+        if (r.mustChange) authView('change', 'นี่คือรหัสชั่วคราว กรุณาตั้งรหัสผ่านของคุณเอง');
+        else startApp(r.token, remember);
+      }).catch(function (e) { loginMsg(e.message); });
+    }
+  };
+}
+/** เริ่มต้น: ยังไม่มี URL -> ถาม URL · ระบบใหม่ -> ตั้งรหัส admin · ปกติ -> หน้าเข้าระบบ */
+function authFlow(msg) {
+  if (!apiUrl()) { authView('url', msg); return Promise.resolve(); }
+  return api('authStatus').then(function (r) {
+    if (r.version !== APP_VERSION) msg = (msg ? msg + ' · ' : '') + 'หมายเหตุ: หน้าเว็บ (' + APP_VERSION + ') กับหลังบ้าน (' + r.version + ') คนละรุ่น — อัปเดตให้ตรงกัน';
+    authView(r.needsSetup ? 'setup' : 'login', msg);
+  });
 }
 function signOut(message) {
   S.token = ''; S.me = null;
-  try { sessionStorage.removeItem('tok'); } catch (e) {}
-  $('app').hidden = true; $('login').hidden = false; document.body.classList.remove('authed');
-  $('loginMsg').textContent = message || '';
-  if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
+  try { sessionStorage.removeItem('tok'); localStorage.removeItem('tok'); } catch (e) {}
+  authFlow(message || '').catch(function (e) { authView('login', message || e.message); });
 }
-function startApp(token) {
+function startApp(token, remember) {
   S.token = token;
-  $('loginMsg').textContent = 'กำลังตรวจสิทธิ์และโหลดข้อมูล… (ครั้งแรกหลังไม่ได้ใช้นานอาจใช้เวลา 5–10 วินาที)';
+  $('authBox').innerHTML = '';
+  loginMsg('กำลังโหลดข้อมูล… (ครั้งแรกหลังไม่ได้ใช้นานอาจใช้เวลา 5–10 วินาที)', true);
   var d0 = todayISO();
   api('boot', { date: d0 }).then(function (r) {
     var me = r.me;
@@ -176,13 +251,97 @@ function startApp(token) {
     try { S.modeAs = me.role === 'admin' ? (localStorage.getItem('fin-mode') || '') : ''; } catch (e) { S.modeAs = ''; }
     S.schema = r.schema; S.st = r.settings; S.docs = r.docs; S.rcv = r.receipts || { rows: [] };
     S.date = defaultDate(); S.preBal = r.balances && S.date === d0 ? r.balances : null;
-    try { sessionStorage.setItem('tok', token); } catch (e) {}
-    $('login').hidden = true; $('app').hidden = false; document.body.classList.add('authed');
+    tokSave(token, remember === undefined ? tokSaved().remember : remember);
+    $('login').hidden = true; $('app').hidden = false; document.body.classList.add('authed'); loginMsg('');
     renderWho();
     $('fyLabel').textContent = 'ปีงบประมาณ ' + S.st.fy;
     renderTabs();
     go(homeTab(), null, true);
-  }).catch(function (e) { signOut(e && e.message ? e.message : String(e)); });
+    if (r.version && r.version !== APP_VERSION) toast('หน้าเว็บกับหลังบ้านคนละรุ่น (' + APP_VERSION + ' / ' + r.version + ') — อัปเดตฝั่งที่เก่ากว่า', 'err');
+  }).catch(function (e) { if (e && e.code === 'MUSTCHANGE') authView('change', e.message); else signOut(e && e.message ? e.message : String(e)); });
+}
+/** เปลี่ยนรหัสผ่านของตัวเอง (ปุ่ม "รหัสผ่าน" มุมขวาบน) */
+function openMyPassword() {
+  var m = openModal({ title: 'เปลี่ยนรหัสผ่านของฉัน', width: 460,
+    body: '<form class="authf" id="mpf">' + authField('mpOld', 'รหัสผ่านปัจจุบัน', 'password', 'autocomplete="current-password"') +
+      authField('mpNew', 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัว มีทั้งตัวเลขและตัวอักษร)', 'password', 'autocomplete="new-password"') +
+      authField('mpNew2', 'ยืนยันรหัสผ่านใหม่', 'password', 'autocomplete="new-password"') + '</form>' +
+      '<p class="hint">เปลี่ยนแล้ว เครื่องอื่นที่เคยเข้าไว้จะต้องเข้าสู่ระบบใหม่</p>',
+    footer: '<button class="btn ghost" type="button" data-close>ยกเลิก</button><span class="sp"></span><button class="btn" type="button" id="mpGo">บันทึก</button>' });
+  m.el.querySelector('#mpGo').onclick = function () {
+    var q = function (id) { return m.el.querySelector('#' + id).value; };
+    if (q('mpNew') !== q('mpNew2')) { toast('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน', 'err'); return; }
+    var rem = tokSaved().remember;
+    busy(this, api('changePassword', { old: q('mpOld'), pass: q('mpNew'), remember: rem })).then(function (r) {
+      S.token = r.token; tokSave(r.token, rem); m.close(); toast('เปลี่ยนรหัสผ่านแล้ว', 'good');
+    }).catch(handleError);
+  };
+}
+/** admin: จัดการผู้ใช้และรหัสผ่าน */
+function tempPassword() {
+  var a = 'abcdefghjkmnpqrstuvwxyz', d = '23456789', out = '', r = new Uint32Array(10);
+  (window.crypto || {}).getRandomValues ? window.crypto.getRandomValues(r) : r.forEach(function (x, i) { r[i] = Math.random() * 1e9; });
+  for (var i = 0; i < 10; i++) out += (i % 3 === 2 ? d : a)[r[i] % (i % 3 === 2 ? d.length : a.length)];
+  return out;
+}
+function openUsers() {
+  var m = openModal({ title: 'ผู้ใช้และรหัสผ่าน', width: 960, body: '<div id="uBody"><div class="skel"></div></div>',
+    footer: '<button class="btn ghost" type="button" data-close>ปิด</button><span class="sp"></span><button class="btn" type="button" id="uAdd">' + ICON.plus + ' เพิ่มผู้ใช้</button>' });
+  var list = [];
+  function stateOf(u) {
+    if (!u.active) return '<span class="badge cancel">ปิดใช้งาน</span>';
+    if (u.locked) return '<span class="badge bad">ล็อกชั่วคราว</span>';
+    if (!u.hasPass) return '<span class="badge wait">ยังไม่มีรหัส</span>';
+    if (u.mustChange) return '<span class="badge in">รอเปลี่ยนรหัส</span>';
+    return '<span class="badge paid">ใช้งานได้</span>';
+  }
+  function draw() {
+    var h = '<p class="hint">ชื่อผู้ใช้ใช้เข้าระบบ (อีเมลหรือชื่อสั้นก็ได้) · ลืมรหัส = กด "ตั้งรหัสชั่วคราว" แล้วบอกรหัสให้ผู้ใช้ ระบบจะให้เขาเปลี่ยนเองตอนเข้าครั้งแรก</p>' +
+      '<div class="tablewrap"><table><thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>บทบาท</th><th>สถานะ</th><th></th></tr></thead><tbody>';
+    list.forEach(function (u, i) {
+      h += '<tr><td>' + esc(u.user) + '</td><td>' + esc(u.name) + '</td><td>' + esc(u.role) + '</td><td>' + stateOf(u) + '</td><td style="white-space:nowrap">' +
+        '<button class="btn sm ghost" type="button" data-u="edit" data-i="' + i + '">แก้ไข</button> ' +
+        '<button class="btn sm soft" type="button" data-u="temp" data-i="' + i + '">ตั้งรหัสชั่วคราว</button>' +
+        (u.locked ? ' <button class="btn sm ghost" type="button" data-u="unlock" data-i="' + i + '">ปลดล็อก</button>' : '') + '</td></tr>';
+    });
+    m.el.querySelector('#uBody').innerHTML = h + '</tbody></table></div>';
+  }
+  function save(p, done) { return api('saveUser', p).then(function (r) { list = r.users; draw(); if (done) done(); }); }
+  function editor(u) {
+    var isNew = !u, pw = tempPassword();
+    var e = openModal({ title: isNew ? 'เพิ่มผู้ใช้' : 'แก้ไข ' + esc(u.user), width: 520,
+      body: '<div class="authf">' + authField('ueUser', 'ชื่อผู้ใช้ (ไม่มีช่องว่าง)', 'text', isNew ? 'autocapitalize="off"' : 'readonly value="' + esc(u.user) + '"') +
+        authField('ueName', 'ชื่อที่แสดง', 'text', 'value="' + esc(u ? u.name : '') + '"') +
+        '<label class="f">บทบาท<select id="ueRole">' + ['การเงิน', 'พัสดุ', 'ผู้บริหาร', 'ครู', 'admin'].map(function (r) { return '<option' + (u && u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
+        '<label class="remember"><input type="checkbox" id="ueAct"' + (!u || u.active ? ' checked' : '') + '> ใช้งานได้</label>' +
+        (isNew ? authField('uePw', 'รหัสผ่านชั่วคราว (บอกผู้ใช้ เขาจะเปลี่ยนเองตอนเข้าครั้งแรก)', 'text', 'value="' + pw + '"') : '') + '</div>',
+      footer: '<button class="btn ghost" type="button" data-close>ยกเลิก</button><span class="sp"></span><button class="btn" type="button" id="ueGo">บันทึก</button>' });
+    e.el.querySelector('#ueGo').onclick = function () {
+      var q = function (id) { var x = e.el.querySelector('#' + id); return x ? x.value : ''; };
+      var p = { user: q('ueUser'), name: q('ueName'), role: q('ueRole'), active: e.el.querySelector('#ueAct').checked };
+      if (isNew) p.tempPass = q('uePw');
+      busy(this, save(p, function () { e.close(); if (isNew) showTemp(p.user, p.tempPass); else toast('บันทึกแล้ว', 'good'); })).catch(handleError);
+    };
+  }
+  function showTemp(user, pw) {
+    openModal({ title: 'รหัสชั่วคราวของ ' + esc(user), width: 440, body: '<p>บอกชื่อผู้ใช้และรหัสนี้ให้ผู้ใช้ (แสดงครั้งเดียว ระบบไม่เก็บรหัสจริง):</p><p class="temppw">' + esc(pw) + '</p><p class="hint">ผู้ใช้จะต้องตั้งรหัสใหม่เองตอนเข้าครั้งแรก</p>',
+      footer: '<span class="sp"></span><button class="btn" type="button" data-close>เสร็จ</button>' });
+  }
+  m.el.querySelector('#uAdd').onclick = function () { editor(null); };
+  m.el.querySelector('#uBody').onclick = function (ev) {
+    var b = ev.target.closest('[data-u]'); if (!b) return;
+    var u = list[Number(b.getAttribute('data-i'))], k = b.getAttribute('data-u');
+    if (k === 'edit') editor(u);
+    else if (k === 'unlock') busy(b, save({ user: u.user, name: u.name, role: u.role, active: u.active, unlock: true })).then(function () { toast('ปลดล็อก ' + u.user + ' แล้ว', 'good'); }).catch(handleError);
+    else if (k === 'temp') {
+      var pw = tempPassword();
+      if (!confirm('ตั้งรหัสชั่วคราวใหม่ให้ ' + u.user + ' ?\nรหัสเดิมและการเข้าระบบทุกเครื่องของผู้ใช้นี้จะใช้ไม่ได้ทันที')) return;
+      busy(b, save({ user: u.user, name: u.name, role: u.role, active: u.active, tempPass: pw })).then(function () {
+        showTemp(u.user, pw);
+      }).catch(handleError);
+    }
+  };
+  api('getUsers').then(function (r) { list = r; draw(); }).catch(function (e) { m.close(); handleError(e); });
 }
 /** โหลดเอกสารใหม่ (หลังบันทึก) */
 function reloadDocs() {
@@ -804,6 +963,8 @@ function renderSettings() {
   Object.keys(groups).forEach(function (g) { gl += '<option value="' + esc(g) + '">'; });
   h += '<section class="hero">' + heroDeco('settings') + '<div class="lbl">ตั้งค่าระบบ</div><div class="big" style="font-family:var(--font);font-size:clamp(26px,4vw,38px)">ประเภทเงิน · ที่เก็บ · ยอดยกมา · เอกสาร</div>' +
     '<div class="sub">แก้ได้เฉพาะ admin · รหัสที่ถูกใช้ในเอกสารแล้วลบไม่ได้ ให้ปิดใช้งานแทน</div></section>';
+  h += '<section class="card glass reveal"><h2>ผู้ใช้และรหัสผ่าน</h2><p class="hint">เพิ่มผู้ใช้ · กำหนดบทบาท · ปิดบัญชี · ตั้งรหัสชั่วคราวเมื่อมีคนลืมรหัส</p>' +
+    '<div class="actions"><button class="btn" type="button" data-act="users">จัดการผู้ใช้</button></div></section>';
   h += '<section class="card glass reveal"><h2>ผู้ลงนามและหัวเอกสาร ขบ. / ขจ.</h2><p class="hint">ใช้พิมพ์บนเอกสาร ไม่มีชื่อจริงในโค้ด กรอกครั้งเดียว</p><div class="erow" id="docSet">';
   DOC_FIELDS.forEach(function (f) {
     h += '<label class="f">' + esc(f[1]) + '<input data-key="' + esc(f[0]) + '" value="' + esc(st.docSettings[f[0]] || '') + '"></label>';
@@ -865,6 +1026,7 @@ function onSettingsClick(ev) {
   if (act === 'payees') { openPayees(); return; }
   if (act === 'packages') { Receipts.openPackages(); return; }
   if (act === 'import') { Importer.open(); return; }
+  if (act === 'users') { openUsers(); return; }
   if (act === 'addopen') { tmp.innerHTML = openRow([S.st.types[0][0], S.st.stores[0][0], '']); $('openRows').appendChild(tmp.firstChild); return; }
   var p;
   if (act === 'savestores') p = api('saveStores', { rows: readRows('storeRows') }).then(function () { return refreshSettings('บันทึกที่เก็บเงินแล้ว'); });
@@ -947,7 +1109,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (b && b.getAttribute('data-tab') !== S.tab) go(b.getAttribute('data-tab'));
   });
   $('btnOut').addEventListener('click', function () { signOut(''); });
-  var saved = '';
-  try { saved = sessionStorage.getItem('tok') || ''; } catch (e) {}
-  if (saved) startApp(saved);
+  $('btnPw').addEventListener('click', openMyPassword);
+  var saved = tokSaved();
+  if (saved.tok && apiUrl()) startApp(saved.tok, saved.remember);
+  else authFlow().catch(function (e) { authView(apiUrl() ? 'login' : 'url', 'เชื่อมต่อระบบไม่ได้: ' + e.message); });
 });
