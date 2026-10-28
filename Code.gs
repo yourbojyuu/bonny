@@ -15,22 +15,23 @@ var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
 var FISCAL_YEAR = 2570; // ปีงบประมาณ (พ.ศ.) เริ่ม 1 ต.ค. ของปี พ.ศ. ก่อนหน้า
 
 /* ============ ทะเบียน action (ที่เดียว) ============
- * action ใหม่ = เพิ่มแถวเดียวที่นี่: [ฟังก์ชัน, บทบาทที่ทำได้, เป็นการเขียนหรือไม่ (W = ใช้ LockService)]
+ * action ใหม่ = เพิ่มแถวเดียวที่นี่: [ฟังก์ชัน, บทบาทที่ทำได้, เป็นการเขียนหรือไม่ (W = ใช้ LockService), ข้อมูลที่ส่งกลับให้หน้าเว็บหลังบันทึก]
+ * ข้อมูลที่ส่งกลับ (D = เอกสาร, RC = ใบเสร็จ, ST = ตั้งค่า) ทำให้หน้าเว็บไม่ต้องยิงคำขอโหลดใหม่อีกรอบ
  * ครู: ส่งคำขอเบิกและติดตามของตัวเองเท่านั้น · ผู้บริหาร: อนุมัติ/ส่งกลับ ขบ. · การเงิน: รับเรื่องแล้วทำ ขจ. ต่อ */
 function actions() {
   var ALL = ROLES, STAFF = ['admin', 'การเงิน', 'พัสดุ', 'ผู้บริหาร'], FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
-  var R = false, W = true;
+  var R = false, W = true, D = ['docs'], RC = ['receipts'], ST = ['settings'], DS = ['docs', 'settings'];
   return {
     boot: [h_boot, ALL, R], getSchema: [h_getSchema, ALL, R], me: [h_me, ALL, R], getSettings: [h_getSettings, ALL, R],
     getBalances: [h_getBalances, STAFF, R], getLedger: [h_getLedger, STAFF, R],
     getDocs: [h_getDocs, ALL, R], khbDoc: [h_khbDoc, ALL, R], khjDoc: [h_khjDoc, STAFF, R], getReceipts: [h_getReceipts, STAFF, R],
-    importReceipts: [h_importReceipts, FIN, W], cancelReceipt: [h_cancelReceipt, FIN, W], voidReceipts: [h_voidReceipts, FIN, W],
-    savePayees: [h_savePayees, KHB, W], saveAliases: [h_saveAliases, ADMIN, W], savePackages: [h_savePackages, FIN, W],
-    saveKhb: [h_saveKhb, KHB.concat(['ครู']), W], cancelKhb: [h_cancelKhb, KHB.concat(['ครู']), W],
-    approveKhb: [h_approveKhb, ['admin', 'ผู้บริหาร'], W], receiveKhb: [h_receiveKhb, FIN, W],
-    createKhj: [h_createKhj, FIN, W], savePayments: [h_savePayments, FIN, W], cancelKhj: [h_cancelKhj, FIN, W],
-    saveTypes: [h_saveTypes, ADMIN, W], saveStores: [h_saveStores, ADMIN, W], saveOpening: [h_saveOpening, ADMIN, W],
-    rebuildLedger: [h_rebuildLedger, ADMIN, W], saveDocSettings: [h_saveDocSettings, ADMIN, W]
+    importReceipts: [h_importReceipts, FIN, W, RC], cancelReceipt: [h_cancelReceipt, FIN, W, RC], voidReceipts: [h_voidReceipts, FIN, W, RC],
+    savePayees: [h_savePayees, KHB, W, DS], saveAliases: [h_saveAliases, ADMIN, W, ST], savePackages: [h_savePackages, FIN, W, ST],
+    saveKhb: [h_saveKhb, KHB.concat(['ครู']), W, DS], cancelKhb: [h_cancelKhb, KHB.concat(['ครู']), W, D],
+    approveKhb: [h_approveKhb, ['admin', 'ผู้บริหาร'], W, D], receiveKhb: [h_receiveKhb, FIN, W, D],
+    createKhj: [h_createKhj, FIN, W, D], savePayments: [h_savePayments, FIN, W, D], cancelKhj: [h_cancelKhj, FIN, W, D],
+    saveTypes: [h_saveTypes, ADMIN, W, ST], saveStores: [h_saveStores, ADMIN, W, ST], saveOpening: [h_saveOpening, ADMIN, W, ST],
+    rebuildLedger: [h_rebuildLedger, ADMIN, W], saveDocSettings: [h_saveDocSettings, ADMIN, W, ST]
   };
 }
 
@@ -49,6 +50,17 @@ function h_boot(p, io, user) {
 function keepWarm() { SpreadsheetApp.getActiveSpreadsheet().getName(); return 'ok'; }
 
 function isWriteAction(a) { var x = actions()[a]; return !!(x && x[2]); }
+
+/** ข้อมูลล่าสุดหลังบันทึก (อ่านจาก memo ที่เพิ่งเขียน จึงแทบไม่เสียเวลา) · ส่งเฉพาะที่ผู้ใช้มีสิทธิ์ดู · พลาดก็ไม่ทำให้การบันทึกล้ม */
+function freshData(keys, io, user, acts) {
+  var fn = { docs: ['getDocs', h_getDocs], receipts: ['getReceipts', h_getReceipts], settings: ['getSettings', h_getSettings] }, out = {};
+  keys.forEach(function (k) {
+    var a = fn[k][0];
+    if (user.role !== 'admin' && acts[a][1].indexOf(user.role) < 0) return;
+    try { out[k] = fn[k][1]({}, io, user); } catch (e) { /* หน้าเว็บจะโหลดเองตามปกติ */ }
+  });
+  return out;
+}
 
 /* ============ ตรวจสิทธิ์ (pure) ============ */
 
@@ -98,7 +110,9 @@ function dispatch(req, io) {
     var email = io.verifyToken(req.idToken);
     var user = findUser(tableRows(io, 'ผู้ใช้'), email);
     authorize(action, user);
-    return { ok: true, data: acts[action][0](req.payload || {}, io, user) };
+    var data = acts[action][0](req.payload || {}, io, user);
+    if (acts[action][3] && data && typeof data === 'object') data._fresh = freshData(acts[action][3], io, user, acts);
+    return { ok: true, data: data };
   } catch (e) {
     return { ok: false, code: e.code || 'ERROR', error: String(e.message || e) };
   }

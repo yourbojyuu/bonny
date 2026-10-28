@@ -105,6 +105,12 @@ function toast(text, kind) {
 }
 
 /* ================= เรียก API ================= */
+/** ข้อมูลล่าสุดที่เซิร์ฟเวอร์ส่งกลับมาพร้อมการบันทึก -> reloadDocs/Receipts/Settings ใช้แทนการยิงคำขอใหม่ (ภายใน 30 วินาที) */
+var FRESH = {};
+function takeFresh(k, action) {
+  var f = FRESH[k]; delete FRESH[k];
+  return f && Date.now() - f.t < 30000 ? Promise.resolve(f.d) : api(action);
+}
 function api(action, payload) {
   if (!/^(get|me$|ping|khbDoc|khjDoc)/.test(action)) S.led = null;
   if (!API_URL || API_URL.indexOf('ใส่') === 0) return Promise.reject(new Error('ยังไม่ได้ใส่ API_URL ใน index.html'));
@@ -117,6 +123,7 @@ function api(action, payload) {
     return r.json();
   }).then(function (res) {
     if (!res.ok) { var e = new Error(res.error || 'เกิดข้อผิดพลาด'); e.code = res.code; throw e; }
+    if (res.data && res.data._fresh) { var t = Date.now(); Object.keys(res.data._fresh).forEach(function (k) { FRESH[k] = { d: res.data._fresh[k], t: t }; }); delete res.data._fresh; }
     return res.data;
   });
 }
@@ -181,14 +188,14 @@ function startApp(token) {
 function reloadDocs() {
   S.led = null;
   if (window.Flow) Flow.resetBal();
-  return api('getDocs').then(function (d) { S.docs = d; renderTabs(); return d; });
+  return takeFresh('docs', 'getDocs').then(function (d) { S.docs = d; renderTabs(); return d; });
 }
 function reloadReceipts() {
   S.led = null;
-  return api('getReceipts').then(function (d) { S.rcv = d; return d; });
+  return takeFresh('receipts', 'getReceipts').then(function (d) { S.rcv = d; return d; });
 }
 function reloadSettings() {
-  return api('getSettings').then(function (d) { S.st = d; return d; });
+  return takeFresh('settings', 'getSettings').then(function (d) { S.st = d; return d; });
 }
 
 /** ชื่อผู้ใช้ + ตัวสลับโหมด (admin สลับดูหน้าของครู/ผู้บริหารได้) */
@@ -846,7 +853,7 @@ function updateOpenSum() {
   el.textContent = money(sumSat(readRows('openRows'), function (r) { return cleanNum(r[2]); }));
 }
 function refreshSettings(okText) {
-  return api('getSettings').then(function (st) { S.st = st; toast(okText, 'good'); renderSettings(); });
+  return reloadSettings().then(function () { toast(okText, 'good'); renderSettings(); });
 }
 function onSettingsClick(ev) {
   var t = ev.target.closest('[data-act]'); if (!t) return;

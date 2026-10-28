@@ -450,6 +450,9 @@ if (require.main === module) {
   ok(Paste.num('1,234.50 บาท') === 1234.5 && Paste.num('') === 0 && Paste.num('-') === 0 && isNaN(Paste.num('12O')) && Paste.num(7) === 7, 'Paste.num: ตัดคอมมา/บาท · ว่าง=0 · อ่านไม่ออก=NaN');
   var acts = C.actions(), bad = Object.keys(acts).filter(function (a) { var x = acts[a]; return typeof x[0] !== 'function' || !Array.isArray(x[1]) || typeof x[2] !== 'boolean'; });
   ok(!bad.length, 'ทะเบียน action: ทุกแถวมีฟังก์ชัน/บทบาท/ชนิดอ่านเขียนครบ ' + bad.join(','));
+  r = call(io, 'tok-t1', 'saveKhb', { date: '2/11/69', lines: TL });
+  ok(r.ok && r.data._fresh && r.data._fresh.docs && r.data._fresh.docs.khbs.every(function (h) { return h.owner === 't1@example.com'; }) && r.data._fresh.settings, 'บันทึกแล้วได้ข้อมูลล่าสุดกลับมา (ครูเห็นเฉพาะของตัวเอง) ' + (r.ok ? '' : r.error));
+  ok(!(r.data._fresh || {}).receipts, 'ครูไม่ได้ข้อมูลใบเสร็จติดมา');
   ok(C.isWriteAction('saveKhb') && !C.isWriteAction('getDocs') && !C.isWriteAction('ping'), 'isWriteAction อ่านจากทะเบียนเดียวกัน');
 
   if (process.env.SHEETIO) console.log('เซลล์ที่เขียนลงชีทจำลองทั้งชุดเทสต์: ' + fakeSpreadsheet.cells);
