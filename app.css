@@ -1381,3 +1381,9 @@ textarea.qe-paste { font-family: var(--num); font-size: 13px; border-radius: 16p
 .login .small, .authf + .small { font-size: 13px; }
 .login .link.small { margin-top: 6px; }
 .temppw { font-family: var(--num); font-size: 26px; letter-spacing: .08em; text-align: center; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--c2) 10%, #fff); user-select: all; }
+
+/* สวิตช์โหมดแบบแบ่งช่อง (3 โหมดขึ้นไป) */
+.modeseg { gap: 2px; padding: 4px; }
+.modeseg button { border: 0; background: none; padding: 7px 16px; border-radius: 22px; font-weight: 700; font-size: 13.5px; color: var(--muted); cursor: pointer; white-space: nowrap; transition: background .35s var(--ease), color .3s; }
+.modeseg button[aria-pressed="true"] { background: #d9560a; color: #fff; box-shadow: 0 6px 14px -8px #d9560a; }
+.modeseg button:focus-visible { outline: 2px solid #d9560a; outline-offset: 2px; }

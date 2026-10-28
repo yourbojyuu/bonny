@@ -364,8 +364,21 @@ function renderWho() {
   var old = $('modeSw'); if (old) old.parentNode.removeChild(old);
   var ml = modeList();
   $('topdock').classList.remove('hasSw');
-  if (!can.admin() || ml.length !== 2) return;
+  if (!can.admin() || ml.length < 2) return;
   $('topdock').classList.add('hasSw');
+  if (ml.length > 2) { // 3 โหมดขึ้นไป: ปุ่มเลือกแบบแบ่งช่อง
+    var sg = document.createElement('div'); sg.id = 'modeSw'; sg.className = 'modesw2 modeseg'; sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', 'สลับโหมดการใช้งาน');
+    sg.innerHTML = ml.map(function (m) { return '<button type="button" data-m="' + m + '" aria-pressed="' + (mode() === m) + '">' + esc(MODES[m].replace('โหมด', '')) + '</button>'; }).join('');
+    $('topdock').appendChild(sg);
+    sg.onclick = function (e) {
+      var b = e.target.closest('[data-m]'); if (!b) return; var m = b.getAttribute('data-m'); if (m === mode()) return;
+      S.modeAs = m === 'fin' ? '' : m;
+      try { localStorage.setItem('fin-mode', S.modeAs); } catch (er) {}
+      Array.prototype.forEach.call(sg.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x.getAttribute('data-m') === m)); });
+      setTimeout(function () { renderWho(); renderTabs(); go(homeTab(), null); }, 200);
+    };
+    return;
+  }
   var on = mode() === ml[1], sw = document.createElement('div'); sw.id = 'modeSw'; sw.className = 'modesw2';
   sw.innerHTML = '<span class="ml' + (on ? '' : ' on') + '" data-m="' + ml[0] + '">' + esc(MODES[ml[0]].replace('โหมด', '')) + '</span>' +
     '<button type="button" class="tgl" role="switch" aria-checked="' + on + '" aria-label="สลับโหมด ' + esc(MODES[ml[0]].replace('โหมด', '')) + ' / ' + esc(MODES[ml[1]].replace('โหมด', '')) + '"><i></i></button>' +
