@@ -371,19 +371,12 @@ var Docs = (function () {
         });
         if (!order.length) { toast('ยังไม่มีแถวใหม่ให้บันทึก', 'err'); return; }
         if (bad || errMsg) { toast(errMsg || 'มี ' + bad + ' ช่องที่ยังไม่ครบ (ช่องสีแดง) — วันที่ ผู้รับ จำนวนเงิน ประเภทเงิน ชนิด วิธีจ่าย', 'err'); return; }
-        var done = [], keep = rows.filter(function (r) { return !r._old; }), p = Promise.resolve();
-        order.forEach(function (key) {
-          p = p.then(function () {
-            var gp = groups[key];
-            return api('saveKhb', { no: null, date: gp.date, note: '', paper: paper, lines: gp.rows.map(function (r) { return { type: typeIdOf(r.type), payee: r.payee, kind: r.kind, method: r.method, gross: String(r.gross), tax: String(r.tax || ''), taxType: r.taxType, taxAuto: !!r.auto }; }) })
-              .then(function (res) { done.push('ขบ.' + res.no); keep = keep.filter(function (r) { return gp.rows.indexOf(r) < 0; }); })
-              .catch(function (e) { gp.idx.forEach(function (ri) { g.markRow(ri); }); throw e; });
-          });
-        });
-        busy(this, p).then(function () {
+        var st = { made: [], keep: rows.filter(function (r) { return !r._old; }), onFail: function (gp) { gp.idx.forEach(function (ri) { g.markRow(ri); }); } }, done = st.made;
+        busy(this, sendKhbGroups(order, groups, paper, st)).then(function () {
+          var keep = st.keep;
           gridRows = keep; if (!keep.some(function (r) { return r.payee || r.gross; })) Draft.del('khbgrid'); else keepDraft();
           return afterSave(paper ? 'บันทึก ' + done.join(', ') + ' แล้ว (อนุมัติบนกระดาษ) — ไปทำ ขจ. ที่แท็บ ขจ. ได้เลย' : 'ส่ง ' + done.join(', ') + ' ให้ผู้บริหารแล้ว — อนุมัติเมื่อไรจะไปรอที่แท็บ ขจ.');
-        }).catch(function (e) { gridRows = keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
+        }).catch(function (e) { gridRows = st.keep; return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
       };
       return;
     }
@@ -503,16 +496,23 @@ var Docs = (function () {
     });
     if (!order.length) { toast('ยังไม่มีรายการให้บันทึก', 'err'); return; }
     if (bad || errMsg) { done(null, errMsg || 'มี ' + bad + ' ช่องที่ยังไม่ครบ (ขึ้นสีแดงในแฟ้ม) — วันที่ ผู้รับ จำนวนเงิน ประเภทเงิน', true); return; }
-    var made = [], keep = loadDraft().filter(function (r) { return !r._old; }), p = Promise.resolve();
+    var st = { made: [], keep: loadDraft().filter(function (r) { return !r._old; }) };
+    busy(btn, sendKhbGroups(order, groups, paper, st)).then(function () { gridRows = st.keep; keepDraftNow(); qs.grp = ''; done(st.made, '', false); })
+      .catch(function (e) { gridRows = st.keep; keepDraftNow(); done(st.made, e.message, true); });
+  }
+  /** ส่ง ขบ. ทีละใบตามกลุ่ม (1 กลุ่ม = 1 ใบ) ใช้ร่วมกันระหว่างตารางกรอกกับกรอกทีละรายการ
+   *  st = { made: ['ขบ.N'], keep: แถวร่างที่ยังไม่ได้ส่ง, onFail(กลุ่ม) } — อัปเดตระหว่างทาง ถ้าล้มกลางคันยังรู้ว่าใบไหนส่งแล้ว */
+  function sendKhbGroups(order, groups, paper, st) {
+    var p = Promise.resolve();
     order.forEach(function (key) {
       p = p.then(function () {
         var gp = groups[key];
         return api('saveKhb', { no: null, date: gp.date, note: '', paper: paper, lines: gp.rows.map(function (r) { return { type: typeIdOf(r.type), payee: r.payee, kind: r.kind, method: r.method, gross: String(r.gross), tax: String(r.tax || ''), taxType: r.taxType, taxAuto: !!r.auto }; }) })
-          .then(function (res) { made.push('ขบ.' + res.no); keep = keep.filter(function (r) { return gp.rows.indexOf(r) < 0; }); });
+          .then(function (res) { st.made.push('ขบ.' + res.no); st.keep = st.keep.filter(function (r) { return gp.rows.indexOf(r) < 0; }); })
+          .catch(function (e) { if (st.onFail) st.onFail(gp); throw e; });
       });
     });
-    busy(btn, p).then(function () { gridRows = keep; keepDraftNow(); qs.grp = ''; done(made, '', false); })
-      .catch(function (e) { gridRows = keep; keepDraftNow(); done(made, e.message, true); });
+    return p;
   }
   function afterSend(made, msg, err, paper) {
     return Promise.all([reloadDocs(), reloadSettings()]).then(function () {
