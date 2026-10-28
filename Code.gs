@@ -14,31 +14,23 @@
 var CLIENT_ID = 'ใส่ CLIENT_ID ของคุณที่นี่';
 var FISCAL_YEAR = 2570; // ปีงบประมาณ (พ.ศ.) เริ่ม 1 ต.ค. ของปี พ.ศ. ก่อนหน้า
 
-/* ============ สิทธิ์ของแต่ละ action ============ */
-function actionRoles() {
-  // ครู: ส่งคำขอเบิกและติดตามของตัวเองเท่านั้น · ผู้บริหาร: อนุมัติ/ส่งกลับ ขบ. · การเงิน: รับเรื่องแล้วทำ ขจ. ต่อ
+/* ============ ทะเบียน action (ที่เดียว) ============
+ * action ใหม่ = เพิ่มแถวเดียวที่นี่: [ฟังก์ชัน, บทบาทที่ทำได้, เป็นการเขียนหรือไม่ (W = ใช้ LockService)]
+ * ครู: ส่งคำขอเบิกและติดตามของตัวเองเท่านั้น · ผู้บริหาร: อนุมัติ/ส่งกลับ ขบ. · การเงิน: รับเรื่องแล้วทำ ขจ. ต่อ */
+function actions() {
   var ALL = ROLES, STAFF = ['admin', 'การเงิน', 'พัสดุ', 'ผู้บริหาร'], FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
+  var R = false, W = true;
   return {
-    ping: null,
-    boot: ALL, getSchema: ALL, me: ALL, getSettings: ALL, getBalances: STAFF, getLedger: STAFF,
-    getDocs: ALL, khbDoc: ALL, khjDoc: STAFF, getReceipts: STAFF,
-    importReceipts: FIN, cancelReceipt: FIN, savePayees: KHB, saveAliases: ADMIN, savePackages: FIN, voidReceipts: FIN,
-    saveKhb: KHB.concat(['ครู']), cancelKhb: KHB.concat(['ครู']),
-    approveKhb: ['admin', 'ผู้บริหาร'], receiveKhb: FIN,
-    createKhj: FIN, savePayments: FIN, cancelKhj: FIN,
-    saveTypes: ADMIN, saveStores: ADMIN, saveOpening: ADMIN, rebuildLedger: ADMIN, saveDocSettings: ADMIN
-  };
-}
-
-function handlers() {
-  return {
-    boot: h_boot, getSchema: h_getSchema, me: h_me, getSettings: h_getSettings, getBalances: h_getBalances, getLedger: h_getLedger,
-    saveStores: h_saveStores, saveTypes: h_saveTypes, saveOpening: h_saveOpening, rebuildLedger: h_rebuildLedger,
-    saveDocSettings: h_saveDocSettings,
-    getDocs: h_getDocs, saveKhb: h_saveKhb, cancelKhb: h_cancelKhb, approveKhb: h_approveKhb, receiveKhb: h_receiveKhb,
-    createKhj: h_createKhj, savePayments: h_savePayments, cancelKhj: h_cancelKhj,
-    khbDoc: h_khbDoc, khjDoc: h_khjDoc, getReceipts: h_getReceipts, importReceipts: h_importReceipts,
-    cancelReceipt: h_cancelReceipt, savePayees: h_savePayees, saveAliases: h_saveAliases, savePackages: h_savePackages, voidReceipts: h_voidReceipts
+    boot: [h_boot, ALL, R], getSchema: [h_getSchema, ALL, R], me: [h_me, ALL, R], getSettings: [h_getSettings, ALL, R],
+    getBalances: [h_getBalances, STAFF, R], getLedger: [h_getLedger, STAFF, R],
+    getDocs: [h_getDocs, ALL, R], khbDoc: [h_khbDoc, ALL, R], khjDoc: [h_khjDoc, STAFF, R], getReceipts: [h_getReceipts, STAFF, R],
+    importReceipts: [h_importReceipts, FIN, W], cancelReceipt: [h_cancelReceipt, FIN, W], voidReceipts: [h_voidReceipts, FIN, W],
+    savePayees: [h_savePayees, KHB, W], saveAliases: [h_saveAliases, ADMIN, W], savePackages: [h_savePackages, FIN, W],
+    saveKhb: [h_saveKhb, KHB.concat(['ครู']), W], cancelKhb: [h_cancelKhb, KHB.concat(['ครู']), W],
+    approveKhb: [h_approveKhb, ['admin', 'ผู้บริหาร'], W], receiveKhb: [h_receiveKhb, FIN, W],
+    createKhj: [h_createKhj, FIN, W], savePayments: [h_savePayments, FIN, W], cancelKhj: [h_cancelKhj, FIN, W],
+    saveTypes: [h_saveTypes, ADMIN, W], saveStores: [h_saveStores, ADMIN, W], saveOpening: [h_saveOpening, ADMIN, W],
+    rebuildLedger: [h_rebuildLedger, ADMIN, W], saveDocSettings: [h_saveDocSettings, ADMIN, W]
   };
 }
 
@@ -56,10 +48,7 @@ function h_boot(p, io, user) {
 /** ตั้ง Trigger (ทุก 5 นาที) ให้เรียกฟังก์ชันนี้เพื่อลดอาการ "ตื่นช้า" ครั้งแรกหลังไม่มีคนใช้ */
 function keepWarm() { SpreadsheetApp.getActiveSpreadsheet().getName(); return 'ok'; }
 
-function isWriteAction(a) {
-  return ['saveTypes', 'saveStores', 'saveOpening', 'rebuildLedger', 'saveDocSettings',
-    'saveKhb', 'cancelKhb', 'approveKhb', 'receiveKhb', 'createKhj', 'savePayments', 'cancelKhj', 'importReceipts', 'cancelReceipt', 'savePayees', 'saveAliases', 'savePackages', 'voidReceipts'].indexOf(a) >= 0;
-}
+function isWriteAction(a) { var x = actions()[a]; return !!(x && x[2]); }
 
 /* ============ ตรวจสิทธิ์ (pure) ============ */
 
@@ -90,7 +79,7 @@ function findUser(userRows, email) {
 }
 
 function authorize(action, user) {
-  var allowed = actionRoles()[action];
+  var allowed = actions()[action][1];
   if (ROLES.indexOf(user.role) < 0) throw fail('FORBIDDEN', 'บทบาท "' + user.role + '" ไม่ถูกต้อง');
   if (user.role === 'admin') return;
   if (!allowed || allowed.indexOf(user.role) < 0) throw fail('FORBIDDEN', 'บทบาท "' + user.role + '" ไม่มีสิทธิ์ทำรายการนี้');
@@ -102,14 +91,14 @@ function authorize(action, user) {
 function dispatch(req, io) {
   try {
     var action = normText(req && req.action);
-    var roles = actionRoles();
-    if (!action || !roles.hasOwnProperty(action)) throw fail('BAD_ACTION', 'ไม่รู้จัก action "' + action + '"');
+    var acts = actions();
+    if (action !== 'ping' && (!action || !acts.hasOwnProperty(action))) throw fail('BAD_ACTION', 'ไม่รู้จัก action "' + action + '"');
     if (action === 'ping') return { ok: true, data: { pong: true } };
     if (!req.idToken) throw fail('AUTH', 'ไม่มี token กรุณาเข้าสู่ระบบ');
     var email = io.verifyToken(req.idToken);
     var user = findUser(tableRows(io, 'ผู้ใช้'), email);
     authorize(action, user);
-    return { ok: true, data: handlers()[action](req.payload || {}, io, user) };
+    return { ok: true, data: acts[action][0](req.payload || {}, io, user) };
   } catch (e) {
     return { ok: false, code: e.code || 'ERROR', error: String(e.message || e) };
   }
