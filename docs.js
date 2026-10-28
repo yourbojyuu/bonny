@@ -1229,8 +1229,7 @@ var Docs = (function () {
       var xb = m.el.querySelector('#pXlsx');
       xb.disabled = false;
       xb.onclick = function () {
-        if (!window.XlsxExport || !window.ExcelJS) { toast('ดาวน์โหลด Excel ใช้ได้ในเว็บจริงที่วางบน Netlify (หน้าตัวอย่างนี้ปิดการดาวน์โหลด)', 'err'); return; }
-        busy(xb, XlsxExport.download(d)).then(function (name) { toast('ดาวน์โหลด ' + name + ' แล้ว', 'good'); }).catch(handleError);
+        busy(xb, loadExcel().then(function () { return XlsxExport.download(d); })).then(function (name) { toast('ดาวน์โหลด ' + name + ' แล้ว', 'good'); }).catch(handleError);
       };
       var pb = m.el.querySelector('#pPrint');
       pb.disabled = false;

@@ -216,8 +216,8 @@ var Importer = (function () {
 
   /** อ่านไฟล์ .xlsx (ExcelJS) -> [{name, rows}] ค่าในเซลล์เป็น primitive (ผลสูตรใช้ค่าที่คำนวณไว้) */
   function readWorkbook(buf) {
-    var wb = new ExcelJS.Workbook();
-    return wb.xlsx.load(buf).then(function () {
+    var wb;
+    return loadExcel().then(function (X) { wb = new X.Workbook(); return wb.xlsx.load(buf); }).then(function () {
       var out = [];
       wb.eachSheet(function (ws) {
         var rows = [];
@@ -250,7 +250,6 @@ var Importer = (function () {
 
   /* ---------------- หน้าจอ ---------------- */
   function open() {
-    if (!window.ExcelJS) { toast('อ่านไฟล์ Excel ได้เฉพาะในเว็บจริง (หน้าตัวอย่างนี้ไม่มีตัวอ่านไฟล์)', 'err'); return; }
     var plan = null;
     var m = openModal({
       title: 'นำเข้าข้อมูลเดิมจากไฟล์ Excel', width: 900,

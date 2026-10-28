@@ -120,6 +120,18 @@ function api(action, payload) {
     return res.data;
   });
 }
+/** โหลด ExcelJS (~950 KB) เฉพาะตอนต้องใช้ (ส่งออก/นำเข้า) ไม่ให้หน้าแรกช้า */
+var excelP = null;
+function loadExcel() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (!excelP) excelP = new Promise(function (ok, no) {
+    var s = document.createElement('script'); s.src = 'vendor/exceljs.min.js';
+    s.onload = function () { window.ExcelJS ? ok(window.ExcelJS) : no(new Error('โหลดตัวอ่าน Excel ไม่สำเร็จ')); };
+    s.onerror = function () { excelP = null; no(new Error('โหลดตัวอ่าน Excel ไม่ได้ (ตรวจอินเทอร์เน็ต หรือหน้าตัวอย่างนี้ไม่มีไฟล์)')); };
+    document.head.appendChild(s);
+  });
+  return excelP;
+}
 function handleError(e) {
   if (e && e.code === 'AUTH') { signOut(e.message); return; }
   toast(e && e.message ? e.message : String(e), 'err');
@@ -459,8 +471,7 @@ function previewSheet(title, cols, rows, sub, file) {
     footer: '<button class="btn ghost" type="button" data-close>ปิด</button><button class="btn" type="button" id="xpGo">ดาวน์โหลด Excel</button>'
   });
   m.el.querySelector('#xpGo').onclick = function () {
-    if (!window.XlsxExport || !window.ExcelJS) { toast('ดาวน์โหลดใช้ได้ในเว็บจริง (หน้าตัวอย่างนี้ปิดการดาวน์โหลด)', 'err'); return; }
-    busy(this, XlsxExport.sheet(title, cols, rows, sub, file)).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); m.close(); }).catch(handleError);
+    busy(this, loadExcel().then(function () { return XlsxExport.sheet(title, cols, rows, sub, file); })).then(function (n) { toast('ดาวน์โหลด ' + n + ' แล้ว', 'good'); m.close(); }).catch(handleError);
   };
 }
 /** ถามเหตุผล (ใช้แทน prompt) */
