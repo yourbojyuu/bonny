@@ -169,34 +169,49 @@ function h_importReceipts(p, io) {
   if (!p.commit) return out;
   var keep = existing.slice(), idxByKey = {};
   existing.forEach(function (r, i) { var x = readReceipt(r); idxByKey[receiptKey(x.fy, x.book, x.no, x.line)] = i; });
-  var add = [], upd = 0;
-  res.forEach(function (x) {
-    if (x.status === 'new') add.push(receiptRow(x.rec));
+  var add = [], upd = 0, whole = {};
+  // wholeReceipt: ใบเสร็จที่มีบางบรรทัดไม่ผ่าน ไม่บันทึกทั้งใบ (ตารางบรรทัดเดียวส่งตรวจและบันทึกในคำขอเดียว)
+  if (p.wholeReceipt) res.forEach(function (x, i) {
+    var k = normKey(out.rows[i].book) + '|' + normKey(out.rows[i].no);
+    if (x.status !== 'new') whole[k] = true;
+  });
+  res.forEach(function (x, i) {
+    if (x.status === 'new' && p.wholeReceipt && whole[normKey(out.rows[i].book) + '|' + normKey(out.rows[i].no)]) return;
+    if (x.status === 'new') { add.push(receiptRow(x.rec)); out.rows[i].saved = true; }
     else if (x.status === 'changed' && p.updateChanged) {
       keep[idxByKey[receiptKey(x.rec.fy, x.rec.book, x.rec.no, x.rec.line)]] = receiptRow(x.rec);
       upd++;
     }
   });
-  if (!add.length && !upd) throw new Error('ไม่มีแถวที่บันทึกได้ (ใหม่ 0 · อัปเดต 0)');
+  if (!add.length && !upd) {
+    if (p.wholeReceipt) return out; // ให้หน้าเว็บเห็นว่าใบไหนผิด แทนการล้มทั้งคำขอ
+    throw new Error('ไม่มีแถวที่บันทึกได้ (ใหม่ 0 · อัปเดต 0)');
+  }
   commitChanges(io, { 'ใบเสร็จ': keep.concat(add) });
   out.committed = true; out.added = add.length; out.updated = upd;
   return out;
 }
 
+/** ยกเลิกใบเสร็จ: ใบเดียว {book, no, reason} หรือหลายใบในคำขอเดียว {items: [{book, no}], reason} (ไม่พบใบใดใบหนึ่ง = ไม่ยกเลิกเลย) */
 function h_cancelReceipt(p, io) {
-  var book = normText(p.book), no = normText(p.no), reason = normText(p.reason);
+  var reason = normText(p.reason);
   if (!reason) throw new Error('กรุณาระบุเหตุผลที่ยกเลิก');
-  var hit = 0;
+  var want = (Array.isArray(p.items) ? p.items : [p]).map(function (it) { return { book: normText(it.book), no: normText(it.no), hit: 0 }; });
+  if (!want.length) throw new Error('ไม่มีใบเสร็จที่จะยกเลิก');
+  if (want.length > 500) throw new Error('ยกเลิกครั้งละไม่เกิน 500 ใบ');
+  var byKey = {};
+  want.forEach(function (w) { byKey[normKey(w.book) + '|' + normKey(w.no)] = w; });
   var rows = tableRows(io, 'ใบเสร็จ').map(function (r) {
-    var x = readReceipt(r);
-    if (x.fy !== FISCAL_YEAR || normKey(x.book) !== normKey(book) || normKey(x.no) !== normKey(no) || x.status === 'ยกเลิก') return r;
-    hit++;
+    var x = readReceipt(r), w = byKey[normKey(x.book) + '|' + normKey(x.no)];
+    if (x.fy !== FISCAL_YEAR || !w || x.status === 'ยกเลิก') return r;
+    w.hit++;
     x.status = 'ยกเลิก'; x.note = (x.note ? x.note + ' · ' : '') + 'ยกเลิก: ' + reason;
     return receiptRow(x);
   });
-  if (!hit) throw new Error('ไม่พบใบเสร็จ เล่ม ' + book + ' เลขที่ ' + no + ' (หรือถูกยกเลิกไปแล้ว)');
+  var miss = want.filter(function (w) { return !w.hit; });
+  if (miss.length) throw new Error('ไม่พบใบเสร็จ ' + miss.map(function (w) { return 'เล่ม ' + w.book + ' เลขที่ ' + w.no; }).join(', ') + ' (หรือถูกยกเลิกไปแล้ว)');
   commitChanges(io, { 'ใบเสร็จ': rows });
-  return { cancelled: hit };
+  return { cancelled: want.reduce(function (a, w) { return a + w.hit; }, 0), receipts: want.length };
 }
 
 function h_savePayees(p, io) {

@@ -443,14 +443,25 @@ function h_createKhj(p, io, user) {
   return { fy: fy, no: no, count: rows.length };
 }
 
+/** บันทึกการจ่าย: ขจ. เดียว {no, rows} หรือหลาย ขจ. ในคำขอเดียว {batch: [{no, rows}]} (ผิดแถวเดียว = ไม่บันทึกเลย) */
 function h_savePayments(p, io) {
-  var ctx = docsContext(io), j = getKhj(ctx, p.no);
+  var ctx = docsContext(io), upd = {}, paid = 0;
+  var batch = Array.isArray(p.batch) ? p.batch : [{ no: p.no, rows: p.rows }];
+  if (!batch.length) throw new Error('ไม่มีข้อมูลการจ่าย');
+  batch.forEach(function (b) { paid += payUpdates(ctx, b.no, b.rows, upd); });
+  var rows = ctx.raw.pays.map(function (r, i) { return upd.hasOwnProperty(i) ? upd[i] : r; });
+  commitChanges(io, { 'การจ่าย': rows });
+  return { saved: Object.keys(upd).length, paid: paid };
+}
+
+/** ตรวจแถวการจ่ายของ ขจ. หนึ่งใบ ใส่ผลลง upd[แถวในชีท] คืนจำนวนรายการที่จ่ายแล้ว */
+function payUpdates(ctx, no, payRows, upd) {
+  var j = getKhj(ctx, no), paid = 0;
   if (j.status === 'ยกเลิก') throw new Error('ขจ.' + j.no + ' ถูกยกเลิกแล้ว');
-  if (!Array.isArray(p.rows) || !p.rows.length) throw new Error('ไม่มีข้อมูลการจ่าย');
+  if (!Array.isArray(payRows) || !payRows.length) throw new Error('ไม่มีข้อมูลการจ่าย');
   var byKey = {};
   j.items.forEach(function (it) { byKey[lineKey(it.khbFy, it.khbNo, it.seq)] = it; });
-  var upd = {}, paid = 0;
-  p.rows.forEach(function (r) {
+  payRows.forEach(function (r) {
     var it = byKey[lineKey(toInt(r.khbFy), toInt(r.khbNo), toInt(r.seq))];
     var label = 'ขบ.' + normText(r.khbNo) + ' ลำดับ ' + normText(r.seq);
     if (!it) throw new Error(label + ' ไม่อยู่ใน ขจ.' + j.no);
@@ -469,9 +480,7 @@ function h_savePayments(p, io) {
       upd[it.row] = [it.fy, it.no, it.khbFy, it.khbNo, it.seq, method, ref, store, it.amount, date, 'ปกติ'];
     } catch (e) { throw new Error(label + ': ' + e.message); }
   });
-  var rows = ctx.raw.pays.map(function (r, i) { return upd.hasOwnProperty(i) ? upd[i] : r; });
-  commitChanges(io, { 'การจ่าย': rows });
-  return { saved: Object.keys(upd).length, paid: paid };
+  return paid;
 }
 
 function h_cancelKhj(p, io, user) {

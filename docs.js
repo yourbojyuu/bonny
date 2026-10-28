@@ -412,9 +412,10 @@ var Docs = (function () {
         byKhj[r._khj].push({ khbFy: r._fy, khbNo: r._no, seq: r._seq, method: r.method, ref: String(r.ref || '').trim(), store: sid, date: iso });
       });
       if (bad) { toast('มี ' + bad + ' ช่องที่ยังไม่ครบ (สีแดง) — จ่ายด้วยเช็ค/KTB ต้องมีเลขอ้างอิง และต้องเลือกที่เก็บเมื่อใส่วันที่จ่าย', 'err'); return; }
-      var done = [], p = Promise.resolve();
-      order.forEach(function (n) { p = p.then(function () { return api('savePayments', { no: n, rows: byKhj[n] }).then(function () { done.push('ขจ.' + n); }); }); });
-      busy(this, p).then(function () { return afterSave('บันทึกการจ่าย ' + done.join(', ') + ' แล้ว'); }).catch(function (e) { return afterSave((done.length ? 'บันทึกได้ ' + done.join(', ') + ' · ' : '') + e.message, 'err'); });
+      // ทุก ขจ. ในคำขอเดียว (ผิดแถวเดียว = ไม่บันทึกเลย จึงไม่มีสถานะครึ่ง ๆ กลาง ๆ)
+      var names = order.map(function (n) { return 'ขจ.' + n; }).join(', ');
+      busy(this, api('savePayments', { batch: order.map(function (n) { return { no: n, rows: byKhj[n] }; }) }))
+        .then(function () { return afterSave('บันทึกการจ่าย ' + names + ' แล้ว'); }).catch(function (e) { return afterSave(e.message, 'err'); });
     };
   }
 

@@ -113,18 +113,18 @@ function takeFresh(k, action) {
 }
 function api(action, payload) {
   if (!/^(get|me$|ping|khbDoc|khjDoc)/.test(action)) S.led = null;
-  if (!API_URL || API_URL.indexOf('ใส่') === 0) return Promise.reject(new Error('ยังไม่ได้ใส่ API_URL ใน index.html'));
-  return fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: action, idToken: S.token, payload: payload || {} })
-  }).then(function (r) {
-    if (!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (HTTP ' + r.status + ')');
-    return r.json();
-  }).then(function (res) {
+  return apiSend({ action: action, idToken: S.token, payload: payload || {} }).then(function (res) {
     if (!res.ok) { var e = new Error(res.error || 'เกิดข้อผิดพลาด'); e.code = res.code; throw e; }
     if (res.data && res.data._fresh) { var t = Date.now(); Object.keys(res.data._fresh).forEach(function (k) { FRESH[k] = { d: res.data._fresh[k], t: t }; }); delete res.data._fresh; }
     return res.data;
+  });
+}
+/** ส่งคำขอไปยัง Web App คืนคำตอบดิบ {ok, data | code, error} */
+function apiSend(req) {
+  if (!API_URL || API_URL.indexOf('ใส่') === 0) return Promise.reject(new Error('ยังไม่ได้ใส่ API_URL ใน index.html'));
+  return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(req) }).then(function (r) {
+    if (!r.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (HTTP ' + r.status + ')');
+    return r.json();
   });
 }
 /** โหลด ExcelJS (~950 KB) เฉพาะตอนต้องใช้ (ส่งออก/นำเข้า) ไม่ให้หน้าแรกช้า */

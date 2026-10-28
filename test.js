@@ -204,6 +204,9 @@ if (require.main === module) {
   ok(/ต้องกรอกเลขที่อ้างอิง/.test(call(io, 'tok-fin', 'savePayments', { no: 1, rows: noRef }).error), 'จ่ายด้วยเช็ค/KTB ต้องมีเลขที่อ้างอิง');
   r = call(io, 'tok-fin', 'savePayments', { no: 1, rows: pay });
   ok(r.ok && r.data.paid === 6, 'บันทึกการจ่าย 6 รายการ ' + (r.ok ? '' : r.error));
+  ok(!call(io, 'tok-fin', 'savePayments', { batch: [{ no: 1, rows: pay }, { no: 99, rows: pay }] }).ok, 'บันทึกการจ่ายหลาย ขจ.: มีใบผิด -> ไม่บันทึกเลย');
+  r = call(io, 'tok-fin', 'savePayments', { batch: [{ no: 1, rows: pay }] });
+  ok(r.ok && r.data.paid === 6, 'บันทึกการจ่ายแบบชุด (batch) ได้ผลเท่ากัน ' + (r.ok ? '' : r.error));
   var b27 = grandOf(io, '2026-10-27'), b28 = grandOf(io, '2026-10-28');
   ok(b27.grand === d.grand, 'ก่อนวันจ่าย ยอดไม่เปลี่ยน');
   ok(sat(d.grand) - sat(b28.grand) === sat(j1.total), 'วันจ่าย ยอดลดเท่ายอด ขจ. ทุกสตางค์');
@@ -453,6 +456,19 @@ if (require.main === module) {
   r = call(io, 'tok-t1', 'saveKhb', { date: '2/11/69', lines: TL });
   ok(r.ok && r.data._fresh && r.data._fresh.docs && r.data._fresh.docs.khbs.every(function (h) { return h.owner === 't1@example.com'; }) && r.data._fresh.settings, 'บันทึกแล้วได้ข้อมูลล่าสุดกลับมา (ครูเห็นเฉพาะของตัวเอง) ' + (r.ok ? '' : r.error));
   ok(!(r.data._fresh || {}).receipts, 'ครูไม่ได้ข้อมูลใบเสร็จติดมา');
+  console.log('15) บันทึกเป็นชุด (คำขอเดียว)');
+  var ioB = makeMemIO();
+  var wr = [{ date: '2/11/69', book: '900', no: '1', type: 'T20', method: 'สด', amount: 10 }, { date: '2/11/69', book: '900', no: '1', line: 2, type: 'ไม่มีประเภทนี้', method: 'สด', amount: 5 },
+    { date: '2/11/69', book: '900', no: '2', type: 'T20', method: 'สด', amount: 7 }];
+  r = call(ioB, 'tok-fin', 'importReceipts', { items: wr, commit: true, wholeReceipt: true });
+  ok(r.ok && r.data.added === 1 && r.data.rows[2].saved && !r.data.rows[0].saved, 'wholeReceipt: ใบที่มีบรรทัดผิดไม่บันทึกทั้งใบ ใบที่ถูกบันทึก ' + (r.ok ? JSON.stringify(r.data.count) : r.error));
+  r = call(ioB, 'tok-fin', 'importReceipts', { items: wr.slice(0, 2), commit: true, wholeReceipt: true });
+  ok(r.ok && !r.data.committed, 'wholeReceipt: ไม่มีใบที่บันทึกได้ -> ตอบผลตรวจ ไม่ล้มทั้งคำขอ');
+  call(ioB, 'tok-fin', 'importReceipts', { items: [{ date: '2/11/69', book: '900', no: '3', type: 'T20', method: 'สด', amount: 3 }], commit: true });
+  ok(/เลขที่ 9/.test(call(ioB, 'tok-fin', 'cancelReceipt', { items: [{ book: '900', no: '2' }, { book: '900', no: '9' }], reason: 'ทดสอบ' }).error || ''), 'ยกเลิกหลายใบ: มีใบที่ไม่พบ -> ไม่ยกเลิกเลย');
+  r = call(ioB, 'tok-fin', 'cancelReceipt', { items: [{ book: '900', no: '2' }, { book: '900', no: '3' }], reason: 'ทดสอบ' });
+  ok(r.ok && r.data.receipts === 2 && r.data._fresh.receipts.rows.length >= 2, 'ยกเลิกหลายใบในคำขอเดียว + ได้รายการใบเสร็จล่าสุดกลับมา ' + (r.ok ? '' : r.error));
+
   ok(C.isWriteAction('saveKhb') && !C.isWriteAction('getDocs') && !C.isWriteAction('ping'), 'isWriteAction อ่านจากทะเบียนเดียวกัน');
 
   if (process.env.SHEETIO) console.log('เซลล์ที่เขียนลงชีทจำลองทั้งชุดเทสต์: ' + fakeSpreadsheet.cells);

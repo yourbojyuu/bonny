@@ -273,13 +273,13 @@ var Receipts = (function () {
         p = p.then(function () {
           var items = [], owner = [];
           grp.forEach(function (r) { splitRow(r).items.forEach(function (it) { items.push({ date: r.date, book: r.book, no: r.no, type: it.type, method: it.method, amount: String(it.amount / 100), payer: '' }); owner.push(r); }); });
-          return api('importReceipts', { items: items }).then(function (pv) {
+          // ตรวจและบันทึกในคำขอเดียว: เซิร์ฟเวอร์บันทึกเฉพาะใบที่ถูกทุกบรรทัด (wholeReceipt) แล้วบอกผลรายบรรทัดกลับมา
+          return api('importReceipts', { items: items, commit: true, wholeReceipt: true }).then(function (pv) {
             var badR = {}; pv.rows.forEach(function (x, n) { if (x.status !== 'new') { badR[all.indexOf(owner[n])] = (x.status === 'same' ? 'เล่ม/เลขที่นี้มีอยู่แล้ว (ข้อมูลเหมือนเดิม)' : x.status === 'changed' ? 'เล่ม/เลขที่นี้มีอยู่แล้วแต่ข้อมูลต่างกัน' : x.msg); } });
-            var good = grp.filter(function (r) { return badR[all.indexOf(r)] === undefined; }), goodSet = good;
+            var good = grp.filter(function (r) { return badR[all.indexOf(r)] === undefined; });
             Object.keys(badR).forEach(function (ri) { var r = all[ri]; r._badSig = sigOf(r); g.markRow(Number(ri)); bad.push('เล่ม ' + r.book + ' เลขที่ ' + r.no + ': ' + badR[ri]); });
             if (!good.length) return null;
-            var keep = []; items.forEach(function (it, n) { if (goodSet.indexOf(owner[n]) >= 0) keep.push(it); });
-            return api('importReceipts', { items: keep, commit: true }).then(function () { good.forEach(function (r) { g.lock(r); }); saved += good.length; last = { book: good[good.length - 1].book, no: nextNo(good[good.length - 1].no), date: good[good.length - 1].date, type: '', method: 'สด' }; });
+            good.forEach(function (r) { g.lock(r); }); saved += good.length; last = { book: good[good.length - 1].book, no: nextNo(good[good.length - 1].no), date: good[good.length - 1].date, type: '', method: 'สด' };
           });
         });
       });
@@ -296,14 +296,13 @@ var Receipts = (function () {
       });
     }
     var leaveT = 0;
-    cfgLeave = function () { clearTimeout(leaveT); leaveT = setTimeout(function () { flush(false); }, 250); };
+    cfgLeave = function () { clearTimeout(leaveT); leaveT = setTimeout(function () { flush(false); }, 1200); }; // รอสักครู่ให้หลายแถวไปในคำขอเดียว
     $('rxSave').onclick = function () { var b = this; busy(b, flush(true)); };
     /* ---- ยกเลิกใบที่เลือก ---- */
     $('rxCx').onclick = function () {
       var sel = g.selected(); if (!sel.length) return;
       askReason('ยกเลิกใบเสร็จ ' + sel.length + ' ใบ (ทุกบรรทัดของแต่ละใบ)', 'ยืนยันยกเลิก', function (reason, am, btn) {
-        var p = Promise.resolve();
-        sel.forEach(function (r) { p = p.then(function () { return api('cancelReceipt', { book: r.book, no: r.no, reason: reason }); }); });
+        var p = api('cancelReceipt', { items: sel.map(function (r) { return { book: r.book, no: r.no }; }), reason: reason }); // หลายใบในคำขอเดียว
         busy(btn, p).then(function () { am.close(); toast('ยกเลิก ' + sel.length + ' ใบแล้ว', 'good'); return refresh(); }).catch(function (e) { handleError(e); refresh(); });
       });
     };
