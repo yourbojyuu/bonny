@@ -4,8 +4,15 @@
 
 ## ภาพรวม
 - หลังบ้าน: Google Apps Script Web App (`Code.gs`, `Schema.gs`, `Util.gs`, `Ledger.gs`, `Receipts.gs`, `Docs.gs`) ใช้ Google Sheet เป็นฐานข้อมูล
-- หน้าเว็บ: static vanilla JS (`index.html`, `app.js`, `app.css`, `grid.js`, `paste.js`, `docs.js`, `flow.js`, `receipts.js`, `report.js`, `export.js`, `bento.js`)
-- ทดสอบหลังบ้านด้วย Node: `node test.js` (ต้องผ่านครบ 155 ข้อ)
+- หน้าเว็บ: static vanilla JS (`index.html`, `app.js`, `app.css`, `grid.js`, `paste.js`, `docs.js`, `flow.js`, `receipts.js`, `report.js`, `export.js`, `import.js`, `bento.js`) · `vendor/exceljs.min.js` โหลดเฉพาะตอนส่งออก/นำเข้า (`loadExcel()`)
+- ทดสอบหลังบ้านด้วย Node: `node test.js` และ `SHEETIO=1 node test.js` (ชุดเดียวกันแต่ผ่าน `makeSheetIO` จริงบนชีทจำลอง) + `node test_import.js` — ต้องผ่านครบทุกข้อ
+
+## โครงสร้างที่ควรรู้ (หลังปรับประสิทธิภาพ)
+- action ทั้งหมดอยู่ในตารางเดียว `actions()` ใน `Code.gs`: `[ฟังก์ชัน, บทบาท, เขียนหรือไม่, ข้อมูลที่ส่งกลับ]` — เพิ่ม action ใหม่แก้ที่เดียว
+- `io.write` เขียนเฉพาะตั้งแต่แถวแรกที่เปลี่ยน (`diffRows` ใน `Util.gs`) ไม่เขียนทั้งชีทใหม่
+- action ที่บันทึกส่งข้อมูลล่าสุดกลับใน `_fresh` (docs/receipts/settings) → `reloadDocs/Receipts/Settings` ในหน้าเว็บใช้ของที่ได้มาแทนการยิงคำขอใหม่
+- บันทึกเป็นชุดในคำขอเดียว: `importReceipts {wholeReceipt}` · `cancelReceipt {items}` · `savePayments {batch}`
+- ตัวแปลงจำนวนเงินของหน้าเว็บมีตัวเดียว `Paste.num` (อ่านไม่ออก = NaN)
 
 ## กติกาที่ตกลงไว้ (ห้ามทำลาย)
 1. Ledger คือแหล่งความจริงเดียว · SCHEMA กำหนดที่เดียว (`Schema.gs`)
