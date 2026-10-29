@@ -260,6 +260,7 @@ function startApp(token, remember) {
     if (r.version && r.version !== APP_VERSION) toast('หน้าเว็บกับหลังบ้านคนละรุ่น (' + APP_VERSION + ' / ' + r.version + ') — อัปเดตฝั่งที่เก่ากว่า', 'err');
   }).catch(function (e) { if (e && e.code === 'MUSTCHANGE') authView('change', e.message); else signOut(e && e.message ? e.message : String(e)); });
 }
+function setUMenu(on) { $('uMenu').hidden = !on; $('whoBtn').setAttribute('aria-expanded', String(!!on)); }
 /** เปลี่ยนรหัสผ่านของตัวเอง (ปุ่ม "รหัสผ่าน" มุมขวาบน) */
 function openMyPassword() {
   var m = openModal({ title: 'เปลี่ยนรหัสผ่านของฉัน', width: 460,
@@ -360,7 +361,9 @@ function reloadSettings() {
 /** ชื่อผู้ใช้ + ตัวสลับโหมด (admin สลับดูหน้าของครู/ผู้บริหารได้) */
 function renderWho() {
   var w = $('who');
-  w.textContent = S.me.name + ' · ' + MODES[mode()];
+  w.textContent = S.me.name;
+  $('whoAv').textContent = Array.from(String(S.me.name || '?'))[0];
+  $('uName').textContent = S.me.name; $('uRole').textContent = S.me.role + ' · ' + MODES[mode()];
   var old = $('modeSw'); if (old) old.parentNode.removeChild(old);
   var ml = modeList();
   $('topdock').classList.remove('hasSw');
@@ -1122,7 +1125,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (b && b.getAttribute('data-tab') !== S.tab) go(b.getAttribute('data-tab'));
   });
   $('btnOut').addEventListener('click', function () { signOut(''); });
-  $('btnPw').addEventListener('click', openMyPassword);
+  $('btnPw').addEventListener('click', function () { setUMenu(false); openMyPassword(); });
+  $('btnOut').addEventListener('click', function () { setUMenu(false); });
+  $('whoBtn').addEventListener('click', function (e) { e.stopPropagation(); setUMenu($('uMenu').hidden); });
+  document.addEventListener('click', function (e) { if (!$('uMenu').hidden && !e.target.closest('.who')) setUMenu(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('uMenu').hidden) { setUMenu(false); $('whoBtn').focus(); } });
   var saved = tokSaved();
   if (saved.tok && apiUrl()) startApp(saved.tok, saved.remember);
   else authFlow().catch(function (e) { authView(apiUrl() ? 'login' : 'url', 'เชื่อมต่อระบบไม่ได้: ' + e.message); });

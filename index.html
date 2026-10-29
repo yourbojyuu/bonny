@@ -33,7 +33,10 @@
         <span class="logo"><img src="logo.png" alt="ตราโรงเรียน"></span>
         <div><h1>ระบบการเงิน<b>โรงเรียน</b></h1><small id="fyLabel"></small></div>
       </div>
-      <div class="who"><span class="chip" id="who"></span><button class="btn ghost sm" id="btnPw" type="button">รหัสผ่าน</button><button class="btn ghost sm" id="btnOut" type="button">ออก</button></div>
+      <div class="who">
+        <button class="whobtn" id="whoBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="uMenu"><span class="av" id="whoAv" aria-hidden="true"></span><span class="wn" id="who"></span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="umenu" id="uMenu" role="menu" hidden><div class="uhead"><b id="uName"></b><small id="uRole"></small></div><button id="btnPw" type="button" role="menuitem">เปลี่ยนรหัสผ่าน</button><button id="btnOut" class="out" type="button" role="menuitem">ออกจากระบบ</button></div>
+      </div>
     </header>
     <nav class="tabs glass" id="tabs" role="tablist" aria-label="เมนูหลัก"></nav>
     <main id="view"></main>
@@ -43,6 +46,7 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="app.js"></script>
+<script src="combo.js"></script>
 <script src="paste.js"></script>
 <script src="grid.js"></script>
 <script src="docs.js"></script>
