@@ -6,7 +6,7 @@
 - หลังบ้าน: Google Apps Script Web App (`Code.gs`, `Schema.gs`, `Util.gs`, `Ledger.gs`, `Receipts.gs`, `Docs.gs`) ใช้ Google Sheet เป็นฐานข้อมูล
 - เข้าระบบ: ชื่อผู้ใช้ + รหัสผ่าน (ไม่ใช้ Google Sign-In แล้ว) · ชีท `รหัสผ่าน` เก็บแฮช · โทเคนเซ็น HMAC (กุญแจใน Script Properties) · ติดตั้ง/ใช้งานดู `INSTALL.md`
 - หน้าเว็บ: static vanilla JS (`index.html`, `config.js` (API_URL), `app.js`, `app.css`, `grid.js`, `paste.js`, `docs.js`, `flow.js`, `receipts.js`, `report.js`, `export.js`, `import.js`, `bento.js`) · `vendor/exceljs.min.js` โหลดเฉพาะตอนส่งออก/นำเข้า (`loadExcel()`)
-- ทดสอบหลังบ้านด้วย Node: `node test.js` และ `SHEETIO=1 node test.js` (ชุดเดียวกันแต่ผ่าน `makeSheetIO` จริงบนชีทจำลอง) + `node test_import.js` — ต้องผ่านครบทุกข้อ
+- ทดสอบ: `bash run_tests.sh` = `node test.js` + `SHEETIO=1 node test.js` (ผ่าน `makeSheetIO` จริงบนชีทจำลอง) + `node test_import.js` + `node test_ui.js` (เบราว์เซอร์จริงด้วย playwright เน้นกรณีผิดพลาด) — ต้องผ่านครบ · **กติกา: ทุกฟีเจอร์ต้องมีเทสต์กรณีผิดพลาด** (ดู CLAUDE.md) · test.js ส่วน 18 สร้างจากทะเบียน action อัตโนมัติ (สิทธิ์/โทเคน/ข้อมูลเสีย) ส่วน 19 คือกรณีผิดพลาดเชิงความหมายรายฟีเจอร์ · หลังบ้านตรวจรูปร่าง payload ที่เดียวใน `validatePayload` (Code.gs)
 
 ## โครงสร้างที่ควรรู้ (หลังปรับประสิทธิภาพ)
 - action ทั้งหมดอยู่ในตารางเดียว `actions()` ใน `Code.gs`: `[ฟังก์ชัน, บทบาท, เขียนหรือไม่, ข้อมูลที่ส่งกลับ]` — เพิ่ม action ใหม่แก้ที่เดียว

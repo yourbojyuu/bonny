@@ -91,13 +91,34 @@ function authorize(action, user) {
 /* ============ router (ผ่าน io ไม่รู้จัก SpreadsheetApp) ============
  * io = { verifyToken(idToken)->email, values(sheetName)->2D|null, write(sheetName, rows) }
  */
+/** ตรวจรูปร่างข้อมูลที่ส่งมาก่อนถึง handler (กันข้อมูลเสียที่ทำให้โปรแกรมพัง แล้วตอบเป็นข้อความไทยที่อ่านรู้เรื่อง)
+ *  - payload ต้องเป็นอ็อบเจ็กต์ · ค่าทั่วไปต้องเป็นข้อความ/ตัวเลข · เฉพาะคีย์รายการ (items rows lines batch nos values) เป็นอาร์เรย์/อ็อบเจ็กต์ได้
+ *  - ในอาร์เรย์ห้ามมีช่องว่าง (null) และสมาชิกของ items/rows/lines/batch ต้องเป็นอ็อบเจ็กต์หรืออาร์เรย์ */
+var LIST_KEYS = { items: 1, rows: 1, lines: 1, batch: 1, nos: 1, values: 1 };
+function validatePayload(p) {
+  if (p === null || p === undefined) return {};
+  if (typeof p !== 'object' || Array.isArray(p)) throw fail('BAD_INPUT', 'ข้อมูลที่ส่งมาไม่ถูกต้อง');
+  Object.keys(p).forEach(function (k) {
+    var v = p[k];
+    if (v === null || typeof v !== 'object') return;
+    if (!LIST_KEYS[k]) throw fail('BAD_INPUT', 'ข้อมูล "' + k + '" ต้องเป็นข้อความหรือตัวเลข');
+    if (!Array.isArray(v)) return;
+    v.forEach(function (e, i) {
+      if (e === null || e === undefined) throw fail('BAD_INPUT', 'รายการที่ ' + (i + 1) + ' ใน "' + k + '" ว่างเปล่า');
+      if (k !== 'nos' && typeof e !== 'object') throw fail('BAD_INPUT', 'รายการที่ ' + (i + 1) + ' ใน "' + k + '" รูปแบบไม่ถูกต้อง');
+    });
+  });
+  return p;
+}
+
 function dispatch(req, io) {
   try {
     var action = normText(req && req.action);
+    var payload = validatePayload(req && req.payload);
     var acts = actions();
     if (action === 'ping') return { ok: true, data: { pong: true, version: APP_VERSION } };
     if (!action || !acts.hasOwnProperty(action)) throw fail('BAD_ACTION', 'ไม่รู้จัก action "' + action + '"');
-    if (acts[action][1] === 'PUBLIC') return { ok: true, data: acts[action][0](req.payload || {}, io) };
+    if (acts[action][1] === 'PUBLIC') return { ok: true, data: acts[action][0](payload, io) };
     var token = req.token || req.idToken;
     if (!token) throw fail('AUTH', 'กรุณาเข้าสู่ระบบ');
     // io.verifyToken ใช้เฉพาะในเทสต์ (โทเคนจำลอง) · ของจริงตรวจลายเซ็นโทเคนด้วย verifySession
@@ -105,7 +126,7 @@ function dispatch(req, io) {
     var user = findUser(tableRows(io, 'ผู้ใช้'), ses.user);
     if (ses.mustChange && ['changePassword', 'me'].indexOf(action) < 0) throw fail('MUSTCHANGE', 'กรุณาตั้งรหัสผ่านใหม่ก่อนใช้งาน');
     authorize(action, user);
-    var data = acts[action][0](req.payload || {}, io, user);
+    var data = acts[action][0](payload, io, user);
     if (acts[action][3] && data && typeof data === 'object') data._fresh = freshData(acts[action][3], io, user, acts);
     return { ok: true, data: data };
   } catch (e) {

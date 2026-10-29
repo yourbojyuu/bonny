@@ -35,8 +35,10 @@ function nextNo(rows, fy) {
 }
 
 /** ตรวจรายการใน ขบ. -> แถวมาตรฐาน (ลำดับ 1..n) */
+var MAX_KHB_LINES = 200, MAX_PAYEE_LEN = 150, MAX_NOTE_LEN = 500;
 function validateKhbLines(lines, types, registry) {
   if (!Array.isArray(lines) || !lines.length) throw new Error('ขบ. ต้องมีอย่างน้อย 1 รายการ');
+  if (lines.length > MAX_KHB_LINES) throw new Error('ขบ. ใบเดียวมีได้ไม่เกิน ' + MAX_KHB_LINES + ' รายการ (มี ' + lines.length + ') กรุณาแบ่งเป็นหลายใบ');
   var out = [];
   lines.forEach(function (l, i) {
     var n = i + 1;
@@ -45,6 +47,7 @@ function validateKhbLines(lines, types, registry) {
       if (!isActive(findById(types, t)[4])) throw new Error('ประเภทเงิน "' + normText(l.type) + '" ปิดใช้งานแล้ว');
       var payee = normText(l.payee);
       if (!payee) throw new Error('ยังไม่ได้กรอกชื่อผู้รับ');
+      if (payee.length > MAX_PAYEE_LEN) throw new Error('ชื่อผู้รับยาวเกิน ' + MAX_PAYEE_LEN + ' ตัวอักษร');
       var kind = normText(l.kind);
       if (LINE_KINDS.indexOf(kind) < 0) throw new Error('ชนิด "' + kind + '" ต้องเป็น ' + LINE_KINDS.join(' / '));
       var method = normText(l.method);
@@ -366,6 +369,7 @@ function h_getDocs(p, io, user) {
 function h_saveKhb(p, io, user) {
   var fy = FISCAL_YEAR, ctx = docsContext(io);
   var date = parseFyDate(p.date, fy, 'วันที่ ขบ.');
+  if (normText(p.note).length > MAX_NOTE_LEN) throw new Error('หมายเหตุยาวเกิน ' + MAX_NOTE_LEN + ' ตัวอักษร');
   assertOpenDay(ctx.closed, date);
   var registryRows = tableRows(io, 'ผู้รับเงิน');
   var lines = validateKhbLines(p.lines, ctx.set.types, payeeMap(registryRows));

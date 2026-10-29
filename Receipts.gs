@@ -130,10 +130,13 @@ function mergePayees(oldRows, newRows, types, aliases) {
     byKey[k] = [normText(r[0]), normText(r[1]) || 'ไม่มีภาษี', normText(r[2]) || 'ไม่', normText(r[3]), normText(r[4])];
     order.push(k);
   });
-  var errors = [];
+  var errors = [], seenAt = {};
   newRows.forEach(function (r, i) {
     var name = normText(r[0]);
     if (!name) return;
+    var sig = [normText(r[1]) || 'ไม่มีภาษี', normText(r[2]), normText(r[3]), normText(r[4])].join('|'), k0 = normKey(name);
+    if (seenAt[k0] && seenAt[k0].sig !== sig) { errors.push('ชื่อ "' + name + '" ซ้ำในรายการ (แถวที่ ' + seenAt[k0].row + ' และ ' + (i + 1) + ') แต่ข้อมูลไม่ตรงกัน'); return; }
+    if (!seenAt[k0]) seenAt[k0] = { row: i + 1, sig: sig };
     var tax = normText(r[1]) || 'ไม่มีภาษี';
     if (TAX_TYPES.indexOf(tax) < 0) { errors.push('แถวที่ ' + (i + 1) + ' (' + name + '): ภาษี "' + tax + '" ต้องเป็น ' + TAX_TYPES.join(' / ')); return; }
     var method = normText(r[3]);

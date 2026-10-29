@@ -552,6 +552,118 @@ if (require.main === module) {
   ok(call(ioD, 'tok-fin', 'getCheques').ok, 'ยังไม่มีชีท เช็คขึ้นเงิน: ดูทะเบียนได้ (ทุกใบค้าง)');
   ok(/setupSheets/.test(call(ioD, 'tok-fin', 'saveChequeClear', { items: [{ ref: '1', date: '5/10/69' }] }).error), 'ยังไม่มีชีท: บันทึกแล้วบอกให้รัน setupSheets');
 
+  console.log('18) ตารางกรณีผิดพลาดอัตโนมัติ — สร้างจากทะเบียน action จึงครอบคลุม action ใหม่ทุกตัวโดยไม่ต้องแก้เทสต์');
+  var acts18 = C.actions(), names18 = Object.keys(acts18);
+  var TOK = { 'admin': 'tok-admin', 'การเงิน': 'tok-fin', 'พัสดุ': 'tok-sup', 'ผู้บริหาร': 'tok-boss', 'ครู': 'tok-t1' };
+  var JSBAD = /undefined|TypeError|Cannot read|is not a function|is not defined|\[object|NaN|Invalid Date/;
+  var snap = function (io) { return JSON.stringify(io.sheets); };
+  // 18.1 สิทธิ์: ทุก action × ทุกบทบาท (ไม่มีสิทธิ์ต้อง FORBIDDEN และห้ามแตะชีท)
+  var permBad = [], ioP = makeMemIO();
+  names18.forEach(function (a) {
+    if (acts18[a][1] === 'PUBLIC') return;
+    C.ROLES.forEach(function (role) {
+      if (role === 'admin') return;
+      var allowed = acts18[a][1].indexOf(role) >= 0, b = snap(ioP), r = call(ioP, TOK[role], a, {});
+      if (!allowed && (r.code !== 'FORBIDDEN' || snap(ioP) !== b)) permBad.push(a + '×' + role);
+      if (allowed && r.code === 'FORBIDDEN') permBad.push(a + '×' + role + '(ควรเข้าได้)');
+    });
+  });
+  ok(!permBad.length, 'สิทธิ์ทุก action × ทุกบทบาทตรงทะเบียน ไม่มีสิทธิ์ = FORBIDDEN และไม่แตะชีท ' + permBad.join(','));
+  // 18.2 ไม่มี/ปลอมโทเคน
+  var authBad = [];
+  names18.forEach(function (a) {
+    if (acts18[a][1] === 'PUBLIC') return;
+    ['', null, 'ปลอม', 'tok-stranger', 'tok-off'].forEach(function (t) { var r = call(makeMemIO(), t, a, {}); if (r.ok || r.code !== 'AUTH') authBad.push(a + '/' + t); });
+  });
+  ok(!authBad.length, 'ไม่มี/โทเคนปลอม/ผู้ใช้ปิดบัญชี -> AUTH ทุก action ' + authBad.slice(0, 6).join(','));
+  // 18.3 ข้อมูลเสียทุกแบบ: ต้องได้ข้อความไทยที่อ่านรู้เรื่อง (ไม่ใช่ข้อผิดพลาดภายในของโปรแกรม) และ action ที่ล้มห้ามแก้ชีท
+  var BADP = [{}, { items: 'x' }, { items: [] }, { items: [null] }, { items: [{}] }, { items: [1, 2, 3] }, { rows: 'x' }, { rows: [null] }, { rows: [[]] }, { rows: [{}] },
+    { no: 'abc' }, { no: -1 }, { no: 99999 }, { no: {} }, { nos: 'x' }, { nos: [99999] }, { nos: [null] }, { date: 'abc' }, { date: '2026-13-45' }, { date: {} }, { lines: 'x' }, { lines: [null] }, { lines: [{}] },
+    { values: 'x' }, { values: [] }, { user: 'a b', pass: 12345678 }, { user: {}, pass: {} }, { user: 'x', role: 'ไม่มีบทบาทนี้' }, { reason: 'x' }, { batch: 'x' }, { batch: [{ no: 99 }] }, { batch: [null] },
+    { book: {}, no: [] }, { old: {}, pass: [] }, { type: 'T99', amount: 'abc' }, { commit: true }, { commit: true, items: [{ ref: {}, date: [] }] }, { payload: 'x'.repeat(5000) }];
+  var crash = [], dirty = [];
+  names18.forEach(function (a) {
+    BADP.forEach(function (bp, i) {
+      var io = makeMemIO(), b = snap(io), tok = acts18[a][1] === 'PUBLIC' ? null : 'tok-admin', r = call(io, tok, a, JSON.parse(JSON.stringify(bp)));
+      if (!r.ok && JSBAD.test(String(r.error))) crash.push(a + '#' + i + ':' + String(r.error).slice(0, 50));
+      if (!r.ok && acts18[a][2] === true && snap(io) !== b) dirty.push(a + '#' + i);
+    });
+  });
+  ok(!crash.length, 'ข้อมูลเสีย ' + BADP.length + ' แบบ × ทุก action: ไม่มีข้อผิดพลาดภายใน (ต้องเป็นข้อความไทยที่อ่านรู้เรื่อง) ' + (process.env.ALLCRASH ? crash.join('\n   ') : crash.slice(0, 8).join(' | ') + (crash.length > 8 ? ' (+' + (crash.length - 8) + ')' : '')));
+  ok(!dirty.length, 'action ที่ล้มเหลวต้องไม่แก้ชีทเลย (ทั้งชุดหรือไม่ทำ) ' + dirty.slice(0, 8).join(','));
+
+  console.log('19) กรณีผิดพลาดเชิงความหมาย (ข้อมูลรูปร่างถูกแต่ค่าผิด) — ทุกข้อต้องถูกปฏิเสธด้วยข้อความไทยบอกเหตุ และชีทไม่เปลี่ยน');
+  var ioF = makeMemIO();
+  var L1 = function (o) { return Object.assign({ type: 'T20', payee: 'x', kind: 'พัสดุ', method: 'เช็ค', gross: 100, tax: 0, taxType: 'ไม่มีภาษี' }, o || {}); };
+  var NEG = [
+    ['tok-admin', 'saveOpening', { rows: [['T01', 'S02', -500]] }, /มากกว่า 0/, 'ยอดยกมาติดลบ'],
+    ['tok-admin', 'saveOpening', { rows: [['T01', 'S02', 'abc']] }, /อ่านไม่ได้/, 'ยอดยกมาเป็นข้อความ'],
+    ['tok-admin', 'saveOpening', { rows: [['T99', 'S02', 100]] }, /ไม่ตรงกับชีทตั้งค่า/, 'ยอดยกมา ประเภทเงินไม่มี'],
+    ['tok-admin', 'saveOpening', { rows: [['T01', 'S99', 100]] }, /ไม่ตรงกับชีทตั้งค่า/, 'ยอดยกมา ที่เก็บไม่มี'],
+    ['tok-admin', 'saveOpening', { rows: [['T01', 'S02', 100], ['T01', 'S02', 50]] }, /ซ้ำกัน/, 'ยอดยกมาคู่ซ้ำ'],
+    ['tok-admin', 'saveStores', { rows: [['S01', 'ก', 'เงินสด'], ['S01', 'ข', 'บัญชี']] }, /ซ้ำ/, 'ที่เก็บเงินรหัสซ้ำ'],
+    ['tok-admin', 'saveStores', { rows: [['S01', 'ก', 'ลอย']] }, /ต้องเป็น เงินสด/, 'ที่เก็บเงิน ชนิดผิด'],
+    ['tok-admin', 'saveStores', { rows: [['S01', '', 'บัญชี']] }, /ต้องมีชื่อ/, 'ที่เก็บเงิน ไม่มีชื่อ'],
+    ['tok-admin', 'saveTypes', { rows: [['T01', 'ก', 'รายได้', 'S02', 'ใช่'], ['T01', 'ข', 'รายได้', 'S02', 'ใช่']] }, /ซ้ำ/, 'ประเภทเงินรหัสซ้ำ'],
+    ['tok-admin', 'saveTypes', { rows: [['T01', 'ก', 'รายได้', 'S99', 'ใช่']] }, /ไม่ตรงกับชีทตั้งค่า/, 'ประเภทเงิน ที่เก็บหลักไม่มี'],
+    ['tok-admin', 'saveDocSettings', { values: { 'ส่วนราชการ': 'x'.repeat(600) } }, /ยาวเกิน/, 'ตั้งค่าเอกสาร ข้อความยาวผิดปกติ'],
+    ['tok-admin', 'saveAliases', { rows: [['xx', 'T99']] }, /ไม่ตรงกับชีทตั้งค่า/, 'ชื่อย่อ ชี้ประเภทที่ไม่มี'],
+    ['tok-fin', 'savePayees', { rows: [['ร้านก', 'ภาษีมั่ว', 'ไม่', 'เช็ค', 'T20']] }, /ต้องเป็น ไม่มีภาษี/, 'ผู้รับ ภาษีผิดประเภท'],
+    ['tok-fin', 'savePayees', { rows: [['ร้านก', 'ไม่มีภาษี', 'ไม่', 'เช็ค', 'T20'], ['ร้านก', 'ภ.ง.ด.53', 'ไม่', 'เช็ค', 'T20']] }, /ซ้ำในรายการ/, 'ผู้รับชื่อเดียวกันแต่ภาษีไม่ตรงกัน'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ gross: -5 })] }, /มากกว่า 0/, 'ขบ. ยอดติดลบ'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ gross: 0 })] }, /มากกว่า 0/, 'ขบ. ยอดเป็น 0'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ tax: 500, taxType: 'ภ.ง.ด.3' })] }, /น้อยกว่ายอดรวม/, 'ขบ. ภาษีเกินยอด'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ tax: 5 })] }, /เลือกประเภทภาษี/, 'ขบ. มีภาษีแต่ไม่เลือกประเภท'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ method: 'ผ่อน' })] }, /วิธีจ่าย/, 'ขบ. วิธีจ่ายผิด'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ kind: 'อื่น' })] }, /ชนิด/, 'ขบ. ชนิดผิด'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ payee: '   ' })] }, /ชื่อผู้รับ/, 'ขบ. ไม่มีชื่อผู้รับ'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ payee: 'ก'.repeat(3000) })] }, /ยาวเกิน/, 'ขบ. ชื่อผู้รับยาวผิดปกติ'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: Array(500).fill(L1()) }, /ไม่เกิน 200/, 'ขบ. รายการมากผิดปกติ'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', note: 'ก'.repeat(600), lines: [L1()] }, /หมายเหตุยาวเกิน/, 'ขบ. หมายเหตุยาวผิดปกติ'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [L1({ type: 'T99' })] }, /ไม่ตรงกับชีทตั้งค่า/, 'ขบ. ประเภทเงินไม่มี'],
+    ['tok-fin', 'saveKhb', { date: '2/10/69', lines: [] }, /อย่างน้อย 1/, 'ขบ. ไม่มีรายการ'],
+    ['tok-fin', 'saveKhb', { date: '1/1/2569', lines: [L1()] }, /นอกปีงบ/, 'ขบ. วันที่นอกปีงบ'],
+    ['tok-boss', 'approveKhb', { nos: [999], decision: 'อนุมัติ' }, /ไม่พบ ขบ/, 'อนุมัติ ขบ. ที่ไม่มี'],
+    ['tok-boss', 'approveKhb', { nos: [], decision: 'อนุมัติ' }, /./, 'อนุมัติโดยไม่เลือก ขบ.'],
+    ['tok-boss', 'approveKhb', { nos: [1], decision: 'มั่ว' }, /อนุมัติ หรือ ส่งกลับ/, 'อนุมัติ ผลพิจารณาแปลก'],
+    ['tok-boss', 'approveKhb', { nos: [1], decision: 'ส่งกลับ' }, /ต้องระบุเหตุผล/, 'ส่งกลับไม่ใส่เหตุผล'],
+    ['tok-fin', 'receiveKhb', { nos: [999] }, /ไม่พบ ขบ/, 'รับเรื่อง ขบ. ที่ไม่มี'],
+    ['tok-fin', 'createKhj', { date: '2/10/69', items: [] }, /ยังไม่ได้เลือก/, 'ขจ. ไม่เลือกรายการ'],
+    ['tok-fin', 'createKhj', { date: '2/10/69', items: [{ fy: 2570, no: 99, seq: 1 }] }, /ไม่พบ/, 'ขจ. ชี้รายการที่ไม่มี'],
+    ['tok-fin', 'cancelKhj', { no: 5, reason: 'x' }, /ไม่พบ ขจ/, 'ยกเลิก ขจ. ที่ไม่มี'],
+    ['tok-fin', 'cancelKhb', { no: 5, reason: 'x' }, /ไม่พบ ขบ/, 'ยกเลิก ขบ. ที่ไม่มี'],
+    ['tok-fin', 'savePayments', { no: 5, rows: [{ khbFy: 2570, khbNo: 1, seq: 1, method: 'เช็ค' }] }, /ไม่พบ ขจ/, 'ระบุการจ่าย ขจ. ที่ไม่มี'],
+    ['tok-fin', 'savePayments', { no: 1, rows: [] }, /./, 'ระบุการจ่ายโดยไม่มีแถว'],
+    ['tok-admin', 'getBalances', { date: '2020-01-01' }, /นอกปีงบ/, 'ดูยอดคงเหลือวันที่นอกปีงบ'],
+    ['tok-admin', 'getBalances', { date: 'ไม่ใช่วันที่' }, /อ่านไม่ได้/, 'ดูยอดคงเหลือ วันที่อ่านไม่ได้'],
+    ['tok-admin', 'khbDoc', { no: 999 }, /ไม่พบ ขบ/, 'พิมพ์ ขบ. ที่ไม่มี'],
+    ['tok-admin', 'khjDoc', { no: 999 }, /ไม่พบ ขจ/, 'พิมพ์ ขจ. ที่ไม่มี'],
+    ['tok-fin', 'importReceipts', { items: Array(2000).fill({ date: '2/11/69', book: '1', no: '1', type: 'T03', method: 'สด', amount: 1 }) }, /ไม่เกิน 1,500/, 'นำเข้าใบเสร็จมากเกินกำหนด'],
+    ['tok-fin', 'importReceipts', { items: [] }, /ไม่มีข้อมูล/, 'นำเข้าใบเสร็จโดยไม่มีแถว'],
+    ['tok-fin', 'cancelReceipt', { book: '1', no: '999', reason: 'x' }, /ไม่พบใบเสร็จ/, 'ยกเลิกใบเสร็จที่ไม่มี'],
+    ['tok-fin', 'cancelReceipt', { book: '1', no: '1', reason: '' }, /เหตุผล/, 'ยกเลิกใบเสร็จไม่ใส่เหตุผล'],
+    ['tok-fin', 'voidReceipts', { items: [{ date: '2/11/69', book: '', no: '1' }] }, /เล่มที่และเลขที่/, 'ใบยกเลิก ไม่มีเล่มที่'],
+    ['tok-fin', 'savePackages', { rows: [{ total: 100, name: 'x', items: [{ type: 'T03', amount: 60 }] }] }, /ไม่เท่ายอดรวม/, 'แพ็กเกจ ผลรวมไม่เท่ายอด'],
+    ['tok-fin', 'savePackages', { rows: [{ total: 100, name: 'x', items: [] }] }, /ไม่มีรายการ/, 'แพ็กเกจ ไม่มีรายการ'],
+    ['tok-fin', 'savePackages', { rows: [{ total: 100, name: 'x', items: [{ type: 'T99', amount: 100 }] }] }, /ไม่ตรงกับชีทตั้งค่า/, 'แพ็กเกจ ประเภทเงินไม่มี'],
+    ['tok-admin', 'saveUser', { user: 'admin@example.com', role: 'การเงิน' }, /ตัวเอง/, 'admin ลดสิทธิ์ตัวเอง'],
+    ['tok-admin', 'saveUser', { user: 'a b', role: 'การเงิน', tempPass: 'abcd1234' }, /ช่องว่าง/, 'ชื่อผู้ใช้มีช่องว่าง'],
+    ['tok-admin', 'saveUser', { user: 'newuser', role: 'ไม่มีบทบาทนี้', tempPass: 'abcd1234' }, /บทบาท/, 'บทบาทผิด'],
+    ['tok-admin', 'saveUser', { user: 'newuser', role: 'การเงิน' }, /รหัสผ่านชั่วคราว/, 'ผู้ใช้ใหม่ไม่มีรหัสชั่วคราว'],
+    ['tok-admin', 'saveUser', { user: 'newuser', role: 'การเงิน', tempPass: '123' }, /อย่างน้อย 8/, 'รหัสชั่วคราวสั้นไป'],
+    ['tok-fin', 'saveChequeClear', { items: [] }, /ไม่มีรายการ/, 'ขึ้นเงินเช็คโดยไม่มีรายการ'],
+    ['tok-fin', 'saveChequeClear', { items: Array(900).fill({ ref: '1', date: '5/10/69' }) }, /ไม่เกิน 800/, 'ขึ้นเงินเช็คมากเกินกำหนด'],
+    ['tok-fin', 'voidChequeClear', { items: [], reason: 'x' }, /ไม่มีเช็ค/, 'ยกเลิกขึ้นเงิน ไม่มีรายการ']
+  ];
+  var negBad = [];
+  NEG.forEach(function (n) {
+    var before = snap(ioF), r = call(ioF, n[0], n[1], n[2]);
+    if (r.ok || !n[3].test(String(r.error)) || /undefined|\[object|NaN/.test(String(r.error)) || (n[1] !== 'getBalances' && n[1] !== 'khbDoc' && n[1] !== 'khjDoc' && snap(ioF) !== before)) negBad.push(n[4] + ' => ' + (r.ok ? 'สำเร็จทั้งที่ควรผิด' : String(r.error).slice(0, 70)));
+  });
+  ok(!negBad.length, NEG.length + ' กรณีผิดพลาดถูกปฏิเสธครบ มีข้อความไทยบอกเหตุ และชีทไม่เปลี่ยน ' + negBad.join(' || '));
+  var vp = C.validatePayload;
+  ok(threws(function () { vp([1]); }, /ไม่ถูกต้อง/) && threws(function () { vp('x'); }) && vp(null) && threws(function () { vp({ no: {} }); }, /ข้อความหรือตัวเลข/) && threws(function () { vp({ items: [null] }); }, /ว่างเปล่า/) && threws(function () { vp({ rows: [3] }); }, /รูปแบบไม่ถูกต้อง/) && !threws(function () { vp({ nos: [1, 2], rows: [[1], { a: 1 }], values: { a: 'b' } }); }), 'validatePayload: ปฏิเสธรูปร่างผิด ยอมรับรูปร่างที่หน้าเว็บส่งจริง');
+
   console.log('15) บันทึกเป็นชุด (คำขอเดียว)');
   var ioB = makeMemIO();
   var wr = [{ date: '2/11/69', book: '900', no: '1', type: 'T20', method: 'สด', amount: 10 }, { date: '2/11/69', book: '900', no: '1', line: 2, type: 'ไม่มีประเภทนี้', method: 'สด', amount: 5 },

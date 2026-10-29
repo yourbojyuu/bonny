@@ -285,6 +285,7 @@ function h_saveDocSettings(p, io) {
   if (!p.values || typeof p.values !== 'object') throw new Error('ไม่มีข้อมูลตั้งค่าเอกสาร');
   var rows = DOC_SETTING_SEED.map(function (r) {
     var v = p.values.hasOwnProperty(r[0]) ? normText(p.values[r[0]]) : r[1];
+    if (v.length > 500) throw new Error('"' + r[0] + '" ยาวเกิน 500 ตัวอักษร');
     return [r[0], v];
   });
   io.write('ตั้งค่าเอกสาร', rows);
