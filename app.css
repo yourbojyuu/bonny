@@ -1500,3 +1500,33 @@ select:not(.cb-hid) { -webkit-appearance: none; appearance: none; padding-right:
   .flow .tile .v { font-size: 18px; white-space: nowrap; }
   .seg2 { display: flex; } .seg2 button { white-space: nowrap; padding: 8px 10px; flex: 1; justify-content: center; } .seg2 button b { font-size: 14px; }
 }
+
+/* ===== ทะเบียนคุมเช็ค ===== */
+.cq-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 0 0 14px; }
+.cq-card { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 14px 16px; border-radius: 20px; border: 1px solid var(--line); background: rgba(255,255,255,.86); cursor: pointer; font: inherit; color: var(--ink);
+  transition: transform .4s var(--spring), box-shadow .3s var(--ease), border-color .3s, background .3s; }
+.cq-card:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -22px var(--c1); }
+.cq-card[aria-pressed="true"] { border-color: var(--c1); background: color-mix(in srgb, var(--c2) 11%, #fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c2) 18%, transparent); }
+.cq-k { font-size: 13.5px; font-weight: 700; color: var(--ink2); }
+.cq-n { font-size: 13.5px; color: var(--muted); } .cq-n b { font-family: var(--num); font-size: 26px; color: var(--ink); margin-right: 2px; }
+.cq-a { font-weight: 600; color: var(--c1); } .cq-s { font-size: 12.5px; color: var(--muted); }
+.cq-warn { margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; background: #ffe9ec; color: #8f1230; font-weight: 600; }
+.cq-tools .cq-q { min-width: 200px; } .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.cq-wrap { margin-bottom: 70px; }
+table.cq td { vertical-align: top; } table.cq .cq-c { width: 44px; text-align: center; }
+.cq-no { font-family: var(--num); font-size: 16px; } .cq-st { display: block; color: var(--muted); font-size: 12.5px; }
+.cq-g { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 12.5px; font-weight: 700; margin-left: 4px; background: #eef0f5; color: var(--ink2); }
+.cq-g.g-a { background: #e3f0ff; color: #0a4fb0; } .cq-g.g-b { background: #e6f7ee; color: #0b6b49; } .cq-g.g-r { background: #fff1de; color: #8a4b00; }
+.cq-more { color: var(--c1); font-weight: 700; } .cq-age { color: var(--muted); font-size: 13.5px; } .cq-age.w { color: #b45309; font-weight: 700; } .cq-age.x { color: var(--bad); font-weight: 700; }
+tr.cq-r { cursor: pointer; transition: background .2s; } tr.cq-r:hover { background: color-mix(in srgb, var(--c2) 6%, #fff); } tr.cq-r.done td { color: var(--ink2); }
+tr.cq-d td { background: #f8f9fc; padding: 6px 16px 12px; } tr.cq-d ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+tr.cq-d li { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; } tr.cq-d li span { flex: 1; min-width: 140px; } tr.cq-d li em { color: var(--muted); font-style: normal; font-size: 13.5px; }
+table.cq tfoot td { font-weight: 800; background: #f6f7fa; }
+.cq-bar { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: min(760px, calc(100% - 24px));
+  padding: 10px 14px; border-radius: 20px; background: #fff; box-shadow: 0 0 0 1px rgba(20,27,45,.07), 0 20px 44px -16px rgba(20,27,45,.34); font-weight: 600; }
+.cq-bar[hidden] { display: none; }
+.pvtable tr.new td:first-child { box-shadow: inset 3px 0 0 var(--ok); } .pvtable tr.changed td:first-child { box-shadow: inset 3px 0 0 #f5b13d; } .pvtable tr.error td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+@media (max-width: 760px) { .hide-sm, .hide-sm-span { display: none; } table.cq th, table.cq td { padding: 9px 8px; } }
+@media (max-width: 640px) { .seg2 { overflow-x: auto; scrollbar-width: none; max-width: 100%; } .seg2::-webkit-scrollbar { display: none; } .seg2 button { flex: 0 0 auto; } }
+.cq-mst { display: none; }
+@media (max-width: 760px) { .cq-mst { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; } table.cq .cq-no { font-size: 15px; } }

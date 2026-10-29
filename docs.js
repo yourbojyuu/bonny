@@ -42,8 +42,8 @@ var Docs = (function () {
   }
 
   /* ================= หน้าหลักรายจ่าย: แถบย่อย ขบ. | ขจ. | สายโยง ================= */
-  var GROUPS = { khb: ['quick', 'paste', 'grid', 'khb'], khj: ['khj', 'khjdoc'], links: ['links'] };
-  var SEG_LABEL = { quick: 'กรอกทีละรายการ', paste: 'วางจาก Excel', grid: 'ตารางแก้ไข', khb: 'เอกสาร ขบ.', khj: 'รับเรื่อง · ทำ ขจ. · จ่ายเงิน', khjdoc: 'เอกสาร ขจ.', links: 'สายโยง' };
+  var GROUPS = { khb: ['quick', 'paste', 'grid', 'khb'], khj: ['khj', 'khjdoc'], cheque: ['cheque'], links: ['links'] };
+  var SEG_LABEL = { quick: 'กรอกทีละรายการ', paste: 'วางจาก Excel', grid: 'ตารางแก้ไข', khb: 'เอกสาร ขบ.', khj: 'รับเรื่อง · ทำ ขจ. · จ่ายเงิน', khjdoc: 'เอกสาร ขจ.', links: 'สายโยง' , cheque: 'ทะเบียนเช็ค' };
   function segOk(id) {
     if (id === 'grid' || id === 'quick' || id === 'paste') return can.khb() && mode() === 'fin';
     if (id === 'khj') return can.fin() && mode() === 'fin';
@@ -84,6 +84,7 @@ var Docs = (function () {
     var L1 = [
       ['khb', 'ขบ. ขอเบิก', fin ? 'กรอก · ส่งผู้บริหาร' : 'เอกสารขอเบิก', fin ? s.back.d : 0],
       ['khj', 'ขจ. ขอจ่าย', fin ? 'รับเรื่อง · ทำ ขจ. · จ่าย' : 'เอกสารขอจ่าย', fin ? s.ok.d + s.wait.n : 0],
+      ['cheque', 'ทะเบียนเช็ค', 'คุมเช็คค้าง', S.chq ? S.chq.summary['ทั้งหมด'].open : 0],
       ['links', 'สายโยง', 'ขบ. ↔ ขจ.', 0]
     ];
     $('seg1').innerHTML = L1.map(function (x) {
@@ -95,8 +96,10 @@ var Docs = (function () {
     Array.prototype.forEach.call($('seg1').querySelectorAll('[data-g]'), function (b) {
       b.onclick = function () { var to = GROUPS[b.getAttribute('data-g')].filter(segOk)[0]; if (to) switchSeg(to); };
     });
+    var on1 = $('seg1').querySelector('[aria-selected="true"]'); if (on1 && on1.scrollIntoView) on1.scrollIntoView({ inline: 'nearest', block: 'nearest' });
     Array.prototype.forEach.call($('seg2').querySelectorAll('[data-seg]'), function (b) { b.onclick = function () { switchSeg(b.getAttribute('data-seg')); }; });
   }
+  window.drawSegsNow = function () { if ($('seg1')) drawSegs(); };
   function switchSeg(id) {
     if (id === seg || !segOk(id)) return;
     var run = function () { seg = id; drawSegs(); renderSeg(); };
@@ -113,6 +116,7 @@ var Docs = (function () {
     else if (seg === 'khb') renderKhbList(dv);
     else if (seg === 'khj') renderKhjWork(dv);
     else if (seg === 'khjdoc') renderKhjList(dv);
+    else if (seg === 'cheque') Cheques.render(dv, { goKhj: function () { switchSeg('khj'); } });
     else renderLinks(dv);
     observeReveal();
   }

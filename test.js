@@ -1,7 +1,7 @@
 // รัน: node test.js   (ข้อมูลทั้งหมดในไฟล์นี้เป็นข้อมูลจำลอง)
 // โหลดไฟล์ .gs ทุกไฟล์รวมกันใน context เดียว เหมือน Apps Script (ลำดับไฟล์สลับได้)
 var fs = require('fs'), vm = require('vm'), path = require('path');
-var FILES = ['Receipts.gs', 'Docs.gs', 'Code.gs', 'Ledger.gs', 'Util.gs', 'Schema.gs']; // ตั้งใจสลับลำดับ
+var FILES = ['Cheques.gs', 'Receipts.gs', 'Docs.gs', 'Code.gs', 'Ledger.gs', 'Util.gs', 'Schema.gs']; // ตั้งใจสลับลำดับ
 var C = vm.createContext({ console: console, Date: Date, Math: Math, JSON: JSON });
 FILES.forEach(function (f) { vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), C, { filename: f }); });
 
@@ -498,6 +498,59 @@ if (require.main === module) {
   ok(call(ioA, r.data.token, 'getDocs').ok, '"จำฉันไว้" ใช้ได้นานกว่า 12 ชั่วโมง');
   ok(/ตัวเอง/.test(call(ioA, r.data.token, 'saveUser', { user: 'admin@example.com', role: 'การเงิน' }).error), 'admin ลดสิทธิ์ตัวเองไม่ได้');
   ok(call(ioA, null, 'login', { user: 'off@example.com', pass: 'whatever1' }).code !== undefined && !call(ioA, null, 'login', { user: 'nobody', pass: 'x' }).ok, 'ไม่มีบัญชี/ปิดใช้งาน เข้าไม่ได้');
+
+  console.log('17) ทะเบียนคุมเช็ค (เช็คค้าง / ขึ้นเงินแล้ว)');
+  var ioC = makeMemIO();
+  var CL = [];
+  ['ก', 'ข', 'ค', 'ง', 'จ', 'ฉ'].forEach(function (n) { CL.push({ type: 'T20', payee: 'ครูตัวอย่าง ' + n, kind: 'ค่าจ้าง', method: 'เช็ค', gross: 1600, tax: 0, taxType: 'ไม่มีภาษี' }); });
+  CL.push({ type: 'T10', payee: 'ร้านตัวอย่างหนังสือ', kind: 'พัสดุ', method: 'เช็ค', gross: 5000, tax: 0, taxType: 'ไม่มีภาษี' });
+  CL.push({ type: 'T03', payee: 'ร้านตัวอย่างสี', kind: 'พัสดุ', method: 'เช็ค', gross: 3000, tax: 0, taxType: 'ไม่มีภาษี' });
+  CL.push({ type: 'T20', payee: 'ครูตัวอย่าง ช', kind: 'ค่าจ้าง', method: 'เช็ค', gross: 7000, tax: 0, taxType: 'ไม่มีภาษี' });
+  r = call(ioC, 'tok-fin', 'saveKhb', { date: '1/10/69', paper: true, lines: CL });
+  ok(r.ok, 'เตรียม ขบ. 9 รายการ (อนุมัติบนกระดาษ) ' + (r.ok ? '' : r.error));
+  r = call(ioC, 'tok-fin', 'createKhj', { date: '2/10/69', items: CL.map(function (x, i) { return { fy: FY, no: 1, seq: i + 1 }; }) });
+  ok(r.ok, 'สร้าง ขจ.1 ' + (r.ok ? '' : r.error));
+  var cp = CL.map(function (x, i) {
+    var row = { khbFy: FY, khbNo: 1, seq: i + 1, method: 'เช็ค', ref: i < 6 ? '5001' : i === 6 ? '5002' : i === 7 ? '5003' : '', store: i < 6 ? 'S06' : i === 6 ? 'S04' : i === 7 ? 'S02' : '', date: i < 6 ? '5/10/69' : i < 8 ? '5/10/69' : '' };
+    return row;
+  });
+  r = call(ioC, 'tok-fin', 'savePayments', { no: 1, rows: cp });
+  ok(r.ok, 'ระบุเลขเช็ค/วันที่จ่าย ' + (r.ok ? '' : r.error));
+  r = call(ioC, 'tok-boss', 'getCheques');
+  var cq = r.ok ? r.data : null;
+  ok(r.ok && cq.rows.length === 3, 'ผู้บริหารดูทะเบียนเช็คได้ · เช็ค 3 ใบ (6 รายการเลขเดียวรวมเป็นใบเดียว) ' + (r.ok ? cq.rows.length : r.error));
+  var c1 = cq.rows.filter(function (x) { return x.ref === '5001'; })[0];
+  ok(c1 && c1.group === 'อุดหนุน' && c1.amount === 9600 && c1.payees.length === 6 && c1.lines.length === 6 && c1.status === 'ค้าง', 'เช็ค 5001: อุดหนุน 9,600 ผู้รับ 6 คน ค้าง');
+  ok(cq.rows.filter(function (x) { return x.ref === '5002'; })[0].group === 'บกศ.' && cq.rows.filter(function (x) { return x.ref === '5003'; })[0].group === 'รายได้', 'แยกกลุ่มตามประเภทเงิน: บกศ. / รายได้');
+  ok(cq.summary['อุดหนุน'].open === 1 && cq.summary['อุดหนุน'].openAmt === 9600 && cq.summary['ทั้งหมด'].open === 3 && cq.summary['ทั้งหมด'].openAmt === 17600, 'สรุปค้างรายกลุ่ม/ทั้งหมด');
+  ok(cq.unissued.length === 1 && /เลขเช็ค/.test(cq.unissued[0].why), 'รายการเช็คที่ยังไม่ระบุเลขเช็ค = ' + cq.unissued.length + ' (แจ้งให้ไปทำที่ ขจ.)');
+  ok(call(ioC, 'tok-boss', 'saveChequeClear', { items: [{ ref: '5001', date: '10/10/69' }] }).code === 'FORBIDDEN', 'ผู้บริหารอัปเดตขึ้นเงินไม่ได้');
+  var bef = grandOf(ioC, '2027-09-30').grand;
+  r = call(ioC, 'tok-fin', 'saveChequeClear', { items: [
+    { ref: '5001', date: '10/10/69', amount: '9,600.00' }, { ref: '5002', date: '4/10/69' }, { ref: '5003', date: '8/10/69', amount: '3000.5' }, { ref: '9999', date: '8/10/69' }, { ref: '5001', date: '11/10/69' }, { ref: '', date: '8/10/69' }, { ref: '5003', date: '8/11/70' }] });
+  ok(r.ok && !r.data.committed && r.data.count.new === 1 && r.data.count.error === 6, 'ดูตัวอย่าง: ใหม่ 1 · ผิด 6 ' + (r.ok ? JSON.stringify(r.data.count) : r.error));
+  var em = r.data.rows.map(function (x) { return x.msg; }).join(' | ');
+  ok(/ก่อนวันที่ออกเช็ค/.test(em) && /ยอดไม่ตรง/.test(em) && /ไม่พบเช็ค/.test(em) && /ซ้ำกับแถวที่ 1/.test(em) && /ระบุเลขที่เช็ค/.test(em) && /นอกปีงบ/.test(em), 'บอกเหตุผลรายแถว: วันที่ก่อนออกเช็ค · ยอดไม่ตรง · ไม่พบ · ซ้ำ · ไม่มีเลข · นอกปีงบ');
+  ok(call(ioC, 'tok-fin', 'getCheques').data.summary['ทั้งหมด'].open === 3, 'ดูตัวอย่างไม่ทำให้เช็คเปลี่ยนสถานะ');
+  r = call(ioC, 'tok-fin', 'saveChequeClear', { items: [{ ref: '5001', date: '10/10/69', amount: '9600' }, { ref: '5002', date: '12/10/69' }], commit: true });
+  ok(r.ok && r.data.committed && r.data.added === 2 && r.data._fresh.cheques.summary['ทั้งหมด'].open === 1, 'บันทึกขึ้นเงิน 2 ใบ -> ค้างเหลือ 1 ใบ (ได้ทะเบียนล่าสุดกลับมา) ' + (r.ok ? '' : r.error));
+  ok(grandOf(ioC, '2027-09-30').grand === bef, 'การขึ้นเงินไม่กระทบ Ledger/ยอดคงเหลือ');
+  r = call(ioC, 'tok-fin', 'saveChequeClear', { items: [{ ref: '5001', date: '10/10/69' }, { ref: '5002', date: '13/10/69' }] });
+  ok(r.data.count.same === 1 && r.data.count.changed === 1, 'วางซ้ำ: วันที่เดิม = เหมือนเดิม · วันที่ต่าง = ต่าง');
+  r = call(ioC, 'tok-fin', 'saveChequeClear', { items: [{ ref: '5002', date: '13/10/69' }], commit: true });
+  ok(!r.ok && /ไม่มีแถวที่บันทึกได้/.test(r.error), 'วันที่ต่างแต่ไม่ติ๊กอัปเดต -> ไม่บันทึก');
+  r = call(ioC, 'tok-fin', 'saveChequeClear', { items: [{ ref: '5002', date: '13/10/69' }], commit: true, updateChanged: true });
+  var c2 = r.ok ? r.data._fresh.cheques.rows.filter(function (x) { return x.ref === '5002'; })[0] : null;
+  ok(r.ok && c2.clearedDate === '2026-10-13' && ioC.sheets['เช็คขึ้นเงิน'].filter(function (x) { return x[8] === 'ยกเลิก'; }).length === 1, 'อัปเดตวันที่ขึ้นเงิน: แถวเดิมถูกยกเลิกด้วยสถานะ แถวใหม่ใช้แทน ' + (r.ok ? '' : r.error));
+  ok(/เหตุผล/.test(call(ioC, 'tok-fin', 'voidChequeClear', { items: [{ ref: '5001' }] }).error), 'ยกเลิกการขึ้นเงินต้องมีเหตุผล');
+  ok(/ไม่พบข้อมูลขึ้นเงิน/.test(call(ioC, 'tok-fin', 'voidChequeClear', { items: [{ ref: '5001' }, { ref: '5003' }], reason: 'ธนาคารคืนเช็ค' }).error), 'ยกเลิกหลายใบ: มีใบที่ไม่เคยขึ้นเงิน -> ไม่ยกเลิกเลย');
+  r = call(ioC, 'tok-fin', 'voidChequeClear', { items: [{ ref: '5001' }], reason: 'ธนาคารคืนเช็ค' });
+  ok(r.ok && r.data._fresh.cheques.rows.filter(function (x) { return x.ref === '5001'; })[0].status === 'ค้าง', 'ยกเลิกการขึ้นเงิน -> เช็คกลับเป็นค้าง');
+  r = call(ioC, 'tok-fin', 'cancelKhj', { no: 1, reason: 'ทดสอบ' });
+  ok(r.ok && r.data._fresh.cheques.rows.length === 0 && r.data._fresh.cheques.unissued.length === 0, 'ยกเลิก ขจ. -> เช็คหายจากทะเบียน');
+  var ioD = makeMemIO(); delete ioD.sheets['เช็คขึ้นเงิน'];
+  ok(call(ioD, 'tok-fin', 'getCheques').ok, 'ยังไม่มีชีท เช็คขึ้นเงิน: ดูทะเบียนได้ (ทุกใบค้าง)');
+  ok(/setupSheets/.test(call(ioD, 'tok-fin', 'saveChequeClear', { items: [{ ref: '1', date: '5/10/69' }] }).error), 'ยังไม่มีชีท: บันทึกแล้วบอกให้รัน setupSheets');
 
   console.log('15) บันทึกเป็นชุด (คำขอเดียว)');
   var ioB = makeMemIO();

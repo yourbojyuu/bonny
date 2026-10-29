@@ -7,6 +7,7 @@
  *   Util.gs   กติกาข้อมูล (วันที่ / จำนวนเงิน / หัวคอลัมน์ / ตัวอักษรไทย)
  *   Ledger.gs ตั้งค่า ยอดยกมา Ledger ยอดคงเหลือ
  *   Docs.gs   ขบ. → ขจ. → การจ่าย และข้อมูลพิมพ์เอกสาร
+ *   Cheques.gs ทะเบียนคุมเช็ค (เช็คค้าง / ขึ้นเงินแล้ว แยกอุดหนุน บกศ. รายได้)
  *   Receipts.gs ใบเสร็จ (รายรับ) นำเข้าแบบวาง · ทะเบียนผู้รับเงิน · ชื่อย่อ
  */
 
@@ -20,19 +21,19 @@ var APP_VERSION = '2026.10.28'; // ต้องตรงกับ APP_VERSION �
  * ครู: ส่งคำขอเบิกและติดตามของตัวเองเท่านั้น · ผู้บริหาร: อนุมัติ/ส่งกลับ ขบ. · การเงิน: รับเรื่องแล้วทำ ขจ. ต่อ */
 function actions() {
   var ALL = ROLES, STAFF = ['admin', 'การเงิน', 'พัสดุ', 'ผู้บริหาร'], FIN = ['admin', 'การเงิน'], KHB = ['admin', 'การเงิน', 'พัสดุ'], ADMIN = ['admin'];
-  var PUBLIC = 'PUBLIC', R = false, W = true, D = ['docs'], RC = ['receipts'], ST = ['settings'], DS = ['docs', 'settings'];
+  var PUBLIC = 'PUBLIC', R = false, W = true, D = ['docs'], RC = ['receipts'], ST = ['settings'], DS = ['docs', 'settings'], DC = ['docs', 'cheques'], CQ = ['cheques'];
   return {
     // เข้าระบบ (PUBLIC = ไม่ต้องมีโทเคน)
     authStatus: [h_authStatus, PUBLIC, R], login: [h_login, PUBLIC, W], setupAdmin: [h_setupAdmin, PUBLIC, W],
     changePassword: [h_changePassword, ALL, W], getUsers: [h_getUsers, ADMIN, R], saveUser: [h_saveUser, ADMIN, W],
     boot: [h_boot, ALL, R], getSchema: [h_getSchema, ALL, R], me: [h_me, ALL, R], getSettings: [h_getSettings, ALL, R],
     getBalances: [h_getBalances, STAFF, R], getLedger: [h_getLedger, STAFF, R],
-    getDocs: [h_getDocs, ALL, R], khbDoc: [h_khbDoc, ALL, R], khjDoc: [h_khjDoc, STAFF, R], getReceipts: [h_getReceipts, STAFF, R],
+    getDocs: [h_getDocs, ALL, R], getCheques: [h_getCheques, STAFF, R], saveChequeClear: [h_saveChequeClear, FIN, W, CQ], voidChequeClear: [h_voidChequeClear, FIN, W, CQ], khbDoc: [h_khbDoc, ALL, R], khjDoc: [h_khjDoc, STAFF, R], getReceipts: [h_getReceipts, STAFF, R],
     importReceipts: [h_importReceipts, FIN, W, RC], cancelReceipt: [h_cancelReceipt, FIN, W, RC], voidReceipts: [h_voidReceipts, FIN, W, RC],
     savePayees: [h_savePayees, KHB, W, DS], saveAliases: [h_saveAliases, ADMIN, W, ST], savePackages: [h_savePackages, FIN, W, ST],
     saveKhb: [h_saveKhb, KHB.concat(['ครู']), W, DS], cancelKhb: [h_cancelKhb, KHB.concat(['ครู']), W, D],
     approveKhb: [h_approveKhb, ['admin', 'ผู้บริหาร'], W, D], receiveKhb: [h_receiveKhb, FIN, W, D],
-    createKhj: [h_createKhj, FIN, W, D], savePayments: [h_savePayments, FIN, W, D], cancelKhj: [h_cancelKhj, FIN, W, D],
+    createKhj: [h_createKhj, FIN, W, D], savePayments: [h_savePayments, FIN, W, DC], cancelKhj: [h_cancelKhj, FIN, W, DC],
     saveTypes: [h_saveTypes, ADMIN, W, ST], saveStores: [h_saveStores, ADMIN, W, ST], saveOpening: [h_saveOpening, ADMIN, W, ST],
     rebuildLedger: [h_rebuildLedger, ADMIN, W], saveDocSettings: [h_saveDocSettings, ADMIN, W, ST]
   };
@@ -44,6 +45,7 @@ function h_boot(p, io, user) {
   var out = { version: APP_VERSION, me: user, schema: h_getSchema(), settings: h_getSettings(p, io), docs: h_getDocs(p, io, user) };
   if (user.role !== 'ครู') {
     out.receipts = h_getReceipts(p, io);
+    try { out.cheques = h_getCheques(p, io); } catch (e) { out.cheques = null; }
     if (p.date) { try { out.balances = h_getBalances({ date: p.date }, io); } catch (e) { out.balances = null; } }
   }
   return out;
@@ -56,7 +58,7 @@ function isWriteAction(a) { var x = actions()[a]; return !!(x && x[2]); }
 
 /** ข้อมูลล่าสุดหลังบันทึก (อ่านจาก memo ที่เพิ่งเขียน จึงแทบไม่เสียเวลา) · ส่งเฉพาะที่ผู้ใช้มีสิทธิ์ดู · พลาดก็ไม่ทำให้การบันทึกล้ม */
 function freshData(keys, io, user, acts) {
-  var fn = { docs: ['getDocs', h_getDocs], receipts: ['getReceipts', h_getReceipts], settings: ['getSettings', h_getSettings] }, out = {};
+  var fn = { docs: ['getDocs', h_getDocs], receipts: ['getReceipts', h_getReceipts], settings: ['getSettings', h_getSettings], cheques: ['getCheques', h_getCheques] }, out = {};
   keys.forEach(function (k) {
     var a = fn[k][0];
     if (user.role !== 'admin' && acts[a][1].indexOf(user.role) < 0) return;

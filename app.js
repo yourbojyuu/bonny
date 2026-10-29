@@ -249,7 +249,7 @@ function startApp(token, remember) {
     if (me.role === 'ครู' && !TEACHER_MODE) throw new Error('ระบบเปิดให้ใช้ภายในฝ่ายการเงินและผู้บริหารก่อน — โหมดครูยังไม่เปิด');
     S.me = me;
     try { S.modeAs = me.role === 'admin' ? (localStorage.getItem('fin-mode') || '') : ''; } catch (e) { S.modeAs = ''; }
-    S.schema = r.schema; S.st = r.settings; S.docs = r.docs; S.rcv = r.receipts || { rows: [] };
+    S.schema = r.schema; S.st = r.settings; S.docs = r.docs; S.rcv = r.receipts || { rows: [] }; S.chq = r.cheques || null; S.chqStale = false;
     S.date = defaultDate(); S.preBal = r.balances && S.date === d0 ? r.balances : null;
     tokSave(token, remember === undefined ? tokSaved().remember : remember);
     $('login').hidden = true; $('app').hidden = false; document.body.classList.add('authed'); loginMsg('');
@@ -346,7 +346,7 @@ function openUsers() {
 }
 /** โหลดเอกสารใหม่ (หลังบันทึก) */
 function reloadDocs() {
-  S.led = null;
+  S.led = null; S.chqStale = true; // ทะเบียนเช็คคำนวณจาก ขจ. — โหลดใหม่เมื่อเปิดแท็บ
   if (window.Flow) Flow.resetBal();
   return takeFresh('docs', 'getDocs').then(function (d) { S.docs = d; renderTabs(); return d; });
 }
