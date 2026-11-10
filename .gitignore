@@ -1,0 +1,8 @@
+node_modules/
+finance/dist/
+finance/.clasp.json
+# ข้อมูลจริงของโรงเรียน ห้าม commit
+*.xlsx
+*.xls
+*.csv
+data-real/

@@ -1,0 +1,53 @@
+import { PermissionError, fail } from '../core/errors.js';
+import { ROLES, roleConflicts, requirePermission } from '../core/roles.js';
+import { validateWith, requireReason, getOrFail, rejectFields } from './common.js';
+
+function check(ctx, rec, selfId) {
+  return validateWith(ctx, 'users', rec, (out, c) => {
+    out.email = out.email.toLowerCase();
+    const domain = ctx.settings.allowed_email_domain;
+    if (out.email && !out.email.endsWith(`@${domain}`)) c.add('email', `ต้องเป็นอีเมล @${domain}`);
+    else if (out.email && ctx.store.find('users', (u) => u.email.toLowerCase() === out.email && u.id !== selfId).length) c.add('email', 'อีเมลนี้มีผู้ใช้แล้ว');
+    const unknown = out.roles.filter((r) => !ROLES[r]);
+    if (unknown.length) c.add('roles', `ไม่รู้จักบทบาท: ${unknown.join(', ')}`);
+    else if (!c.has('roles')) {
+      const bad = roleConflicts(out.roles);
+      if (bad.length) c.add('roles', `บทบาทที่ถือพร้อมกันไม่ได้: ${bad.map(([a, b]) => `${ROLES[a]} + ${ROLES[b]}`).join(' · ')}`);
+    }
+  });
+}
+
+export function createUser(ctx, input) {
+  requirePermission(ctx, 'users.manage');
+  rejectFields(input, ['id'], 'รหัสผู้ใช้ระบบออกให้');
+  return ctx.store.insert(ctx.user, 'users', check(ctx, input, null));
+}
+
+export function updateUser(ctx, id, patch, reason) {
+  requirePermission(ctx, 'users.manage');
+  const why = requireReason(reason);
+  const cur = getOrFail(ctx, 'users', id, 'ผู้ใช้');
+  const { created_by, created_at, updated_at, ...plain } = cur;
+  const next = check(ctx, { ...plain, ...patch }, id);
+  return ctx.store.update(ctx.user, 'users', id, next, { reason: why });
+}
+
+export function listUsers(ctx) {
+  requirePermission(ctx, 'users.read');
+  return ctx.store.list('users');
+}
+
+/** หาผู้ใช้จากอีเมลที่ Google ยืนยันแล้ว · ไม่พบหรือปิดใช้งาน = เข้าไม่ได้ */
+export function resolveUser(store, email) {
+  const e = String(email || '').trim().toLowerCase();
+  const u = e && store.find('users', (x) => x.email.toLowerCase() === e)[0];
+  if (!u) throw new PermissionError(`ไม่พบผู้ใช้ ${email || '(ไม่ทราบอีเมล)'} ในระบบ ติดต่อผู้ดูแลระบบ`);
+  if (!u.active) throw new PermissionError('บัญชีนี้ถูกปิดใช้งาน');
+  return u;
+}
+
+/** ตั้งผู้ดูแลระบบคนแรก ทำได้ครั้งเดียวตอนยังไม่มีผู้ใช้ */
+export function bootstrapAdmin(ctx, input) {
+  if (ctx.store.list('users').length) fail('email', 'มีผู้ใช้แล้ว ตั้งผู้ดูแลคนแรกซ้ำไม่ได้');
+  return ctx.store.insert(ctx.user, 'users', check(ctx, { ...input, roles: ['admin'] }, null), { reason: 'ตั้งผู้ดูแลระบบคนแรก' });
+}

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบการเงิน · ข้อมูลหลัก</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f6f5f1; --card:#fff; --ink:#1f2328; --muted:#646a73; --line:#dcd9d0; --accent:#2457c5; --bad:#b42318; --warn:#9a6700; --ok:#1a7f37; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Sarabun','TH Sarabun New',sans-serif; font-size:16px; background:var(--bg); color:var(--ink); }
+  header { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  header h1 { font-size:18px; margin:0; }
+  header .who { color:var(--muted); font-size:14px; }
+  nav { display:flex; flex-wrap:wrap; gap:6px; padding:12px 16px 0; }
+  nav button { border:1px solid var(--line); background:var(--card); padding:6px 12px; border-radius:6px; cursor:pointer; font:inherit; font-size:15px; }
+  nav button[aria-current="true"] { background:var(--accent); color:#fff; border-color:var(--accent); }
+  main { padding:12px 16px 40px; }
+  .bar { display:flex; gap:8px; align-items:center; margin:8px 0 12px; flex-wrap:wrap; }
+  .bar h2 { margin:0; font-size:18px; flex:1; }
+  button.primary { background:var(--accent); color:#fff; border:0; padding:7px 14px; border-radius:6px; font:inherit; cursor:pointer; }
+  button.ghost { background:none; border:1px solid var(--line); padding:4px 10px; border-radius:6px; font:inherit; font-size:14px; cursor:pointer; }
+  .tablewrap { overflow-x:auto; background:var(--card); border:1px solid var(--line); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; font-size:15px; }
+  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); white-space:nowrap; vertical-align:top; }
+  th { background:#efede6; font-weight:600; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  tr.clickable:hover { background:#f2f6ff; cursor:pointer; }
+  .pill { display:inline-block; padding:0 8px; border-radius:10px; font-size:13px; background:#eee; }
+  .pill.wait { background:#fff3cd; color:var(--warn); } .pill.ok { background:#dafbe1; color:var(--ok); } .pill.no { background:#ffebe9; color:var(--bad); }
+  dialog { border:1px solid var(--line); border-radius:10px; padding:0; width:min(560px, calc(100vw - 32px)); }
+  dialog form { padding:16px; }
+  dialog h3 { margin:0 0 12px; }
+  .field { margin-bottom:10px; }
+  .field label { display:block; font-size:14px; color:var(--muted); margin-bottom:2px; }
+  .field input[type=text], .field select, .field textarea { width:100%; font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; }
+  .field .err { color:var(--bad); font-size:14px; }
+  .field.bad input, .field.bad select, .field.bad textarea { border-color:var(--bad); }
+  .checks label { display:inline-flex; gap:4px; margin:0 12px 4px 0; color:var(--ink); font-size:15px; }
+  .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+  .msg { padding:8px 12px; border-radius:6px; margin:8px 0; }
+  .msg.bad { background:#ffebe9; color:var(--bad); } .msg.ok { background:#dafbe1; color:var(--ok); }
+  .note { color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<header><h1>ระบบการเงิน · ข้อมูลหลัก</h1><span class="who" id="who">กำลังโหลด…</span></header>
+<nav id="tabs"></nav>
+<main id="main"></main>
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+
+<script>
+// เรียก server ผ่าน google.script.run · error ชี้ช่องแสดงใต้ช่องนั้น
+function call(action, payload) {
+  return new Promise(function (resolve, reject) {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).api(action, payload || {});
+  });
+}
+var ME = null, current = null, rowsCache = {};
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+function money(s) { if (s == null || s === '') return ''; var neg = s < 0, a = Math.abs(s); return (neg ? '-' : '') + Math.floor(a / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + String(a % 100).padStart(2, '0'); }
+var TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function thDate(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? (+m[3]) + ' ' + TH_MONTHS[+m[2] - 1] + ' ' + (+m[1] + 543) : (iso || ''); }
+function hasRole(list) { return ME.user.roles.some(function (r) { return list.indexOf(r) >= 0; }); }
+
+// ช่องที่คำนวณเพิ่มตอนแสดง
+var EXTRA_COLS = {
+  cheque_books: [{ key: 'account_no', label: 'เลขบัญชี' }, { key: 'fund_group', label: 'กลุ่มเงิน' }],
+  plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
+  payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
+};
+var HIDE_IN_LIST = { audit_log: ['before', 'after'] };
+
+async function boot() {
+  var r = await call('me');
+  if (!r.ok) { document.getElementById('who').textContent = ''; document.getElementById('main').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+  ME = r.data;
+  document.getElementById('who').textContent = ME.user.name + ' · ' + ME.user.roles.map(function (k) { return ME.roles[k]; }).join(', ') + ' · วันนี้ ' + thDate(ME.today);
+  var nav = document.getElementById('tabs');
+  nav.innerHTML = ME.tables.map(function (t) { return '<button data-t="' + t.key + '">' + esc(t.label) + '</button>'; }).join('');
+  nav.onclick = function (e) { var b = e.target.closest('button'); if (b) show(b.dataset.t); };
+  show(ME.tables[0].key);
+}
+
+function tableMeta(key) { return ME.tables.filter(function (t) { return t.key === key; })[0]; }
+
+async function show(key, flash) {
+  current = key;
+  [].forEach.call(document.querySelectorAll('nav button'), function (b) { b.setAttribute('aria-current', b.dataset.t === key); });
+  var main = document.getElementById('main');
+  main.innerHTML = '<p class="note">กำลังโหลด…</p>';
+  var r = await call('list', { table: key });
+  if (!r.ok) { main.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+  rowsCache[key] = r.data;
+  var meta = tableMeta(key);
+  var html = '<div class="bar"><h2>' + esc(meta.label) + ' <span class="note">(' + r.data.length + ' รายการ)</span></h2>';
+  if (meta.canWrite && key !== 'settings' && key !== 'payee_account_changes' && key !== 'audit_log') html += '<button class="primary" id="addBtn">+ เพิ่ม</button>';
+  html += '</div>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '');
+  if (key === 'settings') html += settingsTable(r.data);
+  else html += listTable(key, r.data, meta);
+  main.innerHTML = html;
+  var add = document.getElementById('addBtn');
+  if (add) add.onclick = function () { openForm(key, null); };
+  main.onclick = function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (btn) { e.stopPropagation(); return rowAction(btn.dataset.act, btn.dataset.id); }
+    var tr = e.target.closest('tr.clickable');
+    if (!tr) return;
+    if (key === 'settings') openSetting(tr.dataset.id); else openForm(key, tr.dataset.id);
+  };
+}
+
+function cols(key) {
+  var schema = ME.schema[key];
+  var c = schema.columns.filter(function (x) { return (HIDE_IN_LIST[key] || []).indexOf(x.key) < 0; });
+  return c.concat(EXTRA_COLS[key] || []);
+}
+
+function cell(col, v) {
+  if (col.type === 'money') return '<td class="num">' + money(v) + '</td>';
+  if (col.type === 'bool') return '<td>' + (v ? '✓' : '—') + '</td>';
+  if (col.type === 'list') return '<td>' + esc((v || []).map(function (x) { return ME.roles[x] || x; }).join(', ')) + '</td>';
+  if (col.type === 'date') return '<td>' + thDate(v) + '</td>';
+  if (col.key === 'status') { var cls = v === 'รออนุมัติ' ? 'wait' : v === 'อนุมัติแล้ว' ? 'ok' : 'no'; return '<td><span class="pill ' + cls + '">' + esc(v) + '</span></td>'; }
+  return '<td>' + esc(v) + '</td>';
+}
+
+function listTable(key, rows, meta) {
+  var c = cols(key);
+  var canApprove = hasRole(ME.settings.payee_account_approver_roles || []);
+  var head = '<tr>' + c.map(function (x) { return '<th>' + esc(x.label || x.key) + '</th>'; }).join('') + (key === 'payees' || key === 'payee_account_changes' ? '<th></th>' : '') + '</tr>';
+  var body = rows.map(function (r) {
+    var extra = '';
+    if (key === 'payees' && hasRole(['finance'])) extra = '<td><button class="ghost" data-act="reqacct" data-id="' + esc(r.id) + '">ขอเปลี่ยนบัญชี</button></td>';
+    if (key === 'payees' && !hasRole(['finance'])) extra = '<td></td>';
+    if (key === 'payee_account_changes') extra = '<td>' + (r.status === 'รออนุมัติ' && canApprove && r.requested_by !== ME.user.email
+      ? '<button class="ghost" data-act="approve" data-id="' + esc(r.id) + '">อนุมัติ</button> <button class="ghost" data-act="reject" data-id="' + esc(r.id) + '">ไม่อนุมัติ</button>' : '') + '</td>';
+    return '<tr class="' + (meta.canWrite && key !== 'audit_log' && key !== 'payee_account_changes' ? 'clickable' : '') + '" data-id="' + esc(r.id) + '">' + c.map(function (x) { return cell(x, r[x.key]); }).join('') + extra + '</tr>';
+  }).join('');
+  return '<div class="tablewrap"><table>' + head + (body || '<tr><td colspan="99" class="note">ยังไม่มีรายการ</td></tr>') + '</table></div>';
+}
+
+function settingsTable(rows) {
+  return '<p class="note">ค่าที่มีป้าย "รอยืนยัน" คือค่าที่ตั้งไว้ก่อน ยังรอคำตอบจากโรงเรียน · ยอดเงินในตั้งค่าเป็นสตางค์</p>' +
+    '<div class="tablewrap"><table><tr><th>ค่า</th><th>ค่าปัจจุบัน</th><th>สถานะ</th></tr>' + rows.map(function (s) {
+      return '<tr class="' + (tableMeta('settings').canWrite ? 'clickable' : '') + '" data-id="' + esc(s.key) + '"><td>' + esc(s.label) + '<br><span class="note">' + esc(s.key) + '</span></td><td><code>' + esc(JSON.stringify(s.value)) + '</code></td><td>' + (s.pending ? '<span class="pill wait">รอยืนยัน · ' + esc(s.pending) + '</span>' : '') + '</td></tr>';
+    }).join('') + '</table></div>';
+}
+
+// ---------- ฟอร์ม ----------
+async function refOptions(table) {
+  if (!rowsCache[table]) { var r = await call('list', { table: table }); rowsCache[table] = r.ok ? r.data : []; }
+  return rowsCache[table].map(function (x) { return { v: x.id, t: [x.account_no, x.type, x.fund_group, x.name].filter(Boolean).join(' · ') }; });
+}
+
+async function fieldHtml(col, val) {
+  var id = 'f_' + col.key, v = val == null ? (col.default != null ? col.default : '') : val;
+  var inner;
+  if (col.type === 'bool') inner = '<label class="checks"><label><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> ใช่</label></label>';
+  else if (col.type === 'list') inner = '<div class="checks" id="' + id + '">' + Object.keys(ME.roles).map(function (k) { return '<label><input type="checkbox" value="' + k + '"' + ((v || []).indexOf(k) >= 0 ? ' checked' : '') + '> ' + esc(ME.roles[k]) + '</label>'; }).join('') + '</div>';
+  else if (col.type === 'enum') {
+    var opts = col.optionsSetting ? ME.settings[col.optionsSetting] : col.options;
+    inner = '<select id="' + id + '"><option value="">— เลือก —</option>' + opts.filter(Boolean).map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+  } else if (col.ref) {
+    var ro = await refOptions(col.ref);
+    inner = '<select id="' + id + '"><option value="">— เลือก —</option>' + ro.map(function (o) { return '<option value="' + esc(o.v) + '"' + (o.v === v ? ' selected' : '') + '>' + esc(o.t) + '</option>'; }).join('') + '</select>';
+  } else {
+    inner = '<input type="text" id="' + id + '" value="' + esc(col.type === 'money' ? money(v) : v) + '"' + (col.type === 'money' ? ' inputmode="decimal" placeholder="บาท เช่น 1,250.50"' : col.type === 'date' ? ' placeholder="YYYY-MM-DD"' : '') + '>';
+  }
+  return '<div class="field" data-key="' + col.key + '"><label for="' + id + '">' + esc(col.label || col.key) + (col.required ? ' *' : '') + '</label>' + inner + '<div class="err"></div></div>';
+}
+
+function readField(col) {
+  var el = document.getElementById('f_' + col.key);
+  if (col.type === 'bool') return el.checked;
+  if (col.type === 'list') return [].map.call(el.querySelectorAll('input:checked'), function (x) { return x.value; });
+  return el.value;
+}
+
+function showErrors(form, r) {
+  [].forEach.call(form.querySelectorAll('.field'), function (f) { f.classList.remove('bad'); f.querySelector('.err').textContent = ''; });
+  var top = form.querySelector('.formmsg');
+  top.innerHTML = '';
+  var shown = false;
+  (r.errors || []).forEach(function (e) {
+    var f = form.querySelector('.field[data-key="' + e.field + '"]');
+    if (f) { f.classList.add('bad'); f.querySelector('.err').textContent = e.message; shown = true; }
+  });
+  if (!shown || !r.errors) top.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>';
+}
+
+async function openDialog(title, fieldsHtml, onSubmit) {
+  var form = document.getElementById('dlgForm');
+  form.innerHTML = '<h3>' + esc(title) + '</h3><div class="formmsg"></div>' + fieldsHtml +
+    '<div class="actions"><button type="button" class="ghost" id="dlgCancel">ยกเลิก</button><button type="submit" class="primary">บันทึก</button></div>';
+  var dlg = document.getElementById('dlg');
+  document.getElementById('dlgCancel').onclick = function () { dlg.close(); };
+  form.onsubmit = async function (e) {
+    e.preventDefault();
+    var r = await onSubmit();
+    if (r.ok) { dlg.close(); show(current, 'บันทึกแล้ว'); } else showErrors(form, r);
+  };
+  dlg.showModal();
+}
+
+var reasonField = '<div class="field" data-key="reason"><label for="f_reason">เหตุผลที่แก้ไข *</label><input type="text" id="f_reason"><div class="err"></div></div>';
+
+async function openForm(key, id) {
+  var meta = tableMeta(key);
+  if (!meta.canWrite) return;
+  var row = id ? rowsCache[key].filter(function (r) { return r.id === id; })[0] : {};
+  var editable = ME.schema[key].columns.filter(function (c) { return c.type !== 'id' && !c.readonly; });
+  var html = '';
+  for (var i = 0; i < editable.length; i++) html += await fieldHtml(editable[i], row[editable[i].key]);
+  if (key === 'payees') html += '<p class="note">เลขบัญชีแก้ที่ปุ่ม "ขอเปลี่ยนบัญชี" ต้องมีผู้อนุมัติ</p>';
+  await openDialog((id ? 'แก้ไข' : 'เพิ่ม') + meta.label, html + (id ? reasonField : ''), function () {
+    var rec = {};
+    editable.forEach(function (c) { rec[c.key] = readField(c); });
+    return id ? call('update', { table: key, id: id, record: rec, reason: document.getElementById('f_reason').value })
+      : call('create', { table: key, record: rec });
+  });
+}
+
+async function openSetting(key) {
+  var s = rowsCache.settings.filter(function (x) { return x.key === key; })[0];
+  var html = '<p class="note">' + esc(s.label) + ' (' + esc(key) + ') · ใส่ค่าแบบ JSON เช่น ["KTB","เช็ค"] หรือ 30</p>' +
+    '<div class="field" data-key="value"><label for="f_value">ค่าใหม่ *</label><textarea id="f_value" rows="3">' + esc(JSON.stringify(s.value)) + '</textarea><div class="err"></div></div>' + reasonField;
+  await openDialog('แก้ค่าตั้ง', html, function () {
+    return call('settings.update', { key: key, value: document.getElementById('f_value').value, reason: document.getElementById('f_reason').value });
+  });
+}
+
+async function rowAction(act, id) {
+  if (act === 'reqacct') {
+    var html = '<div class="field" data-key="bank"><label for="f_bank">ธนาคาร *</label><input type="text" id="f_bank"><div class="err"></div></div>' +
+      '<div class="field" data-key="account_no"><label for="f_acct">เลขที่บัญชีใหม่ *</label><input type="text" id="f_acct" inputmode="numeric"><div class="err"></div></div>' +
+      '<div class="field" data-key="reason"><label for="f_reason">เหตุผล/หลักฐาน *</label><input type="text" id="f_reason"><div class="err"></div></div>' +
+      '<p class="note">คำขอนี้ต้องมีผู้อนุมัติที่ไม่ใช่คุณ จึงจะมีผล</p>';
+    return openDialog('ขอเปลี่ยนบัญชีผู้รับเงิน', html, function () {
+      return call('payees.requestAccountChange', { payee_id: id, bank: document.getElementById('f_bank').value, account_no: document.getElementById('f_acct').value, reason: document.getElementById('f_reason').value });
+    });
+  }
+  if (act === 'approve') {
+    if (!confirm('อนุมัติการเปลี่ยนบัญชีนี้?')) return;
+    var r = await call('payees.approveAccountChange', { id: id });
+    return r.ok ? show(current, 'อนุมัติแล้ว') : alert(r.error);
+  }
+  if (act === 'reject') {
+    return openDialog('ไม่อนุมัติคำขอ', '<div class="field" data-key="reason"><label for="f_reason">เหตุผล *</label><input type="text" id="f_reason"><div class="err"></div></div>', function () {
+      return call('payees.rejectAccountChange', { id: id, reason: document.getElementById('f_reason').value });
+    });
+  }
+}
+
+boot().catch(function (e) { document.getElementById('main').innerHTML = '<div class="msg bad">' + esc(e.message || e) + '</div>'; });
+</script>
+</body>
+</html>
