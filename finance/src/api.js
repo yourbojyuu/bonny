@@ -14,6 +14,9 @@ export const TABLE_ACCESS = {
   khj: { read: 'masters.read', write: null },
   loans: { read: 'masters.read', write: null },
   procurements: { read: 'masters.read', write: null },
+  cheques: { read: 'masters.read', write: null },
+  ktb_batches: { read: 'masters.read', write: null },
+  ledger: { read: 'masters.read', write: null },
   payees: { read: 'masters.read', write: 'payees.manage' },
   payee_account_changes: { read: 'masters.read', write: 'payees.account.request' },
   bank_accounts: { read: 'masters.read', write: 'bank_accounts.manage' },
@@ -33,7 +36,10 @@ const ok = (data) => ({ ok: true, data });
 
 // การกระทำที่หน้าเว็บเรียกได้ (ชื่อบริการ → วิธี) · ทุกวิธีตรวจสิทธิ์เองในบริการ
 const CALLS = {
-  approvals: ['submit', 'resubmit', 'receive', 'returnToRequester', 'propose', 'recordDecision', 'financeReceive', 'classify'],
+  approvals: ['submit', 'resubmit', 'receive', 'returnToRequester', 'propose', 'recordDecision', 'financeReceive', 'classify', 'closeCode'],
+  cheques: ['propose', 'confirm', 'voidCheque', 'register', 'sendForSignature', 'markReceived'],
+  ktb: ['createBatch', 'fileContent', 'markUploaded', 'recordApproval', 'recordTxn', 'approvers'],
+  ledger: ['balance', 'taxSummary'],
   loans: ['create'],
   procurement: ['purchase', 'inspect', 'sendBundle', 'receiveBundle'],
   payments: ['createLine', 'updateLine', 'reverseLine'],
@@ -125,6 +131,9 @@ export function handle(app, email, action, payload = {}, deps = {}) {
         if (table === 'khj') return ok(u.khj.list());
         if (table === 'loans') return ok(u.loans.list());
         if (table === 'procurements') return ok(u.procurement.list());
+        if (table === 'cheques') return ok(u.cheques.list().slice().reverse());
+        if (table === 'ktb_batches') return ok(u.ktb.list());
+        if (table === 'ledger') return ok(u.ledger.list().slice().reverse());
         return ok(u[table].list());
       case 'create':
         needRead();

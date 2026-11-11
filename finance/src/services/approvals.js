@@ -148,3 +148,23 @@ export function get(ctx, id) {
 export function findByCode(ctx, code) {
   return ctx.store.find('approval_requests', (r) => r.approval_code && r.approval_code === code)[0] || null;
 }
+
+const unpaidOf = (ctx, code) => ctx.store.list('payment_lines').filter((l) => l.approval_code === code && l.kind !== 'ส่งใช้เงินยืม' && !['จ่ายแล้ว', 'ทำรายการกลับ'].includes(l.status));
+
+/** ปิดรหัส: ยอดเหลือ (อนุมัติ − จ่ายจริง) คืนเข้าแผนอัตโนมัติ เพราะยอดผูกพันของรหัสที่ปิดไม่ถูกนับ */
+export function closeCode(ctx, id) {
+  return ctx.store.withLock(() => {
+    if (!hasRole(ctx.user, 'finance')) throw new PermissionError('เฉพาะการเงินปิดรหัสอนุมัติ');
+    const cur = getOrFail(ctx, 'approval_requests', id, 'ใบขออนุมัติ');
+    if (!COMMIT_OK.includes(cur.status)) fail('id', 'ใบนี้ไม่ได้อยู่ในสถานะที่ปิดรหัสได้');
+    if (unpaidOf(ctx, cur.approval_code).length) fail('id', 'ยังมีแถวของรหัสนี้ที่ยังไม่จ่าย ปิดรหัสไม่ได้');
+    return ctx.store.update(ctx.user, 'approval_requests', id, { status: ST.closed, closed_at: ctx.store.now() }, { reason: 'ปิดรหัสอนุมัติ คืนยอดเหลือเข้าแผน' });
+  });
+}
+
+/** โหมด auto: ปิดเมื่อจ่ายครบทุกแถวของรหัส (ผู้เรียกถือ lock) */
+export function closeIfComplete(ctx, code) {
+  const r = findByCode(ctx, code);
+  if (r && COMMIT_OK.includes(r.status) && !unpaidOf(ctx, code).length) ctx.store.update(ctx.user, 'approval_requests', r.id, { status: ST.closed, closed_at: ctx.store.now() }, { reason: 'ปิดรหัสอัตโนมัติ (จ่ายครบ)' });
+}
+const COMMIT_OK = [ST.approved, ST.received];

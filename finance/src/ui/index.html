@@ -310,13 +310,17 @@ function roleTag(r) { return '<span class="rtag" style="color:' + roleVar(r) + '
 var GROUPS = [
   { label: 'งานแผน', color: '--r-plan', tables: ['plan_projects'] },
   { label: 'ฝั่งจ่าย', color: '--r-finance', tables: ['approval_requests', 'payment_lines', 'khb', 'khj', 'loans', 'procurements'] },
+  { label: 'จ่ายเงิน', color: '--r-finance', tables: ['cheques', 'ktb_batches', 'ledger'] },
   { label: 'การเงิน', color: '--r-finance', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'cheque_books'] },
   { label: 'ข้อมูลหลัก', color: '--r-system', tables: ['funds', 'subfunds', 'fund_allowed_expense'] },
   { label: 'ผู้ดูแลระบบและผู้ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps'] },
 ];
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
-var SHORT = { approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
+var SHORT = { cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
 var DESC = {
+  cheques: 'ทะเบียนคุมเช็คทุกใบ เลขเช็คต่อเนื่องในสมุด เช็คเสียก็ลงทะเบียน (ไม่นับยอด) พร้อมรูป จ่ายแล้วเมื่อผู้รับลงชื่อรับเช็ค',
+  ktb_batches: 'ไฟล์โอนที่ระบบสร้างจาก ขจ. ผู้ตั้งอัปโหลด ผู้บริหารอนุมัติใน KTB (คนละคนกับผู้ตั้ง) ยังไม่นับว่าจ่ายจนกรอกเลขธุรกรรม',
+  ledger: 'สมุดบัญชีเดียวของโรงเรียน แก้หรือลบไม่ได้ ใต้ตารางมีสรุปภาษีหัก ณ ที่จ่ายรายเดือน (ภ.ง.ด.3 และ 53)',
   approval_requests: 'ครูยื่นใบขออนุมัติ งานแผนตรวจกับแผน เสนอ ผอ. เซ็นบนกระดาษ แล้วกดรับคืนพร้อมแนบภาพ ระบบจึงออกรหัสอนุมัติและกันยอดในแผน',
   payment_lines: 'ฐานข้อมูลหลักของการจ่าย หนึ่งแถวคือหนึ่งใบแจ้งหนี้หรือใบส่งของ ระบบเติมประเภทเงิน วิธีจ่าย ภาษี และยอดเบิกให้ แถวที่ ผอ. เซ็น ขจ. แล้วจะล็อก แก้ได้ด้วยการทำรายการกลับเท่านั้น',
   khb: 'ขออนุมัติเบิกเงิน ผ่านผู้ตรวจ 3 ชั้นแล้วถึง ผอ. เลขที่ระบบออกให้ต่อเนื่องในแต่ละปีงบ',
@@ -339,6 +343,8 @@ var DESC = {
   login_log: 'การเข้าระบบทุกครั้ง ถ้าบัญชี Google ที่เปิดอยู่ไม่ตรงกับอีเมลที่ใช้เข้า ช่องนั้นจะเป็นสีเหลือง',
 };
 var EXTRA_COLS = {
+  cheques: [{ key: 'khj_no', label: 'ขจ.' }],
+  ktb_batches: [{ key: 'status', label: 'สถานะ' }],
   khb: [{ key: 'total', label: 'ยอดรวม', type: 'money' }, { key: 'line_count', label: 'แถว' }, { key: 'status', label: 'สถานะ' }],
   khj: [{ key: 'total', label: 'ยอดรวม', type: 'money' }, { key: 'line_count', label: 'แถว' }, { key: 'status', label: 'สถานะ' }],
   loans: [{ key: 'settled_docs', label: 'ส่งใช้แล้ว (หลักฐาน)', type: 'money' }, { key: 'overdue_days', label: 'เกินกำหนด (วัน)' }, { key: 'status', label: 'สถานะ' }],
@@ -347,7 +353,7 @@ var EXTRA_COLS = {
   plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
   payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
 };
-var HIDE = { approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
+var HIDE = { cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
 
 /* ================= ผังภาพรวม (จากผังหน้า 1) =================
    live = ตารางที่ใช้งานได้แล้ว · uses = ข้อมูลหลักที่ขั้นนี้ต้องใช้ · step = ขั้นที่จะเปิดใช้ · hand = ส่งต่อ ผู้รับต้องกดรับ */
@@ -464,6 +470,9 @@ var ICON = {
   khj: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="m13 10 3 3-3 3"/>',
   loans: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
   procurements: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  cheques: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h6"/><path d="M6 15h3"/><path d="M16 12h2"/>',
+  ktb_batches: '<path d="M12 2v13"/><path d="m8 11 4 4 4-4"/><path d="M5 21h14"/>',
+  ledger: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
   login_log: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>',
 };
 function ico(name, cls) { return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICON[name] || '') + '</svg>'; }
@@ -691,6 +700,7 @@ function renderTable(key, flash) {
   if ($('mineOnly')) $('mineOnly').onchange = function () { onlyMine = this.checked; drawRows(key); };
   if ($('addBtn')) $('addBtn').onclick = function () { payAdd ? payAdd.open() : openForm(key, null); };
   drawRows(key);
+  if (key === 'ledger') taxBox();
   $('tbl').onclick = function (e) {
     var btn = e.target.closest('button[data-act]');
     if (btn) { e.stopPropagation(); return rowAction(btn.dataset.act, btn.dataset.id); }
@@ -730,7 +740,7 @@ function settingsTable(rows) {
 
 
 /* ================= ฝั่งจ่าย: ใบขออนุมัติ · หน้ารายการ · ขบ. · ขจ. · เงินยืม · พัสดุ ================= */
-var PAY_TABLES = { approval_requests: 1, payment_lines: 1, khb: 1, khj: 1, loans: 1, procurements: 1 };
+var PAY_TABLES = { cheques: 1, ktb_batches: 1, approval_requests: 1, payment_lines: 1, khb: 1, khj: 1, loans: 1, procurements: 1 };
 var KIND_OPTS = ['เบิก', 'พัสดุ', 'เงินยืม', 'สำรองจ่าย', 'ค่าจ้าง', 'ภาษีนำส่ง', 'คืนเงิน', 'ส่งใช้เงินยืม'];
 function fld(key, label, inner, opts) { opts = opts || {}; return '<div class="field" data-key="' + key + '"><label for="f_' + key + '">' + esc(label) + (opts.req ? ' <span class="req">*</span>' : '') + '</label>' + inner + (opts.hint ? '<div class="hint">' + esc(opts.hint) + '</div>' : '') + '<div class="err"></div></div>'; }
 function fTxt(key, label, opts) { opts = opts || {}; return fld(key, label, '<input type="text" id="f_' + key + '"' + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + (opts.money ? ' inputmode="decimal"' : '') + (opts.val != null ? ' value="' + esc(opts.val) + '"' : '') + '>', opts); }
@@ -781,6 +791,21 @@ function rowButtons(key, r) {
     if (f.stage === 'sign' && hasRole([SIGN_ROLE[t]]) && !mk) h += btn('doc_signed', t + ':' + r.id, 'กดรับคืน (ผอ. เซ็นแล้ว)', 'ok') + btn('doc_dreturn', t + ':' + r.id, 'ผอ. ส่งคืน', 'no');
     if (t === 'khb' && f.stage === 'done' && hasRole(['khj_maker']) && !mk && !(cache.khj || []).some(function (j) { return j.khb_id === r.id; })) h += btn('khj_gen', r.id, 'จัด ขจ.', 'ok');
   }
+  if (key === 'khj' && hasRole(['finance']) && r.flow && r.flow.stage === 'done') {
+    if (r.pay_method === 'เช็ค') h += btn('ck_issue', r.id, 'ออกเช็ค', 'ok');
+    if (r.pay_method === 'KTB' && !(cache.ktb_batches || []).some(function (b) { return b.khj_id === r.id; })) h += btn('kt_create', r.id, 'สร้างชุดโอน KTB', 'ok');
+  }
+  if (key === 'cheques' && hasRole(['finance'])) {
+    if (r.status === 'ออกแล้ว') h += btn('ck_sign', r.id, 'ส่งลงนาม', 'ok');
+    if (r.status === 'ลงนามแล้ว') h += btn('ck_recv', r.id, 'ผู้รับลงชื่อรับเช็คแล้ว', 'ok');
+  }
+  if (key === 'ktb_batches' && hasRole(['finance'])) {
+    h += btn('kt_file', r.id, 'ดูไฟล์โอน');
+    if (!r.uploaded_at && r.maker === me()) h += btn('kt_up', r.id, 'อัปโหลดแล้ว', 'ok');
+    if (r.uploaded_at && !r.approved_at) h += btn('kt_appr', r.id, 'ผู้บริหารอนุมัติแล้ว', 'ok');
+    if (r.approved_at && !r.txn_ref) h += btn('kt_txn', r.id, 'กรอกเลขธุรกรรม', 'ok');
+  }
+  if (key === 'approval_requests' && hasRole(['finance']) && r.approval_code && (r.status === 'อนุมัติแล้ว รอการเงินรับ' || r.status === 'การเงินรับแล้ว')) h += btn('ar_close', r.id, 'ปิดรหัส');
   if (key === 'procurements' && hasRole(['procurement'])) {
     if (!r.inspected_at) h += btn('pc_inspect', r.id, 'บันทึกตรวจรับ');
     if (r.inspected_at && !r.sent_at) h += btn('pc_send', r.id, 'ส่งชุดเบิก', 'ok');
@@ -838,7 +863,48 @@ async function pcAdd() {
   openDialog('บันทึกจัดซื้อ', 'พัสดุ', '--r-proc', html, 'บันทึก', function () { return svc('procurement', 'purchase', [{ approval_code: val('approval_code'), vendor: val('vendor'), amount: val('amount'), egp_no: val('egp_no') }]); });
 }
 
+async function chequeDialog(khjId) {
+  var r = await svc('cheques', 'propose', [khjId]);
+  if (!r.ok) { alert(r.error); return; }
+  if (!r.data.length) { await show(current, 'ออกเช็คครบทุกใบของ ขจ. นี้แล้ว'); return; }
+  var p = r.data[0];
+  var html = '<div class="node decide" style="--bar:var(--decide-edge);margin-bottom:10px"><div class="d">ผู้รับ</div><div class="t">' + esc(p.payee_name) + '</div><div class="d">จำนวนเงิน ' + money(p.amount) + ' บาท · ' + p.line_count + ' แถว</div><div class="d">ใบแนบ: ' + p.attachment.map(esc).join(' · ') + '</div></div>' +
+    '<p class="note">พิมพ์เช็คแล้วกรอกเลขที่ที่พิมพ์จริง ถ้าตรงกับที่ระบบเสนอจะลงทะเบียนคุมเช็คทันที ยังเหลืออีก ' + (r.data.length - 1) + ' ใบ</p>' +
+    fTxt('cheque_no', 'เลขที่เช็คที่พิมพ์จริง', { req: true, val: p.next_no }) +
+    '<p class="note">พิมพ์พลาด? <button type="button" class="btn small no" id="voidBtn">บันทึกเช็คเสีย</button></p>';
+  AFTER = function () { chequeDialog(khjId); };
+  openDialog('ออกเช็ค', 'การเงิน', '--r-finance', html, 'ยืนยันเลขที่พิมพ์', function () { return svc('cheques', 'confirm', [{ khj_id: khjId, payee_id: p.payee_id, cheque_no: val('cheque_no') }]); });
+  setTimeout(function () { var v = $('voidBtn'); if (v) v.onclick = function () { AFTER = null; $('dlg').close(); voidDialog(khjId, p.next_no); }; }, 0);
+}
+function voidDialog(khjId, no) {
+  AFTER = function () { chequeDialog(khjId); };
+  openDialog('บันทึกเช็คเสีย', 'การเงิน', '--r-finance', fTxt('cheque_no', 'เลขที่เช็คที่เสีย', { req: true, val: no }) + fTxt('reason', 'เหตุผล', { req: true }) + fld('void_photo', 'รูปเช็คที่ประทับยกเลิก', '<input type="file" id="f_scan_file" accept="image/*">', { req: true, hint: 'แล้วระบบจะใช้เลขถัดไป' }), 'บันทึกเช็คเสีย', async function () {
+    var s = await scanRef(); if (!s.ok) return s.r;
+    return svc('cheques', 'voidCheque', [{ khj_id: khjId, cheque_no: val('cheque_no'), reason: val('reason'), void_photo: s.ref }]);
+  });
+}
+async function taxBox() {
+  var ym = ME.today.slice(0, 7);
+  $('tbl').insertAdjacentHTML('afterend', '<h2 style="font-size:19px;margin:26px 0 8px">สรุปภาษีหัก ณ ที่จ่ายรายเดือน</h2><div class="toolbar"><input class="search" id="taxMonth" style="width:140px" value="' + ym + '" aria-label="เดือน (ปี ค.ศ.-เดือน)"><span class="note">รูปแบบ ปี ค.ศ.-เดือน เช่น ' + ym + ' นับตามวันที่จ่าย</span></div><div id="taxOut"></div>');
+  var draw = async function () {
+    var r = await svc('ledger', 'taxSummary', [$('taxMonth').value]);
+    if (!r.ok) { $('taxOut').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+    var d = r.data;
+    $('taxOut').innerHTML = d.forms.length ? '<div class="register"><table><thead><tr><th>แบบ</th><th>ผู้รับ</th><th>มูลค่า</th><th>ภาษีที่หัก</th></tr></thead><tbody>' + d.forms.map(function (f) { return f.rows.map(function (x) { return '<tr><td>' + esc(f.form) + '</td><td>' + esc(x.name) + '</td><td class="num">' + money(x.base) + '</td><td class="num">' + money(x.tax) + '</td></tr>'; }).join('') + '<tr><td colspan="2"><b>รวม ' + esc(f.form) + '</b></td><td class="num"><b>' + money(f.base) + '</b></td><td class="num"><b>' + money(f.tax) + '</b></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">เดือนนี้ยังไม่มีภาษีที่หักจากรายการที่จ่ายแล้ว</p>';
+  };
+  $('taxMonth').onchange = draw; draw();
+}
+
 var PAY_ACT = {
+  ar_close: function (id) { return openDialog('ปิดรหัสอนุมัติ', 'การเงิน', '--r-finance', '<p class="note">ยอดที่เหลือ (อนุมัติ − จ่ายจริง) จะคืนเข้าแผน และใช้รหัสนี้บันทึกแถวใหม่ไม่ได้อีก</p>', 'ปิดรหัส', function () { return svc('approvals', 'closeCode', [id]); }); },
+  ck_issue: function (id) { return chequeDialog(id); },
+  ck_sign: function (id) { return run('cheques', 'sendForSignature', [id], 'ส่งลงนามแล้ว'); },
+  ck_recv: function (id) { return run('cheques', 'markReceived', [id], 'บันทึกผู้รับรับเช็คแล้ว จ่ายแล้วและลง Ledger'); },
+  kt_create: function (id) { return run('ktb', 'createBatch', [id], 'สร้างชุดโอนแล้ว ดูไฟล์โอนแล้วอัปโหลดขึ้น KTB'); },
+  kt_up: function (id) { return run('ktb', 'markUploaded', [id], 'บันทึกการอัปโหลดแล้ว รอผู้บริหารอนุมัติใน KTB'); },
+  kt_file: async function (id) { var r = await svc('ktb', 'fileContent', [id]); if (!r.ok) return; var b = rec('ktb_batches', id); openDialog('ไฟล์โอน ' + b.file_name, 'การเงิน', '--r-finance', '<p class="note">รูปแบบไฟล์เป็นรูปแบบชั่วคราว ต้องปรับตามตัวอย่างไฟล์ KTB Corporate จริงก่อนใช้โอนเงิน</p><textarea rows="8" readonly style="width:100%;font-family:monospace">' + esc(r.data) + '</textarea>', 'ปิด', function () { return Promise.resolve({ ok: true }); }); },
+  kt_appr: async function (id) { var r = await svc('ktb', 'approvers', []); var list = r.ok ? r.data : []; openDialog('บันทึกผู้บริหารอนุมัติใน KTB', 'การเงิน', '--r-finance', fSel('approver_id', 'ผู้อนุมัติ', list.map(function (a) { return { v: a.id, t: a.name }; }), { req: true, hint: 'ต้องเป็นคนละคนกับผู้ตั้งรายการ' }), 'บันทึก', function () { return svc('ktb', 'recordApproval', [id, val('approver_id')]); }); },
+  kt_txn: function (id) { return openDialog('กรอกเลขธุรกรรม KTB', 'การเงิน', '--r-finance', '<p class="note">ก่อนกรอก ระบบยังไม่นับว่าจ่าย</p>' + fTxt('txn_ref', 'เลขธุรกรรม', { req: true }), 'บันทึก', function () { return svc('ktb', 'recordTxn', [id, val('txn_ref')]); }); },
   ar_receive: function (id) { return run('approvals', 'receive', [id], 'กดรับแล้ว'); },
   ar_propose: function (id) { return run('approvals', 'propose', [id], 'เสนอ ผอ. แล้ว รอ ผอ. เซ็นบนกระดาษ'); },
   ar_freceive: function (id) { return run('approvals', 'financeReceive', [id], 'กดรับเรื่องแล้ว'); },
@@ -904,6 +970,7 @@ function showErrors(form, r) {
   if (!shown) top.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>';
   if (first) { var i = first.querySelector('input,select,textarea'); if (i) i.focus(); }
 }
+var AFTER = null;
 async function openDialog(title, who, color, fieldsHtml, okLabel, onSubmit) {
   var form = $('dlgForm');
   $('dlgNode').style.setProperty('--bar', 'var(' + color + ')');
@@ -916,7 +983,7 @@ async function openDialog(title, who, color, fieldsHtml, okLabel, onSubmit) {
     $('dlgOk').disabled = true;
     var r = await onSubmit();
     $('dlgOk').disabled = false;
-    if (r.ok) { dlg.close(); cache = {}; show(current, { 'สร้าง ขบ.': 'สร้าง ขบ. แล้ว ตรวจรายการแล้วกดส่งตรวจ', 'ทำรายการกลับ': 'ทำรายการกลับแล้ว', 'จำแนก': 'จำแนกแล้ว', 'กดรับคืน': 'กดรับคืนแล้ว', 'บันทึก': 'บันทึกแล้ว', 'อนุมัติ': 'อนุมัติแล้ว บัญชีใหม่มีผลทันที', 'ไม่อนุมัติ': 'บันทึกผลไม่อนุมัติแล้ว', 'ส่งคำขอ': 'ส่งคำขอแล้ว รอผู้อนุมัติ' }[okLabel] || 'บันทึกแล้ว'); } else showErrors(form, r);
+    if (r.ok) { dlg.close(); cache = {}; var AF = AFTER; AFTER = null; if (AF) { await show(current); AF(); return; } show(current, { 'สร้าง ขบ.': 'สร้าง ขบ. แล้ว ตรวจรายการแล้วกดส่งตรวจ', 'ทำรายการกลับ': 'ทำรายการกลับแล้ว', 'จำแนก': 'จำแนกแล้ว', 'กดรับคืน': 'กดรับคืนแล้ว', 'บันทึก': 'บันทึกแล้ว', 'อนุมัติ': 'อนุมัติแล้ว บัญชีใหม่มีผลทันที', 'ไม่อนุมัติ': 'บันทึกผลไม่อนุมัติแล้ว', 'ส่งคำขอ': 'ส่งคำขอแล้ว รอผู้อนุมัติ' }[okLabel] || 'บันทึกแล้ว'); } else showErrors(form, r);
   };
   dlg.showModal();
   var first = form.querySelector('input,select,textarea'); if (first) first.focus();

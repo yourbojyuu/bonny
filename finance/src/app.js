@@ -10,6 +10,9 @@ import * as loans from './services/loans.js';
 import * as procurement from './services/procurement.js';
 import * as payments from './services/payments.js';
 import * as documents from './services/documents.js';
+import * as cheques from './services/cheques.js';
+import * as ktb from './services/ktb.js';
+import * as ledger from './services/ledger.js';
 import * as users from './services/users.js';
 import * as settingsSvc from './services/settings.js';
 import * as payees from './services/payees.js';
@@ -49,7 +52,7 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
       approvals: {
         submit: b(approvals.submit), resubmit: b(approvals.resubmit), receive: b(approvals.receive), returnToRequester: b(approvals.returnToRequester),
         propose: b(approvals.propose), recordDecision: b(approvals.recordDecision), financeReceive: b(approvals.financeReceive), classify: b(approvals.classify),
-        list: b(approvals.list), get: b(approvals.get),
+        list: b(approvals.list), get: b(approvals.get), closeCode: b(approvals.closeCode),
       },
       loans: { create: b(loans.createLoan), list: b((c) => { requirePermission(c, 'masters.read'); return loans.listLoans(c); }) },
       procurement: {
@@ -59,6 +62,12 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
       payments: { createLine: b(payments.createLine), updateLine: b(payments.updateLine), reverseLine: b(payments.reverseLine), listLines: b(payments.listLines) },
       khb: { create: b(documents.createKhb), list: b((c) => { requirePermission(c, 'masters.read'); return documents.listKhb(c); }) },
       khj: { generate: b(documents.generateKhj), list: b((c) => { requirePermission(c, 'masters.read'); return documents.listKhj(c); }) },
+      cheques: {
+        propose: b(cheques.propose), confirm: b(cheques.confirm), voidCheque: b(cheques.voidCheque), register: b((c, a) => { requirePermission(c, 'masters.read'); return cheques.register(c, a); }),
+        sendForSignature: b(cheques.sendForSignature), markReceived: b(cheques.markReceived), list: b((c) => { requirePermission(c, 'masters.read'); return cheques.listCheques(c); }),
+      },
+      ktb: { createBatch: b(ktb.createBatch), fileContent: b(ktb.fileContent), markUploaded: b(ktb.markUploaded), recordApproval: b(ktb.recordApproval), recordTxn: b(ktb.recordTxn), approvers: b(ktb.approvers), list: b((c) => { requirePermission(c, 'masters.read'); return ktb.listBatches(c); }) },
+      ledger: { list: b(ledger.listLedger), balance: b(ledger.balance), taxSummary: b(ledger.taxSummary) },
       workflow: {
         submit: b(review.submitForReview), receive: b(review.receiveStage), pass: b(review.passStage), returnDoc: b(review.returnStage),
         receiveSigned: b(review.receiveSigned), directorReturn: b(review.directorReturn),

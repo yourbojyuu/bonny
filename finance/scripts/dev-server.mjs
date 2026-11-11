@@ -18,10 +18,13 @@ for (const [k, roles] of Object.entries(people)) admin.users.create({ name: `ผ
 const sav = admin.bank_accounts.create({ account_no: '0000000001', bank: 'ธนาคารสมมติ', branch: 'สาขาสมมติ', type: 'ออมทรัพย์', fund_group: 'บกศ.' });
 const cur = admin.bank_accounts.create({ account_no: '0000000002', bank: 'ธนาคารสมมติ', branch: 'สาขาสมมติ', type: 'กระแสรายวัน', fund_group: 'บกศ.', linked_account_id: sav.id });
 admin.funds.create({ fund_code: 'บกศ. ง/1', name: 'ค่าจ้างครูสมมติ', fund_group: 'บกศ.', bank_account_id: cur.id });
+admin.users.create({ name: 'ผู้บริหาร สมมติ', email: `dir@${D}`, roles: ['director'], appointment_ref: 'คำสั่งสมมติ dir' });
+admin.settings.update('ktb_approver_user_ids', [app.store.find('users', (u) => u.email === `dir@${D}`)[0].id], 'ตั้งต้นทดลอง');
 const fin = app.asUser(`finance@${D}`);
 fin.cheque_books.create({ bank_account_id: cur.id, first_no: '00000001', last_no: '00000050' });
 const p = fin.payees.create({ name: 'ร้านสมมติ ก', tax_form: 'ภ.ง.ด.53', pay_method: 'KTB' });
 fin.payees.requestAccountChange(p.id, { bank: 'ธนาคารสมมติ', account_no: '0000000099', reason: 'ร้านแจ้งเปลี่ยน (สมมติ)' });
+fin.payees.create({ name: 'ร้านสมมติ ค (เช็ค)', tax_form: 'ภ.ง.ด.53', pay_method: 'เช็ค' });
 const planner = app.asUser(`plan@${D}`);
 planner.plan_projects.create({ name: 'โครงการพัฒนาห้องเรียนสมมติ', fund_code: 'บกศ. ง/1', budget: 1250050, owner_emails: [`teacher@${D}`] });
 planner.plan_projects.create({ name: 'กิจกรรมแข่งขันวิชาการสมมติ', fund_code: 'บกศ. ง/1', budget: 4800000, owner_emails: [`teacher@${D}`, `plan@${D}`] });
