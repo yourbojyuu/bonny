@@ -99,16 +99,6 @@
   .tool kbd { font:inherit; font-size:12.5px; color:var(--muted); border:1px solid var(--rule-soft); border-radius:6px; padding:0 6px; background:var(--chip); }
   .toolbar-top { display:flex; align-items:center; gap:8px; }
   #sideToggle { padding:5px 8px; }
-  #cmd { margin:12vh auto 0; width:min(580px, calc(100vw - 24px)); }
-  #cmd .node { padding:12px 14px 10px 20px; }
-  #cmdQ { width:100%; border:0; border-bottom:1.5px solid var(--rule-soft); padding:8px 4px 10px; outline:none; background:transparent; font-size:17px; }
-  #cmdList { list-style:none; margin:6px 0 2px; padding:0; max-height:46vh; overflow:auto; }
-  #cmdList li { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:12px; cursor:pointer; }
-  #cmdList li[aria-selected="true"] { background:var(--hover); box-shadow:inset 0 0 0 1.5px var(--focus); }
-  #cmdList .c-main { flex:1; min-width:0; } #cmdList .c-t { font-weight:600; } #cmdList .c-d { font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #cmdList .c-g { font-size:13px; color:var(--muted); white-space:nowrap; }
-  #cmdEmpty { padding:18px 8px; color:var(--muted); }
-  #cmdHint { font-size:13px; color:var(--muted); padding:6px 4px 0; border-top:1px solid var(--rule-soft); }
   main { padding:6px 10px 64px 20px; min-width:0; animation:rise .28s ease both; }
   .shell.collapsed main { padding-left:6px; }
   @keyframes rise { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
@@ -610,6 +600,136 @@
   .qtot { display:grid; gap:2px; min-width:96px; text-align:right; } .qtot span { font-size:var(--f-sm); color:var(--muted); font-weight:600; } .qtot b { font-size:22px; color:#0b2a6b; font-variant-numeric:tabular-nums; line-height:1.2; }
   .qgrid .btn { min-height:42px; align-self:flex-end; margin-left:auto; }
   #qr_msg .msg { margin:10px 0 0; }
+
+  /* =====================================================================
+     ระบบการออกแบบ "สมุดบัญชี" (ชั้นสุดท้าย ทับของเดิม)
+     แนวคิด: เอกสารการเงินของโรงเรียน กระดาษทึบ เส้นบาง หมึกกรมท่า ส้มใช้เป็นจุดเน้นเดียว
+     โทเคน: สี --d-* · มุม 3 ระดับ (4/8/12) · ระดับเงา 3 ระดับ · ตัวเลขเงินใช้ฟอนต์ตัวเลขเท่ากันทุกหลัก
+     พื้นหลังไล่สียังอยู่ แต่เนื้อหาทั้งหมดวางบนกระดาษทึบ ไม่ใช้กระจกเบลอ
+     ===================================================================== */
+  :root {
+    --d-ink:#0f1f3d; --d-ink2:#3a4660; --d-mute:#5b667d; --d-paper:#fffdf9; --d-sheet:#ffffff; --d-wash:#f5f3ee;
+    --d-rule:#dcdfe6; --d-rule2:#eceef2; --d-orange:#e8590c; --d-orange-ink:#b84407; --d-blue:#1f4fd1; --d-blue-wash:#eaf0ff; --d-orange-wash:#fff0e5;
+    --d-r1:4px; --d-r2:8px; --d-r3:12px;
+    --d-e1:0 1px 0 rgba(15,31,61,.04); --d-e2:0 1px 2px rgba(15,31,61,.06), 0 6px 16px -10px rgba(15,31,61,.22); --d-e3:0 2px 4px rgba(15,31,61,.06), 0 18px 36px -18px rgba(15,31,61,.35);
+    --ink:var(--d-ink); --muted:var(--d-mute); --radius:var(--d-r3); --radius-sm:var(--d-r2); --focus:var(--d-blue);
+    --glass:var(--d-paper); --glass-strong:var(--d-sheet); --glass-edge:var(--d-rule); --glass-line:var(--d-rule);
+    --shadow:var(--d-e1); --blur:none; --chip:var(--d-wash); --hover:rgba(15,31,61,.05);
+  }
+  body { color:var(--d-ink); }
+  #bgGL { opacity:.42; }
+  h1, h2, h3, .page-title, .homehead h1 { font-family:'Sarabun','Geist',sans-serif; color:var(--d-ink); }
+  .page-title, .homehead h1 { font-weight:700; font-size:28px; letter-spacing:-.015em; line-height:1.25; }
+  .page-title::after { display:none; }
+  .page-desc, .homehead p { color:var(--d-mute); }
+
+  /* พื้นผิวทึบ: เส้นขอบบาง ไม่เบลอ */
+  .island, .tile, .ribbon, .wb, .side, .register, .node, dialog, .whomenu { -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--d-paper); border:1px solid var(--d-rule); box-shadow:var(--d-e1); }
+  .tile, .wb, .register, .node { border-radius:var(--d-r3); }
+  .tile::after, .tile .rim { display:none; }
+  .tile[class*="g-"] { background:var(--d-paper); }
+  .tile.link:hover, .arow.clickable:hover, .qchip:hover { transform:none; box-shadow:var(--d-e2); border-color:#c9cedb; }
+  dialog { box-shadow:var(--d-e3); border-radius:var(--d-r3); }
+
+  /* แถบบนสุด: แถวเดียว ไม่แยกเป็นเกาะลอย */
+  .topbar { border-radius:var(--d-r3); background:var(--d-paper); border:1px solid var(--d-rule); box-shadow:var(--d-e1); -webkit-backdrop-filter:none; backdrop-filter:none; padding:8px 12px; gap:8px 14px; }
+  .topbar .island { background:none; border:0; box-shadow:none; border-radius:0; }
+  .logoisle { width:44px; height:44px; } .logoisle .logo { width:38px; height:38px; }
+  .navisle { padding:0; }
+  .modeisle { padding:3px; gap:2px; border-radius:var(--d-r2); background:var(--d-wash) !important; }
+  .modeisle button { min-height:36px; border-radius:6px; color:var(--d-ink2); font-weight:600; }
+  .modeisle button[aria-pressed="true"] { background:var(--d-ink); color:#fff; }
+  .toolisle { padding:0; }
+  .whochip { border-radius:var(--d-r2); background:var(--d-sheet); border:1px solid var(--d-rule); min-height:38px; }
+  .whochip:hover { border-color:#b9c0d0; }
+
+  /* เมนูโซน: ตัวหนังสือล้วน เส้นใต้สีส้มเป็นตัวบอกว่าอยู่ที่ไหน */
+  .navrow { gap:0; padding:0; }
+  body .navpill { top:auto; bottom:0; height:3px; border-radius:3px 3px 0 0; background:var(--d-orange) !important; box-shadow:none !important; }
+  .navrow > .item, .navrow > .grp-head { border-radius:var(--d-r2); padding:0 14px; min-height:44px; color:var(--d-ink2); font-weight:500; }
+  .navrow > .item:hover, .navrow > .grp-head:hover { background:var(--hover); }
+  .navrow > .item[aria-current="true"], .navrow > .grp-head.on { color:var(--d-ink); font-weight:700; }
+  .navrow > .item[aria-current="true"] .ico, .navrow > .grp-head.on .ico { color:var(--d-orange); }
+  .navrow > .grp-head.on .zdot, .navrow > .grp-head.on i { background:var(--d-orange) !important; }
+  .pagetabs { margin-top:14px; gap:4px 6px; padding-bottom:10px; border-bottom:1px solid var(--d-rule); }
+
+  /* ปุ่ม: มุมเหลี่ยมนุ่ม 8 พิกเซล ปุ่มหลักทึบสีหมึก */
+  .btn { border-radius:var(--d-r2); background:var(--d-sheet); border:1px solid var(--d-rule); box-shadow:none; padding:7px 16px; font-weight:500; color:var(--d-ink); transition:background .15s, border-color .15s, color .15s; }
+  .btn:hover { transform:none; box-shadow:none; background:var(--d-wash); border-color:#b9c0d0; }
+  .btn:active { transform:none; background:#ebe8e0; }
+  .btn.primary, body .btn.primary { background:var(--d-ink); border-color:var(--d-ink); color:#fff; text-shadow:none; font-weight:600; box-shadow:none; filter:none; }
+  .btn.primary:hover, body .btn.primary:hover { background:#1b3263; border-color:#1b3263; filter:none; }
+  .btn.small { padding:4px 12px; }
+  .rtag, .handoff, .pill, .qchip { border-radius:var(--d-r1); }
+  .rtag, .handoff { border-width:1px; }
+  .pill { font-weight:600; padding:1px 8px; }
+
+  /* ป้ายลัดหน้าแรก */
+  .qchip { border:1px solid var(--d-rule); background:var(--d-sheet); min-height:38px; padding:0 12px 0 10px; font-weight:500; }
+  .qchip .ico { color:var(--d-orange); }
+
+  /* แถวรายการ: ไอคอนในกรอบสี่เหลี่ยม แถบสีบางด้านซ้ายบอกฝั่ง */
+  .arow { border-radius:var(--d-r2); background:var(--d-sheet); border:1px solid var(--d-rule2); border-left:3px solid var(--ac); padding:10px 12px; gap:12px; animation:none; }
+  .arow .ai { border-radius:var(--d-r2); width:38px; height:38px; background:color-mix(in srgb, var(--ac) 10%, #fff); }
+  .arow.clickable:hover .ai { transform:none; }
+  .arow .at b { font-weight:600; }
+  .alist { gap:6px; }
+
+  /* สถิติ: ตัวเลขเป็นพระเอก ใช้ฟอนต์ตัวเลขเท่ากันทุกหลัก */
+  .tile .cap, .tile h3 { font-size:13.5px; font-weight:600; letter-spacing:0; color:var(--d-mute); }
+  .tile .big, .tile .big.thin { font-family:'Geist Mono','Geist',monospace; font-weight:500; letter-spacing:-.03em; color:var(--d-ink); }
+  .tile .big { font-size:44px; line-height:1.05; } .tile .big.thin { font-size:34px; }
+  .homegrid .tile h3 { color:var(--d-ink); font-size:15px; }
+  .tile .chip { border-radius:var(--d-r1); background:var(--d-ink); }
+
+  /* ตารางทะเบียน */
+  .register { overflow:hidden; }
+  .register table { border-collapse:collapse; }
+  .register thead th { background:var(--d-wash); color:var(--d-ink2); font-weight:600; font-size:13.5px; border-bottom:1px solid var(--d-rule); }
+  .register tbody td { border-bottom:1px solid var(--d-rule2); }
+  .register tbody tr:hover td { background:#faf8f3; }
+  .num { font-family:'Geist Mono','Geist',monospace; font-weight:500; }
+
+  /* ไทม์ไลน์ */
+  .ribbon { padding:4px; border-radius:var(--d-r2); }
+  .ribbon button { border-radius:6px; }
+  .ribbon button i { border-radius:var(--d-r1); }
+  .ribbon button.mine { box-shadow:inset 0 0 0 1px var(--d-orange); background:var(--d-orange-wash); }
+  .wb { border-radius:var(--d-r3); }
+  .wb-head h2 { color:var(--d-ink); font-weight:700; }
+  .wb-node { border-radius:var(--d-r2); box-shadow:var(--d-e1); }
+  .wb-node:hover { transform:none; box-shadow:var(--d-e2); }
+  .wb-node .g { border-radius:var(--d-r1); width:28px; height:28px; font-family:'Geist Mono',monospace; font-weight:600; font-size:13px; }
+  .wb-node .c strong { font-family:'Geist Mono',monospace; font-weight:500; }
+  .wb-node .mine { border-radius:var(--d-r1); background:var(--d-orange); box-shadow:none; }
+  .wb-band { border-radius:var(--d-r2); }
+  .wb-tools { border-radius:var(--d-r2); box-shadow:var(--d-e2); }
+  .wb-tools button { border-radius:6px; }
+  .wb-item { border-radius:var(--d-r2); }
+
+  /* ฟอร์มและช่องกรอก */
+  input, select, textarea { border-radius:var(--d-r2); }
+  .field input, .field select, .field textarea { border:1px solid var(--d-rule); background:var(--d-sheet); }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--d-blue); outline:none; box-shadow:0 0 0 3px rgba(31,79,209,.16); }
+  :focus-visible { outline:2px solid var(--d-blue); outline-offset:2px; }
+
+  .search, input.search, #q { border-radius:var(--d-r2) !important; background:var(--d-sheet); border:1px solid var(--d-rule); }
+  .pagetabs > *, .pagetabs button, .pagetabs a, .pagetabs .tabs, .pagetabs [role="tab"] { border-radius:var(--d-r2) !important; }
+  .pagetabs .tabs, .pagetabs [role="tablist"] { background:var(--d-wash) !important; box-shadow:none !important; border:0 !important; }
+  .pagetabs [aria-selected="true"], .pagetabs .on { background:var(--d-ink) !important; color:#fff !important; border-color:var(--d-ink) !important; box-shadow:none !important; }
+  .pt-name b { border-radius:var(--d-r1); background:var(--d-orange) !important; }
+  .toolbar .btn.primary { border-radius:var(--d-r2); }
+  .search { border-radius:var(--d-r2); }
+  .tool, .uses button, .uses span, .subrow .item, .modeisle, .toolisle { border-radius:var(--d-r2); }
+  .subrow .item { border-radius:6px; }
+  .subrow .item[aria-current="true"] { background:var(--d-ink); color:#fff; font-weight:600; box-shadow:none; }
+  .subrow .item[aria-current="true"] .ico { color:#fff; }
+  .pt-tabs { border-radius:var(--d-r2); background:var(--d-wash); border:0; box-shadow:none; padding:3px; }
+  .pt-tabs button { border-radius:6px; }
+  .pt-tabs button[aria-selected="true"] { background:var(--d-ink); color:#fff; box-shadow:none; }
+  .pt-tabs button[aria-selected="true"] .count { color:#fff; }
+  /* หน้าล็อกอิน */
+  .login-card, #loginView .card, #loginView form { border-radius:var(--d-r3); }
 </style>
 </head>
 <body>
@@ -902,7 +1022,6 @@ void main() {
     </div>
     <div class="island modeisle hidden" id="modeSw" role="group" aria-label="สลับโหมด"><button type="button" data-mode="home">การเงิน</button><button type="button" data-mode="executive">ผู้บริหาร</button></div>
     <div class="island toolisle">
-      <button class="tool" id="cmdBtn" aria-label="ค้นหาเมนู" aria-keyshortcuts="Control+K Meta+K"></button>
       <div class="who">
         <button class="whochip" id="whoBtn" aria-haspopup="true" aria-expanded="false"><span class="name" id="whoName"></span><span id="whoRoles"></span></button>
         <div class="whomenu hidden" id="whoMenu"><div id="whoRolesMenu"></div><div class="note" id="runheadDate"></div><button class="btn small" id="logoutBtn">ออกจากระบบ</button></div>
@@ -914,12 +1033,6 @@ void main() {
   <div class="shell"><main id="main"></main></div>
 </section>
 
-<dialog id="cmd" aria-label="ค้นหาเมนู"><div class="node" style="--bar:var(--r-finance)">
-  <input id="cmdQ" type="text" role="combobox" aria-expanded="true" aria-controls="cmdList" aria-autocomplete="list" placeholder="พิมพ์ชื่อเมนู เช่น ผู้รับเงิน สมุดเช็ค" autocomplete="off" spellcheck="false">
-  <ul id="cmdList" role="listbox" aria-label="ผลการค้นหา"></ul>
-  <div id="cmdEmpty" class="hidden"></div>
-  <div id="cmdHint">ลูกศรขึ้นลงเพื่อเลือก Enter เพื่อเปิด Esc เพื่อปิด</div>
-</div></dialog>
 
 <div id="toasts" role="status" aria-live="polite"></div>
 <div id="printArea" aria-label="ตัวอย่างก่อนพิมพ์"></div>
@@ -1192,8 +1305,6 @@ function arow(o) {
 }
 var HF = '<span class="handoff hf">ส่ง<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>รับ</span>';
 function ico(name, cls) { return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICON[name] || '') + '</svg>'; }
-var IS_MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
-var KEYCAP = IS_MAC ? '⌘K' : 'Ctrl K';
 
 // สถานะเมนู: กลุ่มที่พับไว้ และเมนูซ่อน · จำไว้ในเครื่องนี้ (ถ้าเบราว์เซอร์ไม่ให้เก็บ ก็ใช้ได้ตามปกติ)
 function memGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
@@ -1248,7 +1359,6 @@ function renderSide() {
     var b = e.target.closest('button[data-p]'); if (b) openPage(b.dataset.p);
   };
   $('pagetabs').onclick = function (e) { var b = e.target.closest('button[data-t]'); if (b && b.dataset.t !== current) { filterText = ''; onlyMine = false; show(b.dataset.t); } };
-  $('cmdBtn').innerHTML = ico('search') + '<span class="tl">ค้นหาเมนู</span><kbd>' + KEYCAP + '</kbd>';
   $('modeSw').classList.toggle('hidden', !tableMeta('executive'));
   $('modeSw').onclick = function (e) { var b = e.target.closest('[data-mode]'); if (b) go(b.dataset.mode === 'home' ? 'home' : 'executive'); };
   $('whoBtn').onclick = function (e) { e.stopPropagation(); var m = $('whoMenu'); m.classList.toggle('hidden'); $('whoBtn').setAttribute('aria-expanded', String(!m.classList.contains('hidden'))); };
@@ -1299,56 +1409,6 @@ function markNav() {
   var m = $('modeSw'); if (m) [].forEach.call(m.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String((b.dataset.mode === 'executive') === (current === 'executive'))); });
   placePill();
 }
-
-/* ================= ค้นหาเมนู (Ctrl/⌘ + K) ================= */
-var cmdSel = 0, cmdRows = [];
-function cmdEntries() {
-  var out = [];
-  PAGES.forEach(function (pg) {
-    pageTables(pg).forEach(function (t) {
-      if (t === 'home') out.push({ key: 'home', label: 'ถาดงาน', group: '1 ถาดงาน', desc: 'งานที่ถึงมือคุณ จำนวนวันที่รอ และงานที่เกินกำหนด', color: '--r-finance' });
-      else out.push({ key: t, label: tableMeta(t).label, group: pg.no + ' ' + pg.label, desc: DESC[t] || '', color: OWNER_COLOR[t] || '--r-system' });
-    });
-  });
-  return out;
-}
-function cmdDraw() {
-  var q = $('cmdQ').value.trim().toLowerCase();
-  // ชื่อเมนูตรงคำค้นขึ้นก่อน แล้วจึงเป็นเมนูที่คำอธิบายหรือชื่อกลุ่มตรง
-  var rank = function (e) { return !q || e.label.toLowerCase().indexOf(q) >= 0 ? 0 : 1; };
-  cmdRows = cmdEntries().filter(function (e) { return !q || (e.label + ' ' + e.group + ' ' + e.desc + ' ' + e.key + ' ' + (SHORT[e.key] || '')).toLowerCase().indexOf(q) >= 0; })
-    .map(function (e, i) { return { e: e, r: rank(e), i: i }; }).sort(function (x, y) { return x.r - y.r || x.i - y.i; }).map(function (x) { return x.e; });
-  cmdSel = Math.min(cmdSel, Math.max(cmdRows.length - 1, 0));
-  $('cmdList').innerHTML = cmdRows.map(function (e, i) {
-    return '<li role="option" id="co' + i + '" data-i="' + i + '" aria-selected="' + (i === cmdSel) + '">' + ico(e.key === 'home' ? 'home' : e.key) +
-      '<div class="c-main"><div class="c-t">' + esc(e.label) + '</div><div class="c-d">' + esc(e.desc) + '</div></div>' +
-      (e.group ? '<span class="c-g"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:var(' + e.color + ')"></i>' + esc(e.group) + '</span>' : '') + '</li>';
-  }).join('');
-  var empty = $('cmdEmpty');
-  empty.classList.toggle('hidden', cmdRows.length > 0);
-  empty.textContent = cmdRows.length ? '' : 'ไม่พบเมนูที่ตรงกับ "' + $('cmdQ').value.trim() + '" ลองคำอื่น เช่น ผู้รับเงิน หรือ บัญชี';
-  $('cmdQ').setAttribute('aria-activedescendant', cmdRows.length ? 'co' + cmdSel : '');
-  var el = $('co' + cmdSel); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
-}
-function cmdOpen() {
-  if (!ME || $('dlg').open) return;
-  $('cmdQ').value = ''; cmdSel = 0; cmdDraw();
-  if (!$('cmd').open) $('cmd').showModal();
-  $('cmdQ').focus();
-}
-function cmdGo(i) { var e = cmdRows[i]; if (!e) return; $('cmd').close(); filterText = ''; onlyMine = false; show(e.key); }
-$('cmdBtn').onclick = cmdOpen;
-$('cmdQ').oninput = function () { cmdSel = 0; cmdDraw(); };
-$('cmdQ').onkeydown = function (e) {
-  if (e.key === 'ArrowDown') { e.preventDefault(); cmdSel = Math.min(cmdSel + 1, cmdRows.length - 1); cmdDraw(); }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); cmdSel = Math.max(cmdSel - 1, 0); cmdDraw(); }
-  else if (e.key === 'Enter') { e.preventDefault(); cmdGo(cmdSel); }
-};
-$('cmdList').onclick = function (e) { var li = e.target.closest('li'); if (li) cmdGo(+li.dataset.i); };
-$('cmd').addEventListener('click', function (e) { if (e.target === $('cmd')) $('cmd').close(); });
-document.addEventListener('keydown', function (e) {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if ($('cmd').open) $('cmd').close(); else cmdOpen(); }
-});
 
 async function load(t, force) {
   if (!cache[t] || force) { var r = await call('list', { table: t }); cache[t] = r.ok ? r.data : []; }
@@ -1555,7 +1615,7 @@ async function renderHome(flash) {
   var staff = ME.user.roles.some(function (r) { return r !== 'requester'; });
   var skel = '<span class="skel"></span>';
   var head = '<div class="homehead"><div><h1>สวัสดี ' + esc(ME.user.name) + '</h1><p>' + esc(thDay(ME.today)) + ' ' + ME.user.roles.map(roleTag).join(' ') + '</p></div>' +
-    '<div class="qchips" id="quick">' + QUICK.filter(function (q) { return tableMeta(q[0]); }).slice(0, 5).map(function (q) { return '<button type="button" class="qchip" data-go="' + q[0] + '">' + ico(q[0]) + esc(q[1]) + '</button>'; }).join('') + '<button type="button" class="qchip" id="homeCmd">' + ico('search') + 'ค้นหาเมนู</button></div></div>';
+    '<div class="qchips" id="quick">' + QUICK.filter(function (q) { return tableMeta(q[0]); }).slice(0, 5).map(function (q) { return '<button type="button" class="qchip" data-go="' + q[0] + '">' + ico(q[0]) + esc(q[1]) + '</button>'; }).join('') + '</div></div>';
   var html = (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '') + head +
     (ME.canTimeline ? '<section class="wb" id="wb" aria-label="ไทม์ไลน์งานการเงิน"><div class="wb-head"><h2>ไทม์ไลน์งานการเงิน</h2><span class="skel" style="width:120px"></span></div><div style="height:420px"></div></section>' : '') +
     '<div class="homegrid"><section class="tile" id="tTray"><h3>ถาดงาน · งานที่ถึงมือคุณ</h3><div class="alist" id="lTray">' + skel + '</div></section>' +
@@ -1571,7 +1631,7 @@ async function renderHome(flash) {
   main.onclick = function (e) {
     if (e.target.closest('#wb')) return; // ไทม์ไลน์จัดการคลิกเอง
     var sc = e.target.closest('[data-scroll]'); if (sc) { var to = $(sc.dataset.scroll); if (to) to.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-    var el = e.target.closest('[data-go]'); if (el) go(el.dataset.go, el.dataset.mine === '1'); else if (e.target.closest('#homeCmd')) $('cmdBtn').click();
+    var el = e.target.closest('[data-go]'); if (el) go(el.dataset.go, el.dataset.mine === '1');
   };
   main.onkeydown = function (e) { if (e.key === 'Enter') { var el = e.target.closest('[data-go]'); if (el) go(el.dataset.go); } };
 
