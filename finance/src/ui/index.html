@@ -578,6 +578,19 @@
   .stat { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; align-items:center; }
   .stat .big { font-size:30px; line-height:1; font-weight:700; color:#0b2a6b; font-variant-numeric:tabular-nums; } .stat .sub { color:var(--muted); font-size:var(--f-sm); } .stat .bar { grid-column:1/-1; width:100%; margin-top:6px; }
   @media (max-width:900px) { .homegrid { grid-template-columns:1fr; } }
+
+  /* กรอกใบเสร็จแถวเดียว */
+  .qrow { margin:0 0 16px; padding:14px 16px; border-radius:22px; background:rgba(255,255,255,.82); border:1px solid #fff; box-shadow:0 18px 40px -30px rgba(11,42,107,.55); animation:cardin .4s cubic-bezier(.22,1,.36,1) both; }
+  .qhead { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:10px; } .qhead b { color:#0b2a6b; font-size:16px; }
+  .qgrid { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+  .qf { display:grid; gap:3px; width:var(--w, 100px); min-width:0; } .qf > span { font-size:var(--f-sm); color:var(--muted); font-weight:600; }
+  .qf input { width:100%; min-height:42px; padding:0 10px; border:1px solid #d5dbe6; border-radius:12px; background:#fff; transition:border-color .15s, box-shadow .15s; }
+  .qf input:focus { outline:0; border-color:#1556d6; box-shadow:0 0 0 3px rgba(21,86,214,.16); }
+  .qg { display:flex; gap:8px; margin:0; padding:6px 10px 8px; border:1.5px solid; border-radius:16px; min-width:0; } .qg legend { padding:0 6px; font-size:var(--f-sm); font-weight:700; }
+  .qg.bks { border-color:#f2a36a; background:#fff6ee; } .qg.bks legend { color:#c94f00; } .qg.inc { border-color:#9db8f2; background:#f0f5ff; } .qg.inc legend { color:#1556d6; } .qg.oth { border-color:#cfd5e0; background:#f7f8fb; } .qg.oth legend { color:#4a5466; }
+  .qtot { display:grid; gap:2px; min-width:96px; text-align:right; } .qtot span { font-size:var(--f-sm); color:var(--muted); font-weight:600; } .qtot b { font-size:22px; color:#0b2a6b; font-variant-numeric:tabular-nums; line-height:1.2; }
+  .qgrid .btn { min-height:42px; align-self:flex-end; margin-left:auto; }
+  #qr_msg .msg { margin:10px 0 0; }
 </style>
 </head>
 <body>
@@ -970,6 +983,7 @@ var DESC = {
   packages: 'แพ็กเกจแยกชนิดเงินย่อยตามยอดรวม ยอดรวมซ้ำกันได้หลายแพ็กเกจ ถ้าระบุช่องเงิน ใบเสร็จต้องมีช่องเงินตรงกันจึงแยกอัตโนมัติ',
   collectibles: 'ยอดที่ต้องเก็บรายนักเรียน (เฉพาะ บกศ. และรายได้ SMS) ผูกกับปีการศึกษาและภาคเรียน รับเกินยอดค้างไม่ได้',
   cheques: 'ทะเบียนคุมเช็คทุกใบ เลขเช็คต่อเนื่องในสมุด เช็คเสียก็ลงทะเบียน (ไม่นับยอด) พร้อมรูป จ่ายแล้วเมื่อผู้รับลงชื่อรับเช็ค',
+  tax_due: 'ภาษีหัก ณ ที่จ่ายที่หักไว้จากรายการที่จ่ายแล้ว สรุปรายเดือนแยก ภ.ง.ด.3 / ภ.ง.ด.53 รายผู้รับ เพื่อนำส่งสรรพากร',
   ktb_batches: 'ไฟล์โอนที่ระบบสร้างจาก ขจ. ผู้ตั้งอัปโหลด ผู้บริหารอนุมัติใน KTB (คนละคนกับผู้ตั้ง) ยังไม่นับว่าจ่ายจนกรอกเลขธุรกรรม',
   ledger: 'สมุดบัญชีเดียวของโรงเรียน แก้หรือลบไม่ได้ ใต้ตารางมีสรุปภาษีหัก ณ ที่จ่ายรายเดือน (ภ.ง.ด.3 และ 53)',
   approval_requests: 'ครูยื่นใบขออนุมัติ งานแผนตรวจกับแผน เสนอ ผอ. เซ็นบนกระดาษ แล้วกดรับคืนพร้อมแนบภาพ ระบบจึงออกรหัสอนุมัติและกันยอดในแผน',
@@ -1006,7 +1020,7 @@ var EXTRA_COLS = {
   plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
   payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
 };
-var HIDE = { daily_close: ['id', 'system_cash', 'count_received_by', 'counted_by', 'signed_at', 'director_sent_at', 'director_scan', 'received_back_at', 'closed_at', 'locked', 'snapshot'], deposit_slips: ['id', 'receipt_ids', 'fund_group', 'expected'], bank_statement_lines: ['id', 'teller_id', 'branch', 'matched_source'], adjustments: ['id', 'approved_at'], receipts: ['id', 'replaces', 'cancel_reason', 'package_id', 'manual_reason', 'deposit_slip_id', 'loan_id', 'bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'], packages: ['id'], collectibles: ['id'], cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
+var HIDE = { daily_close: ['id', 'system_cash', 'count_received_by', 'counted_by', 'signed_at', 'director_sent_at', 'director_scan', 'received_back_at', 'closed_at', 'locked', 'snapshot'], deposit_slips: ['id', 'receipt_ids', 'fund_group', 'expected'], bank_statement_lines: ['id', 'teller_id', 'branch', 'matched_source'], adjustments: ['id', 'approved_at'], receipts: ['id', 'replaces', 'cancel_reason', 'package_id', 'manual_reason', 'deposit_slip_id', 'loan_id'], packages: ['id'], collectibles: ['id'], cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
 
 /* ================= ผังภาพรวม (จากผังหน้า 1) =================
    live = ตารางที่ใช้งานได้แล้ว · uses = ข้อมูลหลักที่ขั้นนี้ต้องใช้ · step = ขั้นที่จะเปิดใช้ · hand = ส่งต่อ ผู้รับต้องกดรับ */
@@ -1104,7 +1118,12 @@ function landingFor(roles) {
 }
 
 /* ================= เมนู ================= */
-function tableMeta(key) { return ME && ME.tables.filter(function (t) { return t.key === key; })[0]; }
+var TAB_LABEL = { approval_requests: 'ใบขออนุมัติจากงานแผน', procurements: 'ส่งต่อพัสดุ', payment_lines: 'หน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', cheques: 'เช็ค · ทะเบียนคุมเช็ค', cheque_books: 'สมุดเช็ค', ktb_batches: 'รายการโอน (เลขที่อ้างอิง)', tax_due: 'ภาษี' };
+function tabLabel(t) { return TAB_LABEL[t] || tableMeta(t).label; }
+// แท็บที่ไม่ใช่ทะเบียนในฐานข้อมูล (ดึงจาก service) · เห็นเมื่อมีสิทธิ์อ่านต้นทาง
+var PSEUDO = { tax_due: { label: 'ภาษีหัก ณ ที่จ่าย', needs: 'ledger' } };
+function tableMeta(key) {
+  if (PSEUDO[key]) return ME && ME.tables.some(function (t) { return t.key === PSEUDO[key].needs; }) ? { key: key, label: PSEUDO[key].label, canWrite: false } : undefined; return ME && ME.tables.filter(function (t) { return t.key === key; })[0]; }
 var ICON = {
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   chevron: '<path d="m9 18 6-6-6-6"/>',
@@ -1144,6 +1163,7 @@ var ICON = {
   collectibles: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/>',
   cheques: '<rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 12h6"/><path d="M6 15h3"/><path d="M16 12h2"/>',
   ktb_batches: '<path d="M12 2v13"/><path d="m8 11 4 4 4-4"/><path d="M5 21h14"/>',
+  tax_due: '<path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   ledger: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
   login_log: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>',
 };
@@ -1169,16 +1189,16 @@ var ZONES = [
 ];
 var PAGES = [
   { id: 'tray', no: 1, zone: 'center', label: 'ถาดงาน', tables: ['home'] },
-  { id: 'approve', no: 2, zone: 'out', label: 'ใบขออนุมัติใช้เงิน', tables: ['approval_requests'] },
-  { id: 'lines', no: 3, zone: 'out', label: 'หน้ารายการ', tables: ['payment_lines', 'loans', 'procurements'] },
-  { id: 'review', no: 4, zone: 'out', label: 'ตรวจ ขบ./ขจ.', tables: ['khb', 'khj'] },
-  { id: 'pay', no: 5, zone: 'out', label: 'จ่ายเงิน', tables: ['cheques', 'ktb_batches'] },
+  { id: 'approve', no: 2, zone: 'out', label: 'รับใบขออนุมัติ', tables: ['approval_requests', 'procurements'] },
+  { id: 'loan', no: 3, zone: 'out', label: 'เงินยืม', tables: ['loans'] },
+  { id: 'khb', no: 4, zone: 'out', label: 'ขบ.', tables: ['payment_lines', 'khb'] },
+  { id: 'khj', no: 5, zone: 'out', label: 'ขจ.', tables: ['khj', 'cheques', 'cheque_books', 'ktb_batches', 'tax_due'] },
   { id: 'receipt', no: 6, zone: 'in', label: 'ออกใบเสร็จ', tables: ['receipts', 'collectibles'] },
   { id: 'bank', no: 7, zone: 'in', label: 'ทะเบียนเงินฝาก', tables: ['bank_register', 'deposit_slips', 'bank_statement_lines', 'adjustments', 'ledger'] },
   { id: 'close', no: 8, zone: 'end', label: 'ปิดวัน', tables: ['daily_close', 'year_end'] },
   { id: 'exec', no: 9, zone: 'end', label: 'รายงานผู้บริหาร', tables: ['executive'] },
   { id: 'mine', no: 10, zone: 'end', label: 'โครงการของฉัน', tables: ['plan_projects'] },
-  { id: 'setup', no: 11, zone: 'end', label: 'ทะเบียน · ตั้งค่า', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'cheque_books', 'funds', 'subfunds', 'fund_allowed_expense', 'packages', 'users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps', 'migrate'] }
+  { id: 'setup', no: 11, zone: 'end', label: 'ทะเบียน · ตั้งค่า', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'funds', 'subfunds', 'fund_allowed_expense', 'packages', 'users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps', 'migrate'] }
 ];
 var ZONE_ICON = { out: 'payment_lines', in: 'receipts', end: 'daily_close' };
 var ZONE_COLOR = {}; ZONES.forEach(function (z) { ZONE_COLOR[z.id] = z.color; });
@@ -1245,7 +1265,7 @@ function renderPageTabs(pg) {
   var ts = pg ? pageTables(pg) : [];
   if (ts.length < 2) { pt.classList.add('hidden'); pt.innerHTML = ''; return; }
   pt.innerHTML = '<span class="pt-name"><b>' + pg.no + '</b>' + esc(pg.label) + '</span><div class="pt-tabs" role="tablist" aria-label="' + esc(pg.label) + '">' + ts.map(function (t) {
-    return '<button type="button" role="tab" data-t="' + t + '" aria-selected="' + (t === current) + '">' + esc(tableMeta(t).label) + '<span class="count" data-count="' + t + '">' + (cache[t] ? cache[t].length : '') + '</span></button>';
+    return '<button type="button" role="tab" data-t="' + t + '" aria-selected="' + (t === current) + '">' + esc(tabLabel(t)) + '<span class="count" data-count="' + t + '">' + (cache[t] ? cache[t].length : '') + '</span></button>';
   }).join('') + '</div>';
   pt.classList.remove('hidden');
 }
@@ -1335,6 +1355,7 @@ async function show(key, flash) {
   if (key === 'executive') return renderExecutive();
   if (key === 'migrate') return renderMigrate();
   if (key === 'year_end') return renderYearEnd();
+  if (key === 'tax_due') return renderTaxPage();
   var main = $('main');
   main.innerHTML = '<div class="tile" style="max-width:360px"><span class="skel"></span><br><span class="skel" style="width:40%"></span></div>';
   var r = await call('list', { table: key });
@@ -1368,7 +1389,7 @@ var TL = null, TL_SEL = '', TL_STILL = false;
 var TL_POS = { request: [0, 60], finance_in: [1, 60], procure: [2, 168], lines: [3, 60], khb: [4, 60], khj: [5, 60], pay: [6, 60], receipt: [4, 360], deposit: [6, 360], daily: [7, 214] };
 var TL_EDGES = [['request', 'finance_in'], ['finance_in', 'procure'], ['procure', 'lines'], ['finance_in', 'lines'], ['lines', 'khb'], ['khb', 'khj'], ['khj', 'pay'], ['pay', 'daily'], ['pay', 'deposit'], ['receipt', 'deposit'], ['deposit', 'daily']];
 var TL_WHO = { request: 'ครูผู้ขอ · งานแผน · ผอ.', finance_in: 'การเงิน', procure: 'พัสดุ', lines: 'การเงิน', khb: 'ผู้ตรวจ 3 ชั้น · ผอ.', khj: 'ผู้ทำ ขจ. · ผู้ตรวจ · ผอ.', pay: 'การเงิน', receipt: 'งานรายรับ', deposit: 'งานรายรับ · การเงิน', daily: 'การเงิน · กรรมการ · ผอ.' };
-var TL_NO = { request: 2, finance_in: 2, procure: 3, lines: 3, khb: 4, khj: 4, pay: 5, receipt: 6, deposit: 7, daily: 8 };
+var TL_NO = { request: 2, finance_in: 2, procure: 2, lines: 4, khb: 4, khj: 5, pay: 5, receipt: 6, deposit: 7, daily: 8 };
 var COLW = 214, NODEW = 176;
 async function refreshTimeline(force) {
   if (!ME || !ME.canTimeline) { $('ribbon').classList.add('hidden'); return; }
@@ -1603,8 +1624,7 @@ function renderTable(key, flash) {
   if ($('seedBtn')) $('seedBtn').onclick = async function () { var r = await svc('subfunds', 'seedDefaults', []); cache = {}; show(current, r.ok ? 'ตั้งชนิดเงินย่อยตั้งต้นแล้ว เพิ่ม ' + r.data.created + ' รายการ (กลุ่มและการตั้งยอดเป็นค่าที่ตั้งไว้ก่อน รอยืนยัน)' : r.error); };
   if ($('addBtn')) $('addBtn').onclick = function () { payAdd ? payAdd.open() : openForm(key, null); };
   drawRows(key);
-  if (key === 'ledger') taxBox();
-  if (key === 'receipts') rcSummaryBox();
+  if (key === 'receipts') { rcQuick(); rcSummaryBox(); }
   if (key === 'cheques') chequeRegButton();
   $('tbl').onclick = function (e) {
     if (e.target.closest('#moreBtn')) { PAGE += 200; return drawRows(key); }
@@ -1812,6 +1832,55 @@ async function chequeRegButton() {
   $('tbl').insertAdjacentHTML('afterend', '<div class="toolbar" style="margin-top:14px"><select class="search" id="crAcct" style="width:300px">' + accts.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.fund_group + ' · ' + a.account_no) + '</option>'; }).join('') + '</select><button class="btn" id="prCr">พิมพ์ทะเบียนคุมเช็ค</button></div>');
   $('prCr').onclick = function () { printDoc('cheque_register', $('crAcct').value); };
 }
+// กรอกใบเสร็จแถวเดียว: เล่มที่ · เลขที่ · บกศ. · รายได้ · อื่น ๆ (สด/โอน) · Enter ไปช่องถัดไป · บันทึกแล้วเลขที่ขยับเอง
+var QR_KEEP = { book: '', date: '' }, QR_FOCUS = false;
+async function rcQuick() {
+  if (!(PAY_ADD.receipts && PAY_ADD.receipts.can())) return;
+  var book = QR_KEEP.book || ((cache.receipts || [])[0] || {}).book_no || '', day = QR_KEEP.date || ME.today;
+  var f = function (id, label, w, extra) { return '<label class="qf" style="--w:' + w + '"><span>' + label + '</span><input type="text" id="qr_' + id + '" ' + (extra || '') + ' autocomplete="off"></label>'; };
+  $('tbl').insertAdjacentHTML('beforebegin', '<form class="qrow" id="qrow" novalidate aria-label="กรอกใบเสร็จต่อเนื่อง"><div class="qhead"><b>กรอกใบเสร็จ</b><span class="note">กรอกตามเล่มที่/เลขที่ แล้วกด Enter ไปช่องถัดไป ช่องสุดท้ายกด Enter เพื่อบันทึก</span></div><div class="qgrid">' +
+    f('book', 'เล่มที่', '84px', 'value="' + esc(book) + '"') + f('no', 'เลขที่', '84px', 'inputmode="numeric"') + f('date', 'วันที่', '120px', 'value="' + esc(day) + '"') + f('payer', 'ผู้ชำระเงิน', '170px') +
+    '<span class="qsep" aria-hidden="true"></span>' +
+    '<fieldset class="qg bks"><legend>บกศ.</legend>' + f('bks_cash', 'สด', '84px', 'inputmode="decimal"') + f('bks_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
+    '<fieldset class="qg inc"><legend>รายได้</legend>' + f('inc_cash', 'สด', '84px', 'inputmode="decimal"') + f('inc_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
+    '<fieldset class="qg oth"><legend>อื่น ๆ</legend>' + f('other', 'จำนวนเงิน', '92px', 'inputmode="decimal"') + '</fieldset>' +
+    f('kcorp', 'เลขที่อ้างอิงโอน (Kcorp)', '170px', 'class="hidden-f"') +
+    '<div class="qtot"><span>รวม (บาท)</span><b id="qr_total">0.00</b></div><button type="submit" class="btn primary" id="qr_go">บันทึก</button></div><div id="qr_msg" role="status" aria-live="polite"></div></form>');
+  var ids = ['book', 'no', 'date', 'payer', 'bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'other', 'kcorp'];
+  var q = function (id) { return $('qr_' + id); };
+  var num = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+  var recalc = function () {
+    var t = num(q('bks_cash').value) + num(q('bks_transfer').value) + num(q('inc_cash').value) + num(q('inc_transfer').value) + num(q('other').value);
+    $('qr_total').textContent = t.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var tr = num(q('bks_transfer').value) + num(q('inc_transfer').value) > 0; q('kcorp').parentNode.style.display = tr ? '' : 'none';
+  };
+  q('kcorp').parentNode.style.display = 'none';
+  ids.forEach(function (id) { q(id).addEventListener('input', recalc); });
+  var nextNo = async function () { var b = q('book').value.trim(); if (!b) return; var r = await svc('receipts', 'nextNo', [b]); if (r.ok && !q('no').value) q('no').value = r.data; };
+  q('book').addEventListener('change', function () { q('no').value = ''; nextNo(); });
+  await nextNo();
+  $('qrow').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    var vis = ids.filter(function (id) { return q(id).parentNode.style.display !== 'none'; }), i = vis.indexOf(e.target.id.slice(3));
+    if (i >= 0 && i < vis.length - 1) { e.preventDefault(); q(vis[i + 1]).focus(); q(vis[i + 1]).select(); }
+  });
+  $('qrow').onsubmit = async function (e) {
+    e.preventDefault();
+    var btn = $('qr_go'), msg = $('qr_msg'); if (btn.disabled) return; btn.disabled = true; msg.innerHTML = '';
+    var input = { book_no: q('book').value.trim(), receipt_no: q('no').value.trim(), date: q('date').value.trim(), payer: q('payer').value.trim(), kcorp_ref: q('kcorp').value.trim(), split: { mode: 'auto' } };
+    ['bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'].forEach(function (k) { input[k] = q(k).value.trim(); });
+    var r = await svc('receipts', 'issue', [input]); btn.disabled = false;
+    if (!r.ok) {
+      var splitErr = r.errors && r.errors.some(function (x) { return x.field === 'split'; });
+      msg.innerHTML = '<div class="msg bad">' + esc(String(r.error || 'บันทึกไม่สำเร็จ').replace(/^split: /, '')) + (splitErr ? ' <button type="button" class="btn small" id="qr_manual">กำหนดแยกเอง</button>' : '') + '</div>';
+      if (splitErr) $('qr_manual').onclick = async function () { await rcAdd(); ids.forEach(function (id) { var map = { book: 'book_no', no: 'receipt_no', date: 'date', payer: 'payer', kcorp: 'kcorp_ref' }, el = $('f_' + (map[id] || id)); if (el && q(id).value) el.value = q(id).value; }); };
+      return;
+    }
+    QR_KEEP = { book: input.book_no, date: input.date }; QR_FOCUS = true; cache = {};
+    show('receipts', 'ออกใบเสร็จ ' + input.book_no + '/' + input.receipt_no + ' แล้ว');
+  };
+  if (QR_FOCUS) { QR_FOCUS = false; q('payer').focus(); }
+}
 async function rcSummaryBox() {
   var ym = ME.today.slice(0, 7);
   $('tbl').insertAdjacentHTML('afterend', '<h2 style="font-size:19px;margin:26px 0 8px">สรุปรายรับรายเดือนแยกชนิดเงินย่อย</h2><div class="toolbar"><input class="search" id="rcMonth" style="width:140px" value="' + ym + '" aria-label="เดือน"><span class="note">รูปแบบ ปี ค.ศ.-เดือน</span><button class="btn" id="prRc">พิมพ์สรุปรายรับ</button></div><div id="rcOut"></div>');
@@ -1883,6 +1952,17 @@ function voidDialog(khjId, no) {
   openDialog('บันทึกเช็คเสีย', 'การเงิน', '--r-finance', fTxt('cheque_no', 'เลขที่เช็คที่เสีย', { req: true, val: no }) + fTxt('reason', 'เหตุผล', { req: true }) + fld('void_photo', 'รูปเช็คที่ประทับยกเลิก', '<input type="file" id="f_scan_file" accept="image/*">', { req: true, hint: 'แล้วระบบจะใช้เลขถัดไป' }), 'บันทึกเช็คเสีย', async function () {
     var s = await scanRef(); if (!s.ok) return s.r;
     return svc('cheques', 'voidCheque', [{ khj_id: khjId, cheque_no: val('cheque_no'), reason: val('reason'), void_photo: s.ref }]);
+  });
+}
+function renderTaxPage() {
+  $('main').innerHTML = '<h1 class="page-title">ภาษีหัก ณ ที่จ่าย</h1><p class="page-desc">' + esc(DESC.tax_due) + '</p><div id="tbl"></div>';
+  taxBox();
+  load('payment_lines').then(function (all) {
+    if (current !== 'tax_due') return;
+    var rows = all.filter(function (l) { return l.kind === 'ภาษีนำส่ง'; });
+    $('main').insertAdjacentHTML('beforeend', '<h2 style="font-size:19px;margin:26px 0 8px">รายการนำส่งภาษีที่บันทึกแล้ว</h2>' + (rows.length ? '<div class="alist">' + rows.map(function (l) {
+      return arow({ icon: 'tax_due', lane: 'end', title: 'เลขอ้างอิง ' + (l.vendor_doc_no || '-'), sub: thDate(l.date) + ' · ' + (l.description || ''), aside: money(l.base_amount) + ' <span class="pill ' + statusClass(l.status) + '">' + esc(l.status) + '</span>' });
+    }).join('') + '</div>' : '<p class="note">ยังไม่มีรายการนำส่งภาษี บันทึกที่แท็บหน้ารายการ ในหน้า ขบ. เลือกชนิด "ภาษีนำส่ง" แล้วใส่เลขอ้างอิงจากระบบสรรพากร</p>'));
   });
 }
 async function taxBox() {
