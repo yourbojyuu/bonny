@@ -48,6 +48,7 @@ export function createStore(repo, { clock, tables, getSettings }) {
     update(user, t, id, patch, { reason } = {}) {
       const d = def(t);
       if (d.appendOnly) throw new Error(`${t} เป็น append-only แก้ไม่ได้`);
+      if (patch.id === '') { patch = { ...patch }; delete patch.id; }
       const before = repo.get(t, id);
       if (!before) throw new Error(`ไม่พบรายการ ${id} ในตาราง ${t}`);
       for (const k of ['id', 'created_by', 'created_at', 'updated_at']) {

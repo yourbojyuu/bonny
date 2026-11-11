@@ -36,9 +36,10 @@ function step(ctx, type, docId, round, stepName, action, extra = {}) {
 /** ผู้ทำส่งตรวจ (ครั้งแรก หรือหลังถูกส่งคืน) */
 export function submitForReview(ctx, type, docId) {
   return ctx.store.withLock(() => {
-    const { flow, st, maker } = load(ctx, type, docId);
+    const { flow, doc, st, maker } = load(ctx, type, docId);
     if (!sameUser(ctx.user.email, maker)) throw new PermissionError('เฉพาะผู้ทำเอกสารเป็นผู้ส่งตรวจ');
     if (st && st.stage !== 'returned') fail('doc_id', 'เอกสารนี้ส่งตรวจแล้ว');
+    if (flow.beforeSubmit) flow.beforeSubmit(ctx, doc);
     let stage = 'r1';
     if (st && ctx.settings.review_restart === 'returned' && STAGES.includes(st.return_stage)) stage = st.return_stage;
     const base = { doc_type: type, doc_id: docId, maker, round: (st ? st.round : 0) + 1, stage, phase: 'wait', reviewer: '', return_stage: '', return_reason: '', finished_at: '' };
@@ -155,11 +156,15 @@ export function inbox(ctx) {
     if (!hasRole(ctx.user, h.to_role)) continue;
     const st = ctx.store.get('doc_flow', flowId(h.doc_type, h.doc_id));
     if (st && sameUser(st.maker, ctx.user.email)) continue;
+    if (h.doc_type === 'approval') { const ar = ctx.store.get('approval_requests', h.doc_id); if (ar && sameUser(ar.requester, ctx.user.email)) continue; }
     out.push({ kind: h.step_key === 'sign' ? 'รอรับคืนหลัง ผอ. เซ็น' : h.step_key.startsWith('r') ? 'รอรับ' : 'รอรับ', handoff_id: h.id, doc_type: h.doc_type, doc_id: h.doc_id, step_key: h.step_key, days: waitDays(ctx, h) });
   }
   for (const st of ctx.store.list('doc_flow')) {
     if (st.phase === 'review' && sameUser(st.reviewer, ctx.user.email)) out.push({ kind: 'กำลังตรวจ', doc_type: st.doc_type, doc_id: st.doc_id, step_key: st.stage });
     if (st.stage === 'returned' && sameUser(st.maker, ctx.user.email)) out.push({ kind: 'ส่งคืนแก้', doc_type: st.doc_type, doc_id: st.doc_id, reason: st.return_reason });
+  }
+  for (const r of ctx.store.list('approval_requests')) {
+    if (r.status === 'ส่งคืนแก้' && sameUser(r.requester, ctx.user.email)) out.push({ kind: 'ส่งคืนแก้', doc_type: 'approval', doc_id: r.id, reason: r.return_reason });
   }
   return out;
 }

@@ -11,12 +11,12 @@ export function sendHandoff(ctx, { doc_type, doc_id, step_key, from_role = '', t
 }
 
 /** กดรับ: ต้องถือบทบาทปลายทาง · ไม่ใช่ผู้ส่ง · ไม่อยู่ในรายชื่อต้องห้าม (เช่น ผู้ทำเอกสาร) · รับได้ครั้งเดียว */
-export function receiveHandoff(ctx, id, { scan_ref = '', forbidEmails = [], reason = '' } = {}) {
+export function receiveHandoff(ctx, id, { scan_ref = '', forbidEmails = [], reason = '', allowSender = false } = {}) {
   const h = getOrFail(ctx, 'handoffs', id, 'งานส่ง-รับ');
   if (h.received_at) fail('id', 'งานนี้มีผู้รับแล้ว');
   if (!hasRole(ctx.user, h.to_role)) throw new PermissionError('ไม่มีสิทธิ์รับงานนี้ (บทบาทไม่ตรงกับผู้รับ)');
   const me = ctx.user.email.toLowerCase();
-  if (h.sent_by.toLowerCase() === me) throw new PermissionError('ผู้รับต้องไม่ใช่ผู้ส่ง');
+  if (!allowSender && h.sent_by.toLowerCase() === me) throw new PermissionError('ผู้รับต้องไม่ใช่ผู้ส่ง');
   if (forbidEmails.map((e) => String(e).toLowerCase()).includes(me)) throw new PermissionError('ผู้รับต้องไม่ใช่ผู้ทำเอกสารนี้');
   return ctx.store.update(ctx.user, 'handoffs', id, { received_by: ctx.user.email, received_at: ctx.store.now(), scan_ref }, { reason: reason || 'กดรับงาน' });
 }

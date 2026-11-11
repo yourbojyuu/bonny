@@ -1,7 +1,7 @@
 // จุดเข้า Apps Script · ใช้ได้เฉพาะใน Google (SpreadsheetApp, Session, ...) ไม่มี test บน Node
 // web app ตั้งให้ execute as owner + เข้าได้เฉพาะในโดเมน (appsscript.json) + ล็อกอินด้วยรหัสผ่านกลางอีกชั้น
 // ผู้ใช้จึงแก้ชีตตรงไม่ได้ (ชีตถูก protect ให้เจ้าของคนเดียว) ต้องเขียนผ่านระบบเท่านั้น
-/* global SpreadsheetApp, LockService, Utilities, Session, HtmlService, PropertiesService, CacheService */
+/* global SpreadsheetApp, LockService, Utilities, Session, HtmlService, PropertiesService, CacheService, DriveApp */
 import { createApp } from '../app.js';
 import { handleRequest } from '../api.js';
 import { createAuth, makePasswordVerifier, hashPassword } from '../services/auth.js';
@@ -57,6 +57,15 @@ function makeAuth(app) {
   });
 }
 
+// เก็บภาพหน้าลงนามใน Drive ของเจ้าของระบบ (โฟลเดอร์ใน Script Property SCAN_FOLDER_ID ถ้าไม่ตั้งจะเก็บที่รากของ Drive) · ยังไม่ได้ทดสอบบน Google จริง
+function saveFile({ name, mime, data, by }) {
+  const blob = Utilities.newBlob(Utilities.base64Decode(data), mime || 'application/octet-stream', `${Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyyMMdd-HHmmss')}-${name}`);
+  const folderId = props().getProperty('SCAN_FOLDER_ID');
+  const file = (folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder()).createFile(blob);
+  file.setDescription(`อัปโหลดโดย ${by}`);
+  return file.getUrl();
+}
+
 export function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('ระบบการเงิน · โรงเรียนกาวิละวิทยาลัย')
@@ -71,7 +80,7 @@ export function api(req) {
   const app = makeApp();
   let google = '';
   try { google = Session.getActiveUser().getEmail(); } catch (e) { google = ''; }
-  return JSON.parse(JSON.stringify(handleRequest({ app, auth: makeAuth(app) }, req || {}, google)));
+  return JSON.parse(JSON.stringify(handleRequest({ app, auth: makeAuth(app), saveFile }, req || {}, google)));
 }
 
 /**

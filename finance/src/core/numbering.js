@@ -12,21 +12,25 @@ export function parseDocNo(docNo) {
   return m ? { seq: Number(m[1]), fiscal_year: Number(m[2]) } : null;
 }
 
+/** เลขถัดไปของปีงบ (ผู้เรียกต้องถือ lock อยู่แล้ว และบันทึกเอกสารที่ใช้เลขนี้ใน lock เดียวกัน) */
+export function reserveDocNumber(ctx, spec, date) {
+  const s = ctx.settings;
+  const fy = fiscalYearOf(date, s.fiscal_year_start_month);
+  let max = 0;
+  for (const r of ctx.store.list(spec.table)) {
+    const p = parseDocNo(r[spec.field]);
+    if (p && p.fiscal_year === fy && p.seq > max) max = p.seq;
+  }
+  return { docNo: formatDocNo(s[spec.prefixSetting], max + 1, fy), seq: max + 1, fiscal_year: fy };
+}
+
 /**
  * @param spec { prefixSetting, table, field } เช่น { prefixSetting:'doc_prefix_khb', table:'khb', field:'khb_no' }
  * @param build (docNo, {seq, fiscal_year}) => record ที่จะบันทึก (ห้ามกำหนดเลขเอง)
  */
 export function issueDocNumber(ctx, spec, date, build) {
   return ctx.store.withLock(() => {
-    const s = ctx.settings;
-    const fy = fiscalYearOf(date, s.fiscal_year_start_month);
-    let max = 0;
-    for (const r of ctx.store.list(spec.table)) {
-      const p = parseDocNo(r[spec.field]);
-      if (p && p.fiscal_year === fy && p.seq > max) max = p.seq;
-    }
-    const seq = max + 1;
-    const docNo = formatDocNo(s[spec.prefixSetting], seq, fy);
+    const { docNo, seq, fiscal_year: fy } = reserveDocNumber(ctx, spec, date);
     const rec = { ...build(docNo, { seq, fiscal_year: fy }) };
     if (rec[spec.field] === undefined) rec[spec.field] = docNo;
     if (rec[spec.field] !== docNo) throw new Error('เลขเอกสารระบบออกให้ ผู้ใช้กำหนดเองไม่ได้');

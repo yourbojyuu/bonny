@@ -3,6 +3,7 @@ import { requirePermission } from '../core/roles.js';
 import { fiscalYearOf } from '../core/thaidate.js';
 import { digitsOnly } from '../core/validate.js';
 import { validateWith, requireReason, getOrFail, rejectFields, norm } from './common.js';
+import { projectUsage } from './plan.js';
 
 const isDigits = (s) => /^\d+$/.test(s);
 // เทียบเลขเช็คแบบข้อความ (เติม 0 ให้ยาวเท่ากัน) ไม่ใช้ Number เพื่อไม่ให้เลข 0 นำหน้าหาย
@@ -75,9 +76,7 @@ const VIEWS = {
     return { ...b, fund_group: a ? a.fund_group : '', account_no: a ? a.account_no : '' };
   },
   plan_projects(ctx, p) {
-    // ขั้น 3–4 จะคำนวณยอดผูกพัน/จ่ายจริงจากรหัสอนุมัติและ ledger
-    const committed = 0, spent = 0;
-    return { ...p, committed, spent, remaining: p.budget - committed - spent, is_mine: (p.owner_emails || []).includes(ctx.user.email) };
+    return { ...p, ...projectUsage(ctx, p), is_mine: (p.owner_emails || []).includes(ctx.user.email) };
   },
 };
 

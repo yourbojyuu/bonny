@@ -309,13 +309,20 @@ function roleTag(r) { return '<span class="rtag" style="color:' + roleVar(r) + '
 // เมนู
 var GROUPS = [
   { label: 'งานแผน', color: '--r-plan', tables: ['plan_projects'] },
+  { label: 'ฝั่งจ่าย', color: '--r-finance', tables: ['approval_requests', 'payment_lines', 'khb', 'khj', 'loans', 'procurements'] },
   { label: 'การเงิน', color: '--r-finance', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'cheque_books'] },
   { label: 'ข้อมูลหลัก', color: '--r-system', tables: ['funds', 'subfunds', 'fund_allowed_expense'] },
   { label: 'ผู้ดูแลระบบและผู้ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps'] },
 ];
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
-var SHORT = { plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
+var SHORT = { approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
 var DESC = {
+  approval_requests: 'ครูยื่นใบขออนุมัติ งานแผนตรวจกับแผน เสนอ ผอ. เซ็นบนกระดาษ แล้วกดรับคืนพร้อมแนบภาพ ระบบจึงออกรหัสอนุมัติและกันยอดในแผน',
+  payment_lines: 'ฐานข้อมูลหลักของการจ่าย หนึ่งแถวคือหนึ่งใบแจ้งหนี้หรือใบส่งของ ระบบเติมประเภทเงิน วิธีจ่าย ภาษี และยอดเบิกให้ แถวที่ ผอ. เซ็น ขจ. แล้วจะล็อก แก้ได้ด้วยการทำรายการกลับเท่านั้น',
+  khb: 'ขออนุมัติเบิกเงิน ผ่านผู้ตรวจ 3 ชั้นแล้วถึง ผอ. เลขที่ระบบออกให้ต่อเนื่องในแต่ละปีงบ',
+  khj: 'ขออนุมัติจ่ายเงิน ระบบจัดจาก ขบ. ที่ ผอ. เซ็นแล้ว แยกตามกลุ่มเงินและวิธีจ่าย ยอดรวมทุกใบต้องเท่ายอด ขบ.',
+  loans: 'สถานะคำนวณจากวันครบกำหนด ผู้ที่มีเงินยืมเกินกำหนดค้างอยู่ ยืมใหม่ไม่ได้',
+  procurements: 'พัสดุจัดซื้อตามรหัสอนุมัติ ตรวจรับโดยกรรมการที่ไม่ใช่ผู้ขอซื้อ แล้วส่งชุดเบิกให้การเงินกดรับ',
   plan_projects: 'โครงการและกิจกรรมตามแผนปฏิบัติการที่อนุมัติแล้ว พร้อมวงเงิน ติดชื่อผู้รับผิดชอบไว้ เพื่อให้เจ้าของโครงการติดตามการเบิกจ่ายของตนได้',
   payees: 'ระบบจ่ายเงินได้เฉพาะผู้รับที่อยู่ในทะเบียนนี้ วิธีจ่ายต้องเลือกเองทุกครั้ง เลขบัญชีเปลี่ยนได้ผ่านคำขอที่มีผู้อนุมัติเท่านั้น',
   payee_account_changes: 'ผู้อนุมัติต้องไม่ใช่ผู้ยื่น บัญชีที่เพิ่งเปลี่ยนภายใน 30 วันจะขึ้นธงทุกครั้งที่จ่าย',
@@ -332,11 +339,15 @@ var DESC = {
   login_log: 'การเข้าระบบทุกครั้ง ถ้าบัญชี Google ที่เปิดอยู่ไม่ตรงกับอีเมลที่ใช้เข้า ช่องนั้นจะเป็นสีเหลือง',
 };
 var EXTRA_COLS = {
+  khb: [{ key: 'total', label: 'ยอดรวม', type: 'money' }, { key: 'line_count', label: 'แถว' }, { key: 'status', label: 'สถานะ' }],
+  khj: [{ key: 'total', label: 'ยอดรวม', type: 'money' }, { key: 'line_count', label: 'แถว' }, { key: 'status', label: 'สถานะ' }],
+  loans: [{ key: 'settled_docs', label: 'ส่งใช้แล้ว (หลักฐาน)', type: 'money' }, { key: 'overdue_days', label: 'เกินกำหนด (วัน)' }, { key: 'status', label: 'สถานะ' }],
+  procurements: [{ key: 'status', label: 'สถานะ' }],
   cheque_books: [{ key: 'fund_group', label: 'กลุ่มเงิน' }],
   plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
   payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
 };
-var HIDE = { audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
+var HIDE = { approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
 
 /* ================= ผังภาพรวม (จากผังหน้า 1) =================
    live = ตารางที่ใช้งานได้แล้ว · uses = ข้อมูลหลักที่ขั้นนี้ต้องใช้ · step = ขั้นที่จะเปิดใช้ · hand = ส่งต่อ ผู้รับต้องกดรับ */
@@ -447,6 +458,12 @@ var ICON = {
   audit_log: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
   handoffs: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
   review_steps: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+  approval_requests: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  payment_lines: '<path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/>',
+  khb: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/>',
+  khj: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="m13 10 3 3-3 3"/>',
+  loans: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+  procurements: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
   login_log: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>',
 };
 function ico(name, cls) { return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICON[name] || '') + '</svg>'; }
@@ -637,16 +654,20 @@ function cols(key) {
 // รหัสอ้างอิงภายใน → ข้อความที่คนอ่านเข้าใจ (เลขบัญชี ชื่อผู้รับเงิน)
 function refText(table, id) {
   var r = (cache[table] || []).filter(function (x) { return x.id === id; })[0];
-  return r ? [r.account_no, r.type, r.name, r.fund_group].filter(Boolean).join(' ') : id;
+  if (!r) return id;
+  return r.name || r.khb_no || r.khj_no || r.loan_no || [r.account_no, r.type, r.fund_group].filter(Boolean).join(' ');
 }
+function statusClass(v) { v = String(v || ''); return /ไม่อนุมัติ|ส่งคืน|เกินกำหนด/.test(v) ? 'no' : /เซ็นแล้ว|อนุมัติแล้ว|ส่งใช้แล้ว|จ่ายแล้ว|ตรวจรับแล้ว|ส่งชุดเบิกแล้ว|การเงินรับแล้ว|กำลังตรวจ/.test(v) ? 'ok' : /รอ|ส่งแล้ว|จัดซื้อ|ยืมอยู่|อยู่ใน|แผนกำลัง/.test(v) ? 'wait' : 'mute'; }
 function cell(col, v, row) {
   if (col.ref && !col.refKey && v) return '<td>' + esc(refText(col.ref, v)) + '</td>';
   if (col.type === 'money') return '<td class="num">' + money(v) + '</td>';
   if (col.type === 'bool') return '<td style="text-align:center">' + (v ? '<span class="pill ok">ใช่</span>' : '<span class="pill mute">ไม่</span>') + '</td>';
+  if (col.itemType === 'text') return '<td class="wrap">' + (v || []).map(function (f) { return '<span class="pill wait">' + esc(f) + '</span>'; }).join(' ') + '</td>';
   if (col.itemType === 'email') return '<td class="wrap">' + (v || []).map(function (e) { return '<span class="chip' + (e === ME.user.email ? ' me' : '') + '">' + esc(e.split('@')[0]) + '</span>'; }).join('') + '</td>';
   if (col.type === 'list') return '<td>' + (v || []).map(roleTag).join(' ') + '</td>';
   if (col.type === 'date') return '<td>' + thDate(v) + '</td>';
-  if (col.key === 'status') { var cls = v === 'รออนุมัติ' ? 'wait' : v === 'อนุมัติแล้ว' ? 'ok' : 'no'; return '<td><span class="pill ' + cls + '">' + esc(v) + '</span></td>'; }
+  if (col.key === 'status') { return '<td><span class="pill ' + statusClass(v) + '">' + esc(v) + '</span></td>'; }
+  if (col.itemType === 'text') return '<td class="wrap">' + (v || []).map(function (f) { return '<span class="pill wait">' + esc(f) + '</span>'; }).join(' ') + '</td>';
   if (col.key === 'at' || col.key === 'decided_at') return '<td>' + thDateTime(v) + '</td>';
   if (col.key === 'result') return '<td><span class="pill ' + (v === 'สำเร็จ' ? 'ok' : 'no') + '">' + esc(v) + '</span></td>';
   if (col.key === 'google_email' && v && row && v !== row.email) return '<td><span class="pill wait">' + esc(v) + '</span></td>';
@@ -661,13 +682,14 @@ function matches(row) {
 function renderTable(key, flash) {
   var meta = tableMeta(key);
   var writable = meta.canWrite && ['settings', 'payee_account_changes', 'audit_log', 'login_log'].indexOf(key) < 0;
+  var payAdd = PAY_ADD[key] && PAY_ADD[key].can() ? PAY_ADD[key] : null;
   $('main').innerHTML = '<h1 class="page-title">' + esc(meta.label) + '</h1><p class="page-desc">' + esc(DESC[key] || '') + '</p>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '') +
     '<div class="toolbar"><input class="search" id="q" placeholder="ค้นหาในตารางนี้" aria-label="ค้นหา" value="' + esc(filterText) + '">' +
     (key === 'plan_projects' ? '<label class="checks"><label><input type="checkbox" id="mineOnly"' + (onlyMine ? ' checked' : '') + '> เฉพาะโครงการที่ฉันรับผิดชอบ</label></label>' : '') +
-    '<span class="grow"></span><span class="note" id="cnt"></span>' + (writable ? '<button class="btn primary" id="addBtn">เพิ่ม' + esc(SHORT[key] || '') + '</button>' : '') + '</div><div id="tbl"></div>';
+    '<span class="grow"></span><span class="note" id="cnt"></span>' + (writable ? '<button class="btn primary" id="addBtn">เพิ่ม' + esc(SHORT[key] || '') + '</button>' : (payAdd ? '<button class="btn primary" id="addBtn">' + esc(payAdd.label) + '</button>' : '')) + '</div><div id="tbl"></div>';
   $('q').oninput = function () { filterText = this.value; drawRows(key); };
   if ($('mineOnly')) $('mineOnly').onchange = function () { onlyMine = this.checked; drawRows(key); };
-  if ($('addBtn')) $('addBtn').onclick = function () { openForm(key, null); };
+  if ($('addBtn')) $('addBtn').onclick = function () { payAdd ? payAdd.open() : openForm(key, null); };
   drawRows(key);
   $('tbl').onclick = function (e) {
     var btn = e.target.closest('button[data-act]');
@@ -684,10 +706,11 @@ function drawRows(key) {
   var c = cols(key);
   var canApprove = hasRole((ME.settings && ME.settings.payee_account_approver_roles) || []);
   var clickable = meta.canWrite && ['audit_log', 'login_log', 'payee_account_changes'].indexOf(key) < 0;
-  var act = (key === 'payees' && hasRole(['finance'])) || key === 'payee_account_changes';
+  var act = (key === 'payees' && hasRole(['finance'])) || key === 'payee_account_changes' || !!PAY_TABLES[key];
   var head = '<thead><tr>' + c.map(function (x) { return '<th>' + esc(x.label || x.key) + '</th>'; }).join('') + (act ? '<th>ดำเนินการ</th>' : '') + '</tr></thead>';
   var body = rows.map(function (r) {
     var extra = '';
+    if (PAY_TABLES[key]) extra = '<td>' + rowButtons(key, r) + '</td>';
     if (key === 'payees' && act) extra = '<td><button class="btn small" data-act="reqacct" data-id="' + esc(r.id) + '">ขอเปลี่ยนบัญชี</button></td>';
     if (key === 'payee_account_changes') extra = '<td>' + (r.status === 'รออนุมัติ' && canApprove && r.requested_by !== ME.user.email
       ? '<button class="btn small ok" data-act="approve" data-id="' + esc(r.id) + '">อนุมัติ</button> <button class="btn small no" data-act="reject" data-id="' + esc(r.id) + '">ไม่อนุมัติ</button>'
@@ -704,6 +727,143 @@ function settingsTable(rows) {
     return '<tr class="' + (can ? 'clickable' : '') + '" data-id="' + esc(s.key) + '"' + (can ? ' tabindex="0"' : '') + '><td class="wrap"><b>' + esc(s.label) + '</b><br><span class="note">' + esc(s.key) + '</span></td><td class="wrap"><code>' + esc(JSON.stringify(s.value)) + '</code></td><td>' + (s.pending ? '<span class="pill wait">รอยืนยัน ' + esc(s.pending) + '</span>' : '<span class="pill ok">ใช้งาน</span>') + '</td></tr>';
   }).join('') + '</tbody></table></div>';
 }
+
+
+/* ================= ฝั่งจ่าย: ใบขออนุมัติ · หน้ารายการ · ขบ. · ขจ. · เงินยืม · พัสดุ ================= */
+var PAY_TABLES = { approval_requests: 1, payment_lines: 1, khb: 1, khj: 1, loans: 1, procurements: 1 };
+var KIND_OPTS = ['เบิก', 'พัสดุ', 'เงินยืม', 'สำรองจ่าย', 'ค่าจ้าง', 'ภาษีนำส่ง', 'คืนเงิน', 'ส่งใช้เงินยืม'];
+function fld(key, label, inner, opts) { opts = opts || {}; return '<div class="field" data-key="' + key + '"><label for="f_' + key + '">' + esc(label) + (opts.req ? ' <span class="req">*</span>' : '') + '</label>' + inner + (opts.hint ? '<div class="hint">' + esc(opts.hint) + '</div>' : '') + '<div class="err"></div></div>'; }
+function fTxt(key, label, opts) { opts = opts || {}; return fld(key, label, '<input type="text" id="f_' + key + '"' + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + (opts.money ? ' inputmode="decimal"' : '') + (opts.val != null ? ' value="' + esc(opts.val) + '"' : '') + '>', opts); }
+function fSel(key, label, options, opts) { return fld(key, label, '<select id="f_' + key + '"><option value="">เลือก</option>' + options.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.t) + '</option>'; }).join('') + '</select>', opts); }
+function fScan(req) { return fld('scan_ref', 'ภาพหน้าที่ ผอ. ลงนาม', '<input type="file" id="f_scan_file" accept="image/*,application/pdf">', { req: req, hint: 'ถ่ายรูปหรือสแกนหน้าที่ลงนามแล้ว ไม่เกิน 4 MB' }); }
+function val(k) { var el = $('f_' + k); return el ? el.value : ''; }
+function readFile(f) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result).split(',')[1] || ''); }; r.onerror = rej; r.readAsDataURL(f); }); }
+async function scanRef() {
+  var el = $('f_scan_file'); if (!el || !el.files || !el.files[0]) return { ok: true, ref: '' };
+  var f = el.files[0], data = await readFile(f);
+  var r = await call('upload', { name: f.name, mime: f.type, data: data });
+  return r.ok ? { ok: true, ref: r.data.ref } : { ok: false, r: r };
+}
+function svc(s, m, args) { return call('call', { svc: s, method: m, args: args }); }
+async function run(s, m, args, msg) {
+  var r = await svc(s, m, args);
+  cache = {};
+  if (r.ok) show(current, msg); else { await show(current); $('main').insertAdjacentHTML('afterbegin', '<div class="msg bad">' + esc(r.error) + '</div>'); }
+}
+function rec(table, id) { return (cache[table] || []).filter(function (x) { return x.id === id; })[0]; }
+var me = function () { return ME.user.email; };
+var STAGE_ROLE = { r1: 'reviewer1', r2: 'reviewer2', r3: 'reviewer3' };
+var SIGN_ROLE = { khb: 'khj_maker', khj: 'finance' };
+
+function btn(act, id, label, cls) { return '<button class="btn small ' + (cls || '') + '" data-act="' + act + '" data-id="' + esc(id) + '">' + esc(label) + '</button> '; }
+
+function rowButtons(key, r) {
+  var h = '';
+  if (key === 'approval_requests') {
+    if (r.status === 'ส่งคืนแก้' && r.requester === me()) h += btn('ar_resubmit', r.id, 'แก้และส่งใหม่');
+    if (hasRole(['plan'])) {
+      if (r.status === 'ส่งแล้ว รอแผนรับ' && r.requester !== me()) h += btn('ar_receive', r.id, 'กดรับ', 'ok');
+      if (r.status === 'แผนกำลังตรวจ' && r.plan_reviewer === me()) h += btn('ar_propose', r.id, 'เสนอ ผอ.', 'ok') + btn('ar_return', r.id, 'ส่งคืนครู', 'no');
+      if (r.status === 'รอ ผอ. เซ็น' && r.requester !== me()) h += btn('ar_decide', r.id, 'กดรับคืน (ผอ. ตัดสินแล้ว)', 'ok');
+    }
+    if (hasRole(['finance'])) {
+      if (r.status === 'อนุมัติแล้ว รอการเงินรับ') h += btn('ar_freceive', r.id, 'กดรับเรื่อง', 'ok');
+      if (r.status === 'การเงินรับแล้ว' && !r.route) h += btn('ar_classify', r.id, 'จำแนก 3 ทาง');
+    }
+    if (r.status === 'ส่งแล้ว รอแผนรับ' || r.status === 'รอ ผอ. เซ็น') h += '<span class="handoff">ส่ง → รับ</span>';
+  }
+  if (key === 'payment_lines' && hasRole(['finance']) && r.locked && r.status !== 'ทำรายการกลับ' && !r.reverses) h += btn('pl_reverse', r.id, 'ทำรายการกลับ', 'no');
+  if (key === 'khb' || key === 'khj') {
+    var f = r.flow || {}, t = key, mk = r.maker === me();
+    if ((f.stage === 'draft' || f.stage === 'returned') && mk) h += btn('doc_submit', t + ':' + r.id, 'ส่งตรวจ', 'ok');
+    if (STAGE_ROLE[f.stage] && f.phase === 'wait' && hasRole([STAGE_ROLE[f.stage]]) && !mk) h += btn('doc_receive', t + ':' + r.id, 'กดรับตรวจ', 'ok');
+    if (f.phase === 'review' && f.reviewer === me()) h += btn('doc_pass', t + ':' + r.id, 'เซ็นผ่าน', 'ok') + btn('doc_return', t + ':' + r.id, 'ส่งคืน', 'no');
+    if (f.stage === 'sign' && hasRole([SIGN_ROLE[t]]) && !mk) h += btn('doc_signed', t + ':' + r.id, 'กดรับคืน (ผอ. เซ็นแล้ว)', 'ok') + btn('doc_dreturn', t + ':' + r.id, 'ผอ. ส่งคืน', 'no');
+    if (t === 'khb' && f.stage === 'done' && hasRole(['khj_maker']) && !mk && !(cache.khj || []).some(function (j) { return j.khb_id === r.id; })) h += btn('khj_gen', r.id, 'จัด ขจ.', 'ok');
+  }
+  if (key === 'procurements' && hasRole(['procurement'])) {
+    if (!r.inspected_at) h += btn('pc_inspect', r.id, 'บันทึกตรวจรับ');
+    if (r.inspected_at && !r.sent_at) h += btn('pc_send', r.id, 'ส่งชุดเบิก', 'ok');
+  }
+  if (key === 'procurements' && hasRole(['finance']) && r.sent_at) h += btn('pc_receive', r.id, 'กดรับชุดเบิก', 'ok');
+  return h;
+}
+
+var PAY_ADD = {
+  approval_requests: { label: 'ยื่นใบขออนุมัติ', can: function () { return true; }, open: arSubmit },
+  payment_lines: { label: 'เพิ่มแถว', can: function () { return hasRole(['finance']); }, open: plAdd },
+  khb: { label: 'สร้าง ขบ.', can: function () { return hasRole(['finance']); }, open: khbAdd },
+  loans: { label: 'ทำสัญญาเงินยืม', can: function () { return hasRole(['finance']); }, open: loanAdd },
+  procurements: { label: 'บันทึกจัดซื้อ', can: function () { return hasRole(['procurement']); }, open: pcAdd },
+};
+
+async function arSubmit() {
+  var pj = await load('plan_projects');
+  var html = fSel('project_id', 'โครงการตามแผน', pj.filter(function (p) { return p.active; }).map(function (p) { return { v: p.id, t: p.name + ' (คงเหลือ ' + money(p.remaining) + ')' }; }), { req: true }) + fTxt('items', 'รายการที่จะใช้', { req: true }) + fTxt('amount', 'ยอดที่ขอ (บาท)', { req: true, money: true }) +
+    '<p class="note"><span class="handoff">ส่ง → รับ</span> งานแผนกดรับแล้วตรวจกับแผน</p>';
+  openDialog('ยื่นใบขออนุมัติใช้เงิน', 'ครูผู้ขอ', '--r-teacher', html, 'ส่งคำขอ', function () { return svc('approvals', 'submit', [{ project_id: val('project_id'), items: val('items'), amount: val('amount') }]); });
+}
+async function plAdd() {
+  var codes = (await load('approval_requests')).filter(function (r) { return r.approval_code && r.status !== 'ปิดรหัส'; });
+  var payees = (await load('payees')).filter(function (p) { return p.active; });
+  var loans = await load('loans');
+  var html = fSel('approval_code', 'รหัสอนุมัติ', codes.map(function (r) { return { v: r.approval_code, t: r.approval_code + ' ' + r.items }; }), { hint: 'ภาษีนำส่งและคืนเงินไม่ใช้รหัส' }) +
+    fSel('kind', 'ชนิด', KIND_OPTS.map(function (k) { return { v: k, t: k }; }), { req: true }) +
+    fSel('payee_id', 'ผู้รับเงิน', payees.map(function (p) { return { v: p.id, t: p.name + ' (' + p.pay_method + ')' }; }), { req: true }) +
+    fTxt('date', 'วันที่', { req: true, val: ME.today }) + fTxt('vendor_doc_no', 'เลขที่เอกสารร้าน', { req: true, hint: 'เลขที่ใบแจ้งหนี้หรือใบส่งของ (ภาษีนำส่งใส่เลขอ้างอิงสรรพากร)' }) +
+    fTxt('description', 'รายการ', { req: true }) + fTxt('base_amount', 'มูลค่าสินค้า (บาท)', { req: true, money: true }) +
+    fSel('loan_id', 'สัญญาเงินยืม', loans.map(function (l) { return { v: l.id, t: l.loan_no + ' ' + l.borrower }; }), { hint: 'ใช้กับเงินยืมและส่งใช้เงินยืม' }) +
+    '<p class="note">ระบบเติมประเภทเงิน วิธีจ่าย ประเภทภาษี ภาษี และยอดเบิกให้</p>';
+  openDialog('เพิ่มแถวในหน้ารายการ', 'การเงิน', '--r-finance', html, 'บันทึก', function () {
+    return svc('payments', 'createLine', [{ approval_code: val('approval_code'), kind: val('kind'), payee_id: val('payee_id'), date: val('date'), vendor_doc_no: val('vendor_doc_no'), description: val('description'), base_amount: val('base_amount'), loan_id: val('loan_id') }]);
+  });
+}
+async function khbAdd() {
+  var lines = (await load('payment_lines')).filter(function (l) { return l.status === 'บันทึกแล้ว' && !l.khb_id && l.kind !== 'ส่งใช้เงินยืม' && !l.reverses && l.fund_code; });
+  var html = lines.length ? '<div class="field" data-key="line_ids"><label>เลือกแถวเข้า ขบ.</label><div class="checks" style="flex-direction:column;gap:4px">' + lines.map(function (l) {
+    return '<label><input type="checkbox" class="lineck" value="' + esc(l.id) + '"> ' + esc(l.date) + ' ' + esc(refText('payees', l.payee_id)) + ' ' + esc(l.vendor_doc_no) + ' <b>' + money(l.request_amount) + '</b> <span class="note">' + esc(l.approval_code) + '</span></label>';
+  }).join('') + '</div><div class="err"></div></div>' : '<p class="note">ยังไม่มีแถวที่พร้อมเข้า ขบ. เพิ่มแถวในหน้ารายการก่อน</p>';
+  openDialog('สร้าง ขบ.', 'การเงิน', '--r-finance', html, 'สร้าง ขบ.', function () {
+    return svc('khb', 'create', [{ line_ids: [].map.call(document.querySelectorAll('.lineck:checked'), function (x) { return x.value; }) }]);
+  });
+}
+async function loanAdd() {
+  var codes = (await load('approval_requests')).filter(function (r) { return r.route === 'เงินยืม'; });
+  var html = fSel('approval_code', 'รหัสอนุมัติ (จำแนกเป็นเงินยืมแล้ว)', codes.map(function (r) { return { v: r.approval_code, t: r.approval_code + ' ' + r.items }; }), { req: true }) + fTxt('borrower', 'ผู้ยืม (อีเมลโรงเรียน)', { req: true, ph: 'ชื่อผู้ใช้@kwc.ac.th' }) + fTxt('amount', 'ยอดยืม (บาท)', { req: true, money: true });
+  openDialog('ทำสัญญาเงินยืม', 'การเงิน', '--r-finance', html, 'บันทึก', function () { return svc('loans', 'create', [{ approval_code: val('approval_code'), borrower: val('borrower').indexOf('@') >= 0 ? val('borrower') : val('borrower') + '@' + (ME.settings.allowed_email_domain || 'kwc.ac.th'), amount: val('amount') }]); });
+}
+async function pcAdd() {
+  var codes = (await load('approval_requests')).filter(function (r) { return r.route === 'วัสดุ' && r.status !== 'ปิดรหัส'; });
+  var html = fSel('approval_code', 'รหัสอนุมัติ (จำแนกเป็นวัสดุแล้ว)', codes.map(function (r) { return { v: r.approval_code, t: r.approval_code + ' ' + r.items }; }), { req: true }) + fTxt('vendor', 'ผู้ขาย', { req: true }) + fTxt('amount', 'ยอดจัดซื้อ (บาท)', { req: true, money: true }) + fTxt('egp_no', 'เลข e-GP', { req: true });
+  openDialog('บันทึกจัดซื้อ', 'พัสดุ', '--r-proc', html, 'บันทึก', function () { return svc('procurement', 'purchase', [{ approval_code: val('approval_code'), vendor: val('vendor'), amount: val('amount'), egp_no: val('egp_no') }]); });
+}
+
+var PAY_ACT = {
+  ar_receive: function (id) { return run('approvals', 'receive', [id], 'กดรับแล้ว'); },
+  ar_propose: function (id) { return run('approvals', 'propose', [id], 'เสนอ ผอ. แล้ว รอ ผอ. เซ็นบนกระดาษ'); },
+  ar_freceive: function (id) { return run('approvals', 'financeReceive', [id], 'กดรับเรื่องแล้ว'); },
+  ar_return: function (id) { return openDialog('ส่งคืนครูผู้ขอ', 'งานแผน', '--r-plan', fTxt('reason', 'เหตุผล', { req: true }), 'ส่งคืน', function () { return svc('approvals', 'returnToRequester', [id, val('reason')]); }); },
+  ar_resubmit: function (id) { var r = rec('approval_requests', id); return openDialog('แก้ใบขออนุมัติและส่งใหม่', 'ครูผู้ขอ', '--r-teacher', '<p class="note">เหตุผลที่ถูกส่งคืน: ' + esc(r.return_reason) + '</p>' + fTxt('items', 'รายการที่จะใช้', { req: true, val: r.items }) + fTxt('amount', 'ยอดที่ขอ (บาท)', { req: true, money: true, val: money(r.amount) }), 'ส่งคำขอ', function () { return svc('approvals', 'resubmit', [id, { items: val('items'), amount: val('amount') }]); }); },
+  ar_classify: function (id) { return openDialog('จำแนกเรื่อง 3 ทาง', 'การเงิน', '--r-finance', fSel('route', 'ทาง', [{ v: 'เงินยืม', t: 'เงินยืม (ค่าใช้สอย)' }, { v: 'วัสดุ', t: 'วัสดุ (ผ่านพัสดุ)' }, { v: 'สำรองจ่าย', t: 'สำรองจ่าย' }], { req: true }), 'จำแนก', function () { return svc('approvals', 'classify', [id, val('route')]); }); },
+  ar_decide: function (id) {
+    var html = fld('approved', 'ผลที่ ผอ. เซ็น', '<select id="f_approved"><option value="1">อนุมัติ</option><option value="0">ไม่อนุมัติ</option></select>', { req: true }) + fScan(true) + fTxt('reason', 'เหตุผล (กรณีไม่อนุมัติ)');
+    return openDialog('กดรับคืนใบที่ ผอ. เซ็น', 'งานแผน', '--r-plan', html, 'บันทึก', async function () {
+      var s = await scanRef(); if (!s.ok) return s.r;
+      return svc('approvals', 'recordDecision', [id, { approved: val('approved') === '1', scan_ref: s.ref, reason: val('reason') }]);
+    });
+  },
+  pl_reverse: function (id) { return openDialog('ทำรายการกลับ', 'การเงิน', '--r-finance', '<p class="note">แถวเดิมไม่ถูกลบ ระบบเพิ่มแถวยอดติดลบเพื่อหักล้าง</p>' + fTxt('reason', 'เหตุผล', { req: true }), 'ทำรายการกลับ', function () { return svc('payments', 'reverseLine', [id, val('reason')]); }); },
+  doc_submit: function (x) { var p = x.split(':'); return run('workflow', 'submit', [p[0], p[1]], 'ส่งตรวจแล้ว รอผู้ตรวจชั้น 1 กดรับ'); },
+  doc_receive: function (x) { var p = x.split(':'); return run('workflow', 'receive', [p[0], p[1]], 'กดรับตรวจแล้ว'); },
+  doc_pass: function (x) { var p = x.split(':'); return run('workflow', 'pass', [p[0], p[1]], 'เซ็นผ่านแล้ว ส่งต่อขั้นถัดไป'); },
+  doc_return: function (x) { var p = x.split(':'); return openDialog('ส่งคืนผู้ทำ', 'ผู้ตรวจ', '--r-review', fTxt('reason', 'เหตุผล', { req: true }), 'ส่งคืน', function () { return svc('workflow', 'returnDoc', [p[0], p[1], val('reason')]); }); },
+  doc_signed: function (x) { var p = x.split(':'); return openDialog('กดรับคืนเอกสารที่ ผอ. เซ็นแล้ว', 'ผู้รับ', '--r-exec', fScan(ME.settings.require_scan !== false), 'กดรับคืน', async function () { var s = await scanRef(); if (!s.ok) return s.r; return svc('workflow', 'receiveSigned', [p[0], p[1], { scan_ref: s.ref }]); }); },
+  doc_dreturn: function (x) { var p = x.split(':'); return openDialog('บันทึก ผอ. ส่งคืน', 'ผู้รับ', '--r-exec', fTxt('reason', 'เหตุผลที่ ผอ. ให้แก้', { req: true }) + fScan(ME.settings.require_scan !== false), 'บันทึก', async function () { var s = await scanRef(); if (!s.ok) return s.r; return svc('workflow', 'directorReturn', [p[0], p[1], { scan_ref: s.ref, reason: val('reason') }]); }); },
+  khj_gen: function (id) { return run('khj', 'generate', [id], 'จัด ขจ. แล้ว ตรวจรายการแล้วกดส่งตรวจ'); },
+  pc_inspect: function (id) { return run('procurement', 'inspect', [id], 'บันทึกตรวจรับแล้ว'); },
+  pc_send: function (id) { return run('procurement', 'sendBundle', [id], 'ส่งชุดเบิกแล้ว รอการเงินกดรับ'); },
+  pc_receive: function (id) { return run('procurement', 'receiveBundle', [id], 'กดรับชุดเบิกแล้ว'); },
+};
 
 /* ================= ฟอร์ม ================= */
 async function refOptions(table, key) {
@@ -756,7 +916,7 @@ async function openDialog(title, who, color, fieldsHtml, okLabel, onSubmit) {
     $('dlgOk').disabled = true;
     var r = await onSubmit();
     $('dlgOk').disabled = false;
-    if (r.ok) { dlg.close(); cache = {}; show(current, { 'บันทึก': 'บันทึกแล้ว', 'อนุมัติ': 'อนุมัติแล้ว บัญชีใหม่มีผลทันที', 'ไม่อนุมัติ': 'บันทึกผลไม่อนุมัติแล้ว', 'ส่งคำขอ': 'ส่งคำขอแล้ว รอผู้อนุมัติ' }[okLabel] || 'บันทึกแล้ว'); } else showErrors(form, r);
+    if (r.ok) { dlg.close(); cache = {}; show(current, { 'สร้าง ขบ.': 'สร้าง ขบ. แล้ว ตรวจรายการแล้วกดส่งตรวจ', 'ทำรายการกลับ': 'ทำรายการกลับแล้ว', 'จำแนก': 'จำแนกแล้ว', 'กดรับคืน': 'กดรับคืนแล้ว', 'บันทึก': 'บันทึกแล้ว', 'อนุมัติ': 'อนุมัติแล้ว บัญชีใหม่มีผลทันที', 'ไม่อนุมัติ': 'บันทึกผลไม่อนุมัติแล้ว', 'ส่งคำขอ': 'ส่งคำขอแล้ว รอผู้อนุมัติ' }[okLabel] || 'บันทึกแล้ว'); } else showErrors(form, r);
   };
   dlg.showModal();
   var first = form.querySelector('input,select,textarea'); if (first) first.focus();
@@ -784,6 +944,7 @@ async function openSetting(key) {
   });
 }
 async function rowAction(act, id) {
+  if (PAY_ACT[act]) return PAY_ACT[act](id);
   if (act === 'reqacct') {
     var p = cache.payees.filter(function (x) { return x.id === id; })[0];
     var html = '<p class="note" style="margin-top:0">' + esc(p.name) + (p.account_no ? ' บัญชีเดิม ' + esc(p.bank) + ' ' + esc(p.account_no) : ' ยังไม่มีเลขบัญชี') + '</p>' +

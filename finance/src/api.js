@@ -8,6 +8,12 @@ import { SETTING_SPECS } from './core/settings.js';
 // ลำดับนี้ = ลำดับเมนูในหน้าเว็บ
 export const TABLE_ACCESS = {
   plan_projects: { read: 'any', write: 'plan_projects.manage' },
+  approval_requests: { read: 'any', write: null },
+  payment_lines: { read: 'masters.read', write: null },
+  khb: { read: 'masters.read', write: null },
+  khj: { read: 'masters.read', write: null },
+  loans: { read: 'masters.read', write: null },
+  procurements: { read: 'masters.read', write: null },
   payees: { read: 'masters.read', write: 'payees.manage' },
   payee_account_changes: { read: 'masters.read', write: 'payees.account.request' },
   bank_accounts: { read: 'masters.read', write: 'bank_accounts.manage' },
@@ -24,6 +30,32 @@ export const TABLE_ACCESS = {
 };
 
 const ok = (data) => ({ ok: true, data });
+
+// การกระทำที่หน้าเว็บเรียกได้ (ชื่อบริการ → วิธี) · ทุกวิธีตรวจสิทธิ์เองในบริการ
+const CALLS = {
+  approvals: ['submit', 'resubmit', 'receive', 'returnToRequester', 'propose', 'recordDecision', 'financeReceive', 'classify'],
+  loans: ['create'],
+  procurement: ['purchase', 'inspect', 'sendBundle', 'receiveBundle'],
+  payments: ['createLine', 'updateLine', 'reverseLine'],
+  khb: ['create'],
+  khj: ['generate'],
+  workflow: ['submit', 'receive', 'pass', 'returnDoc', 'receiveSigned', 'directorReturn'],
+};
+const MONEY_KEYS = ['amount', 'base_amount'];
+// หน้าเว็บส่งยอดเงินเป็นบาท (ข้อความ) → แปลงเป็นสตางค์ก่อนเข้าบริการ
+function moneyArgs(args) {
+  return args.map((a) => {
+    if (!a || typeof a !== 'object' || Array.isArray(a)) return a;
+    const out = { ...a };
+    const c = collector();
+    for (const k of MONEY_KEYS) {
+      if (out[k] === undefined || out[k] === '' || out[k] === null) continue;
+      try { out[k] = toSatang(out[k]); } catch (e) { c.add(k, e.message); }
+    }
+    c.throwIfAny();
+    return out;
+  });
+}
 
 function fromWire(def, rec) {
   const out = { ...rec };
@@ -45,7 +77,7 @@ function publicSchema(app) {
   return Object.fromEntries(Object.keys(TABLE_ACCESS).map((t) => [t, app.tables[t]]));
 }
 
-export function handle(app, email, action, payload = {}) {
+export function handle(app, email, action, payload = {}, deps = {}) {
   try {
     const u = app.asUser(email);
     const ctx = u.ctx;
@@ -66,6 +98,17 @@ export function handle(app, email, action, payload = {}) {
         });
       case 'inbox':
         return ok(u.workflow.inbox());
+      case 'call': {
+        const { svc, method } = payload;
+        if (!(CALLS[svc] || []).includes(method)) return { ok: false, error: 'ไม่รู้จักคำสั่งนี้' };
+        return ok(u[svc][method](...moneyArgs(Array.isArray(payload.args) ? payload.args : [])));
+      }
+      case 'upload': {
+        if (!payload.data || String(payload.data).length > 5_600_000) return { ok: false, errors: [{ field: 'scan_ref', message: 'ไฟล์ใหญ่เกิน 4 MB' }], error: 'ไฟล์ใหญ่เกิน 4 MB' };
+        const name = String(payload.name || 'scan').replace(/[^\w.\-ก-๙]+/g, '_').slice(0, 80);
+        const ref = deps.saveFile ? deps.saveFile({ name, mime: String(payload.mime || ''), data: payload.data, by: ctx.user.email }) : `ไฟล์:${name}`;
+        return ok({ ref });
+      }
       case 'flags':
         return ok({ overdue: u.workflow.overdue() });
       case 'list':
@@ -76,6 +119,12 @@ export function handle(app, email, action, payload = {}) {
         if (table === 'login_log') return ok(u.audit.logins().slice(-500).reverse());
         if (table === 'settings') return ok(u.settings.list());
         if (table === 'payee_account_changes') return ok(u.payees.listAccountChanges());
+        if (table === 'approval_requests') return ok(u.approvals.list());
+        if (table === 'payment_lines') return ok(u.payments.listLines().slice().reverse());
+        if (table === 'khb') return ok(u.khb.list());
+        if (table === 'khj') return ok(u.khj.list());
+        if (table === 'loans') return ok(u.loans.list());
+        if (table === 'procurements') return ok(u.procurement.list());
         return ok(u[table].list());
       case 'create':
         needRead();
@@ -110,7 +159,7 @@ export function handle(app, email, action, payload = {}) {
  * จุดเข้าเดียวจากหน้าเว็บ: { token, action, payload } · action 'login' ไม่ต้องมี token
  * googleEmail = บัญชี Google ที่เปิดอยู่ (ถ้า Apps Script รู้) ใช้บันทึกใน login_log เท่านั้น
  */
-export function handleRequest({ app, auth }, req = {}, googleEmail = '') {
+export function handleRequest({ app, auth, saveFile }, req = {}, googleEmail = '') {
   const { token, action, payload = {} } = req;
   try {
     if (action === 'login') {
@@ -124,5 +173,5 @@ export function handleRequest({ app, auth }, req = {}, googleEmail = '') {
   }
   const email = auth.emailOf(token);
   if (!email) return { ok: false, code: 'AUTH', error: 'กรุณาเข้าสู่ระบบ (หมดเวลาหรือยังไม่ได้ล็อกอิน)' };
-  return handle(app, email, action, payload);
+  return handle(app, email, action, payload, { saveFile });
 }

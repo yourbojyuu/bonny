@@ -32,6 +32,7 @@ export const SETTING_SPECS = {
   payee_account_approver_roles: { label: 'บทบาทที่อนุมัติการแก้เลขบัญชีผู้รับเงินได้', default: ['reviewer1'], pending: 'ขั้น 1 [รอยืนยัน]', check: isStrList },
   payee_account_flag_days: { label: 'ขึ้นธงเมื่อบัญชีผู้รับเงินถูกแก้ภายใน (วัน)', default: 30, check: (v) => isInt(v) && v >= 0 },
 
+  loan_due_days: { label: 'เงินยืมต้องส่งใช้ภายใน (วัน)', default: 30, pending: 'HANDOFF 12.11 [รอยืนยัน]', check: (v) => isInt(v) && v > 0 },
   review_restart: { label: 'ส่งคืนแล้วแก้ ให้เริ่มตรวจที่ (first = ชั้น 1 ใหม่ · returned = ชั้นที่ส่งคืน)', default: 'first', pending: 'HANDOFF 12.5 [รอยืนยัน]', check: (v) => v === 'first' || v === 'returned' },
   require_scan: { label: 'ต้องแนบภาพหน้าที่ ผอ. ลงนามทุกครั้ง', default: true, pending: 'HANDOFF 12.8 [รอยืนยัน]', check: (v) => typeof v === 'boolean' },
   fund_allowed_expense_mode: { label: 'กฎค่าใช้จ่ายตามประเภทเงิน', default: 'flag', check: (v) => v === 'flag' || v === 'block' },

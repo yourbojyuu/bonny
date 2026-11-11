@@ -45,3 +45,8 @@ export function daysBetween(fromIso, toIso) {
   const a = parseDate(fromIso), b = parseDate(toIso);
   return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86400000);
 }
+
+export function addDays(iso, n) {
+  const { y, m, d } = parseDate(iso);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}

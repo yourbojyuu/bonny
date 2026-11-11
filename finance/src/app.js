@@ -5,6 +5,11 @@ import { requirePermission } from './core/roles.js';
 import { createStore } from './data/store.js';
 import { FLOWS } from './core/flows.js';
 import * as review from './services/review.js';
+import * as approvals from './services/approvals.js';
+import * as loans from './services/loans.js';
+import * as procurement from './services/procurement.js';
+import * as payments from './services/payments.js';
+import * as documents from './services/documents.js';
 import * as users from './services/users.js';
 import * as settingsSvc from './services/settings.js';
 import * as payees from './services/payees.js';
@@ -14,7 +19,7 @@ const SYSTEM_USER = { id: 'system', email: 'system', roles: [] };
 
 export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
   const tables = { ...TABLES, ...extraTables };
-  const flows = { ...FLOWS, ...extraFlows };
+  const flows = { ...FLOWS, ...documents.DOC_FLOWS, ...extraFlows };
   let store;
   const getSettings = () => loadSettings(store);
   store = createStore(repo, { clock, tables, getSettings });
@@ -41,6 +46,19 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
         rejectAccountChange: b(payees.rejectAccountChange),
         listAccountChanges: b(payees.listAccountChanges),
       },
+      approvals: {
+        submit: b(approvals.submit), resubmit: b(approvals.resubmit), receive: b(approvals.receive), returnToRequester: b(approvals.returnToRequester),
+        propose: b(approvals.propose), recordDecision: b(approvals.recordDecision), financeReceive: b(approvals.financeReceive), classify: b(approvals.classify),
+        list: b(approvals.list), get: b(approvals.get),
+      },
+      loans: { create: b(loans.createLoan), list: b((c) => { requirePermission(c, 'masters.read'); return loans.listLoans(c); }) },
+      procurement: {
+        purchase: b(procurement.purchase), inspect: b(procurement.inspect), sendBundle: b(procurement.sendBundle), receiveBundle: b(procurement.receiveBundle),
+        list: b((c) => { requirePermission(c, 'masters.read'); return procurement.listProcurements(c); }),
+      },
+      payments: { createLine: b(payments.createLine), updateLine: b(payments.updateLine), reverseLine: b(payments.reverseLine), listLines: b(payments.listLines) },
+      khb: { create: b(documents.createKhb), list: b((c) => { requirePermission(c, 'masters.read'); return documents.listKhb(c); }) },
+      khj: { generate: b(documents.generateKhj), list: b((c) => { requirePermission(c, 'masters.read'); return documents.listKhj(c); }) },
       workflow: {
         submit: b(review.submitForReview), receive: b(review.receiveStage), pass: b(review.passStage), returnDoc: b(review.returnStage),
         receiveSigned: b(review.receiveSigned), directorReturn: b(review.directorReturn),

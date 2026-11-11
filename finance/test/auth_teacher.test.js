@@ -116,8 +116,8 @@ test('ครูที่ไม่มีชื่อในตารางผู�
   const me = req({ token: tok, action: 'me' }).data;
   assert.equal(me.user.email, 'someteacher@kwc.ac.th');
   assert.deepEqual(me.user.roles, ['requester']);
-  assert.deepEqual(me.tables.map((t) => t.key), ['plan_projects']);
-  assert.ok(!me.tables[0].canWrite);
+  assert.deepEqual(me.tables.map((t) => t.key), ['plan_projects', 'approval_requests']);
+  assert.ok(me.tables.every((t) => !t.canWrite));
   assert.deepEqual(me.settings, {}); // ครูไม่เห็นค่าตั้ง
   assert.equal(app.store.list('users').length, before);
   assert.equal(req({ token: tok, action: 'list', payload: { table: 'payees' } }).ok, false);
