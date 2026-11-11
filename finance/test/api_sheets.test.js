@@ -114,3 +114,47 @@ test('api call: ยอดเงินจากหน้าเว็บเป็�
   const bad = handle(env.app, EMAILS.finance, 'call', { svc: 'ledger', method: 'ไม่มี', args: [] });
   assert.equal(bad.ok, false);
 });
+
+// ---------- ความเร็ว: อ่านชีตครั้งเดียวต่อคำขอ แต่ต้องไม่เสียความถูกต้อง ----------
+
+function countingEnv() {
+  const { ss, repo } = sheetsEnv();
+  let reads = 0;
+  const orig = ss.getSheetByName.bind(ss);
+  ss.getSheetByName = (n) => {
+    const sh = orig(n);
+    if (!sh) return sh;
+    return { ...sh, getRange: (...a) => { const r = sh.getRange(...a); return { ...r, getValues: () => { reads++; return r.getValues(); } }; } };
+  };
+  return { ss, repo, reads: () => reads };
+}
+
+test('sheetsRepo memo: list ซ้ำหลายครั้งอ่านชีตครั้งเดียว (หัวคอลัมน์ + ข้อมูล = 2 ครั้ง)', () => {
+  const { repo, reads } = countingEnv();
+  repo.insert('subfunds', { id: 's1', code: 'ก/20', name: 'บัตรสมมติ', group: 'บกศ.', has_collectible: false, active: true });
+  const before = reads();
+  for (let i = 0; i < 5; i++) { repo.list('subfunds'); repo.get('subfunds', 's1'); }
+  assert.ok(reads() - before <= 2, `อ่าน ${reads() - before} ครั้ง`);
+});
+
+test('sheetsRepo memo: แก้ค่าที่ได้จาก list ไม่ทำให้ข้อมูลใน memo เพี้ยน · insert/update เห็นผลทันที', () => {
+  const { repo } = countingEnv();
+  repo.insert('users', { id: 'u1', name: 'ก', email: 'a@kwc.ac.th', roles: ['finance'], appointment_ref: 'x', active: true });
+  repo.list('users')[0].roles.push('admin');
+  repo.get('users', 'u1').name = 'เปลี่ยนนอกระบบ';
+  assert.deepEqual(repo.get('users', 'u1').roles, ['finance']);
+  assert.equal(repo.get('users', 'u1').name, 'ก');
+  repo.update('users', 'u1', { name: 'ข' });
+  assert.equal(repo.get('users', 'u1').name, 'ข');
+  repo.insert('users', { id: 'u2', name: 'ค', email: 'b@kwc.ac.th', roles: ['plan'], appointment_ref: 'x', active: true });
+  assert.equal(repo.list('users').length, 2);
+});
+
+test('sheetsRepo memo: ได้ lock แล้วอ่านใหม่ เห็นสิ่งที่คนอื่นเขียนระหว่างรอ', () => {
+  const { ss, repo } = sheetsEnv();
+  repo.insert('subfunds', { id: 's1', code: 'ก/20', name: 'บัตรสมมติ', group: 'บกศ.', has_collectible: false, active: true });
+  assert.equal(repo.list('subfunds').length, 1); // memo อุ่นไว้
+  const other = createSheetsRepo({ spreadsheet: ss, lock: { waitLock() {}, releaseLock() {} }, tables: TABLES, newUuid: () => 'z' });
+  other.insert('subfunds', { id: 's2', code: 'ข/3', name: 'พิเศษสมมติ', group: 'บกศ.', has_collectible: true, active: true });
+  repo.withLock(() => assert.equal(repo.list('subfunds').length, 2));
+});
