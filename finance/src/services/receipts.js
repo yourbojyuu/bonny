@@ -93,6 +93,7 @@ export function workState(ctx) {
   const pick = (k) => live.reduce((n, r) => n + r[k], 0);
   return {
     book, next: String(next), size, used, full: !!book && used >= size, date, todaySummarized: !!summarized(ctx, today),
+    recent: all.filter((r) => r.book_no === book && r.status !== 'ยกเลิก').slice(-4).map((r) => ({ no: r.receipt_no, date: r.date, total: r.total, cash: r.bks_cash + r.inc_cash + r.other, transfer: r.bks_transfer + r.inc_transfer, bks: r.bks_cash + r.bks_transfer, inc: r.inc_cash + r.inc_transfer })),
     day: { count: live.length, cancelled: all.filter((r) => r.date === date && r.status === 'ยกเลิก').length, cash: pick('bks_cash') + pick('inc_cash') + pick('other'), transfer: pick('bks_transfer') + pick('inc_transfer'), total: live.reduce((n, r) => n + r.total, 0) },
   };
 }

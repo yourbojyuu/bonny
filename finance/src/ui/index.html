@@ -729,54 +729,68 @@
   .pt-tabs button[aria-selected="true"] { background:var(--d-ink); color:#fff; box-shadow:none; }
   .pt-tabs button[aria-selected="true"] .count { color:#fff; }
 
-  /* ---- โต๊ะรับเงิน: สมุดเงินฝากสไตล์เกม (ใช้เฉพาะหน้าใบเสร็จ/สรุปวัน/เงินแยกประเภท) ---- */
-  .nbtn { --nb:#ff6a13; --nb-lip:#b84407; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px; padding:0 20px; border:0; border-radius:14px; background:var(--nb); color:#fff; font:600 16px 'Kanit','Sarabun',sans-serif; cursor:pointer; box-shadow:0 4px 0 var(--nb-lip), 0 10px 18px -10px rgba(15,31,61,.5); transform:translateY(0); transition:transform .08s ease, box-shadow .08s ease, filter .15s; white-space:nowrap; }
-  .nbtn:hover { filter:brightness(1.06); }
-  .nbtn:active { transform:translateY(3px); box-shadow:0 1px 0 var(--nb-lip), 0 4px 8px -6px rgba(15,31,61,.5); }
-  .nbtn[disabled] { filter:grayscale(.7) opacity(.6); cursor:not-allowed; transform:none; box-shadow:0 4px 0 #8b93a5; }
-  .nbtn.orange { --nb:#ff6a13; --nb-lip:#b84407; } .nbtn.blue { --nb:#2f6bff; --nb-lip:#1747b8; } .nbtn.small { min-height:36px; padding:0 14px; font-size:14px; border-radius:11px; }
-  .nbtn .plus { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#fff; color:var(--nb); font:700 20px/1 'Kanit',sans-serif; box-shadow:inset 0 -2px 0 rgba(0,0,0,.12); }
-  .nbtn svg { width:18px; height:18px; }
-  .rcdesk { position:relative; margin:0 0 20px; padding:16px 18px 16px 34px; border:2px solid var(--d-ink); border-radius:22px; background:#fffdf9; box-shadow:0 5px 0 var(--d-ink), 0 18px 30px -20px rgba(15,31,61,.5); overflow:hidden; }
-  .rcdesk::before { content:""; position:absolute; left:0; top:0; bottom:0; width:16px; background:linear-gradient(180deg,#ff6a13 0 50%,#2f6bff 50% 100%); border-right:2px solid var(--d-ink); }
-  .rcdesk::after { content:""; position:absolute; left:3px; top:10px; bottom:10px; width:10px; background:radial-gradient(circle, #fffdf9 0 3px, transparent 3.5px) 0 0/10px 22px repeat-y; opacity:.95; }
-  .rd-top { display:flex; align-items:stretch; gap:14px 22px; flex-wrap:wrap; margin-bottom:14px; }
-  .rd-cap { display:block; font:600 13px 'Kanit','Sarabun',sans-serif; color:var(--d-orange-ink); }
-  .rd-sub { display:block; font-size:12.5px; color:var(--d-mute); margin-top:3px; }
-  .rd-book { min-width:190px; } .rd-day { min-width:170px; }
-  .rd-bk { display:flex; align-items:center; gap:8px; font:600 18px 'Kanit','Sarabun',sans-serif; color:var(--d-ink); }
-  .rd-bk input, .rd-day input, .rd-no input { font:600 22px 'Kanit','Geist Mono',monospace; letter-spacing:.01em; color:var(--d-ink); text-align:center; border:2px solid var(--d-ink); border-radius:12px; background:#fff; box-shadow:0 3px 0 var(--d-ink); min-height:46px; }
-  .rd-bk input { width:120px; } .rd-day input { width:160px; font-size:19px; display:block; margin-top:4px; }
-  .rd-no { display:grid; gap:3px; width:96px; } .rd-no > span { font-size:var(--f-sm); color:var(--d-mute); } .rd-no input { width:100%; color:var(--d-blue); }
-  .rd-bk input:focus, .rd-day input:focus, .rd-no input:focus, .qf input:focus { outline:0; border-color:var(--d-blue); box-shadow:0 3px 0 var(--d-blue), 0 0 0 4px rgba(47,107,255,.16); }
-  .rd-meter { height:14px; margin-top:8px; border:2px solid var(--d-ink); border-radius:999px; background:#fff; overflow:hidden; }
-  .rd-meter i { display:block; height:100%; min-width:4px; background:repeating-linear-gradient(135deg,#ffc933 0 8px,#ffb000 8px 16px); border-right:2px solid var(--d-ink); transition:width .6s cubic-bezier(.34,1.56,.64,1); }
-  .rd-stats { display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; align-self:flex-start; }
-  .rd-stats > div { min-width:92px; padding:8px 12px; border:2px solid var(--d-ink); border-radius:14px; background:#fff; text-align:center; box-shadow:0 3px 0 var(--d-ink); }
-  .rd-stats b { display:block; font:600 20px/1.15 'Kanit','Geist Mono',monospace; color:var(--d-ink); } .rd-stats span { font-size:12.5px; color:var(--d-mute); }
-  .rd-top .nbtn { align-self:center; }
+  /* ---- บันทึกใบเสร็จ: แฟ้มกระจกสามชั้น (ดัดแปลงจาก glass-folder-cards เป็น HTML/CSS ล้วน) ----
+     ชั้นหลัง = แผ่นหลังมีลายสีส้ม/น้ำเงิน/ขาวไหลช้า ๆ · ชั้นกลาง = ใบเสร็จล่าสุดของเล่ม · ชั้นหน้า = กระจกฝ้าที่เอียงตามเมาส์ */
+  .gbtn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:0 18px; border:1px solid rgba(15,31,61,.14); border-radius:12px; background:linear-gradient(180deg,#fff,#f1f3f8); color:var(--d-ink); font-weight:600; cursor:pointer; box-shadow:inset 0 1px 0 #fff, 0 6px 14px -10px rgba(15,31,61,.5); transition:transform .25s cubic-bezier(.34,1.36,.5,1), box-shadow .25s; }
+  .gbtn:hover { transform:translateY(-1px); } .gbtn:active { transform:scale(.97); } .gbtn[disabled] { opacity:.45; cursor:not-allowed; transform:none; }
+  .gbtn svg { width:18px; height:18px; } .gbtn.go { background:radial-gradient(120% 90% at 50% 0%,#3b4660 0%,#0f1f3d 60%,#070f20 100%); color:#fff; border-color:#050b18; box-shadow:inset 0 1px 0 rgba(255,255,255,.2), 0 10px 18px -8px rgba(15,31,61,.7); }
+  .rcdesk { display:grid; grid-template-columns:minmax(300px,330px) minmax(0,1fr); gap:6px 34px; align-items:start; margin:64px 0 24px; }
+  .rf-wrap { width:320px; height:310px; position:relative; }
+  .rf { --px:0; --py:0; --hinge:0deg; --lift:30px; --spread:0px; --fan:0deg; --stack:14px; --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.36,.5,1); position:absolute; left:0; top:54px; width:340px; height:272px; transform:scale(.94); transform-origin:0 0; transform-style:preserve-3d; transition:transform .9s var(--ease); isolation:isolate; }
+  .rf:hover, .rf:focus-within { --hinge:-11deg; --lift:-28px; --spread:8px; --fan:1.4deg; --stack:10px; }
+  .rf.open { --hinge:-24deg; --lift:-92px; --spread:40px; --fan:5deg; --stack:28px; }
+  .rf-shadow { position:absolute; left:18px; right:18px; bottom:-6px; height:56px; border-radius:40px; background:rgba(15,31,61,.34); filter:blur(22px); transform:translateX(calc(var(--px)*-8px)); transition:transform .9s var(--ease); }
+  .rf-back { position:absolute; inset:0; overflow:hidden; border-radius:22px; clip-path:path('M0 56A22 22 0 0 1 22 34L146 34C170 34 172 0 198 0L318 0A22 22 0 0 1 340 22L340 250A22 22 0 0 1 318 272L22 272A22 22 0 0 1 0 250Z'); background:#eef1f7; }
+  .rf-art { position:absolute; inset:-30px; background:radial-gradient(60% 55% at 18% 22%,#ff8a3d 0,transparent 62%), radial-gradient(55% 60% at 82% 30%,#2f6bff 0,transparent 64%), radial-gradient(60% 50% at 55% 90%,#ffd9b8 0,transparent 65%), radial-gradient(45% 45% at 88% 96%,#0f1f3d 0,transparent 70%), #f4f6fb; transform:translate(calc(var(--px)*-8px),calc(var(--py)*-6px)); animation:rf-flow 22s ease-in-out infinite alternate; }
+  .rf-art.b { background:conic-gradient(from 210deg at 70% 40%,rgba(255,255,255,0),rgba(255,255,255,.6),rgba(255,106,19,.0),rgba(47,107,255,.5),rgba(255,255,255,0)); mix-blend-mode:soft-light; animation-duration:30s; animation-direction:alternate-reverse; }
+  @keyframes rf-flow { from { filter:hue-rotate(0deg) saturate(1.05); background-position:0 0,0 0,0 0,0 0,0 0; } to { filter:hue-rotate(-12deg) saturate(1.25); background-position:8% 6%,-6% 8%,4% -6%,-4% -4%,0 0; } }
+  .rf-sheen { position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 24%), radial-gradient(120% 80% at 80% 0%,rgba(255,255,255,.22),transparent 60%); }
+  .rf-files { position:absolute; inset:0; z-index:5; pointer-events:none; clip-path:inset(-400px -400px 10px -400px); }
+  .rf-sheet { position:absolute; left:34px; top:96px; width:272px; height:184px; padding:12px 14px; border-radius:16px; background:linear-gradient(180deg,#fff,#f3f3f1); box-shadow:inset 0 1px 0 #fff, 0 0 0 .5px rgba(15,31,61,.14), 0 10px 26px -8px rgba(10,12,20,.3); display:grid; grid-template-rows:auto auto 1fr auto; gap:8px; transform-origin:50% 100%; transform:translate(calc(var(--j)*1.6px + var(--s)*var(--spread)), calc(var(--lift) + var(--d)*var(--stack)*-1)) rotate(calc(var(--j)*.5deg + var(--s)*var(--fan))); transition:transform .75s var(--spring) calc(var(--d)*40ms); z-index:calc(10 - var(--d)); }
+  .rf-sh-h { display:flex; justify-content:space-between; align-items:baseline; gap:8px; } .rf-sh-h b { font-size:14.5px; } .rf-sh-h em { font:normal 11px 'Geist Mono',monospace; color:var(--d-mute); }
+  .rf-sh-b { height:7px; border-radius:6px; background:rgba(15,31,61,.08); overflow:hidden; } .rf-sh-b i { display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#ff6a13,#ff9a4d); } .rf-sheet.b .rf-sh-b i { background:linear-gradient(90deg,#2f6bff,#6a98ff); }
+  .rf-sh-t { display:flex; gap:12px; color:var(--d-mute); font:500 11.5px 'Geist Mono',monospace; }
+  .rf-sheet strong { font:600 22px 'Geist Mono',monospace; letter-spacing:-.03em; color:var(--d-ink); }
+  .rf-front { position:absolute; left:0; top:74px; width:340px; height:198px; z-index:10; -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5); clip-path:path('M0 22A22 22 0 0 1 22 0L118 0C144 0 146 32 172 32L318 32A22 22 0 0 1 340 54L340 176A22 22 0 0 1 318 198L22 198A22 22 0 0 1 0 176Z'); transform-origin:50% 100%; transform:perspective(760px) rotateX(var(--hinge)); transition:transform .8s var(--spring); }
+  .rf-tint { position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.26) 45%,rgba(255,255,255,.66)); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7); }
+  .rf-spec { position:absolute; inset:0; background:radial-gradient(240px 190px at calc(50% + var(--px)*46%) calc(30% + var(--py)*40%),rgba(255,255,255,.55),transparent 70%); mix-blend-mode:soft-light; pointer-events:none; }
+  .rf-hit { all:unset; position:absolute; inset:0; z-index:1; cursor:pointer; } .rf-hit:focus-visible { outline:3px solid var(--d-blue); outline-offset:-4px; border-radius:22px; }
+  .rf-label { position:absolute; left:26px; bottom:26px; z-index:2; display:grid; gap:4px; width:210px; pointer-events:none; color:var(--d-ink); }
+  .rf-t { font:600 22px/1.1 'Kanit','Sarabun',sans-serif; letter-spacing:-.01em; } .rf-m { font:500 12px 'Geist Mono',monospace; color:var(--d-mute); }
+  .rf-bar { height:8px; border-radius:6px; background:rgba(15,31,61,.1); overflow:hidden; } .rf-bar i { display:block; height:100%; min-width:5px; border-radius:6px; background:linear-gradient(90deg,#ff6a13,#2f6bff); transition:width .8s var(--spring); }
+  .rf-key { all:unset; box-sizing:border-box; position:absolute; right:22px; bottom:22px; z-index:12; width:58px; height:58px; border-radius:18px; display:grid; place-items:center; cursor:pointer; color:#fff; background:radial-gradient(120% 90% at 50% 0%,#3a3a3f,#121214 55%,#050506); box-shadow:inset 0 1px 0 rgba(255,255,255,.22), inset 0 -3px 8px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.75), 0 14px 22px -8px rgba(0,0,0,.55); transition:transform .35s var(--spring); }
+  .rf-key:hover { transform:translateY(-2px); } .rf-key:active { transform:scale(.93); } .rf-key:focus-visible { outline:2px solid #4c8dff; outline-offset:3px; }
+  .rf-key svg { width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; }
+  .rd-side { min-width:0; padding-top:8px; }
+  .rd-bar { display:flex; flex-wrap:wrap; gap:10px 12px; align-items:flex-end; margin-bottom:14px; }
+  .rd-fld { display:grid; gap:3px; width:96px; } .rd-fld.wide { width:170px; } .rd-fld > span { font-size:var(--f-sm); color:var(--d-mute); }
+  .rd-fld input, .qf input { width:100%; min-height:44px; padding:0 12px; border:1px solid rgba(15,31,61,.16); border-radius:12px; background:rgba(255,255,255,.85); font:500 17px 'Geist Mono','Geist',monospace; color:var(--d-ink); box-shadow:inset 0 1px 2px rgba(15,31,61,.06); }
+  .rd-fld input:focus, .qf input:focus { outline:0; border-color:var(--d-blue); box-shadow:0 0 0 3px rgba(47,107,255,.16); }
+  .rd-stats { display:flex; gap:8px; margin-left:auto; } .rd-stats > div { min-width:84px; padding:6px 12px; border-radius:12px; background:rgba(255,255,255,.7); border:1px solid rgba(15,31,61,.1); }
+  .rd-stats b { display:block; font:600 17px/1.2 'Geist Mono',monospace; letter-spacing:-.02em; } .rd-stats span { font-size:12px; color:var(--d-mute); }
   .rd-note { margin:0 0 12px; }
-  .rd-form { display:flex; flex-wrap:wrap; gap:10px 12px; align-items:flex-end; padding-top:14px; border-top:2px dashed #c8cede; }
-  .rcdesk .qf input { border:2px solid var(--d-ink); border-radius:12px; box-shadow:0 3px 0 rgba(15,31,61,.9); font-family:'Geist Mono','Geist',monospace; font-weight:500; background:#fff; }
-  .rcdesk .qf > span, .rcdesk .qtot span { color:var(--d-ink2); font-weight:500; }
-  .rcdesk .qg { border:2px solid var(--d-ink); border-radius:16px; } .rcdesk .qg legend { font:600 14px 'Kanit','Sarabun',sans-serif; padding:0 6px; }
-  .rcdesk .qtot b { font:600 24px 'Kanit','Geist Mono',monospace; color:var(--d-ink); }
-  .rcdesk .btn.no { border-radius:10px; }
-  .passpage { border:2px solid var(--d-ink); border-radius:16px; background:#fffdf9; box-shadow:0 4px 0 var(--d-ink); padding:6px 16px; margin-bottom:12px; }
+  .rd-form { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+  .qf { display:grid; gap:3px; width:150px; min-width:0; } .qf > span { font-size:var(--f-sm); color:var(--d-ink2); }
+  .rd-form .qg { display:flex; gap:10px; margin:0; padding:8px 12px 12px; border:1px solid; border-radius:18px; } .rd-form .qg legend { padding:0 8px; font:600 14px 'Kanit','Sarabun',sans-serif; }
+  .rd-form .qg.bks { border-color:#f4b58a; background:rgba(255,240,229,.7); } .rd-form .qg.bks legend { color:#b84407; } .rd-form .qg.inc { border-color:#9db7f3; background:rgba(234,240,255,.7); } .rd-form .qg.inc legend { color:#1f4fd1; }
+  .qtot { display:grid; gap:2px; text-align:right; min-width:104px; } .qtot span { font-size:var(--f-sm); color:var(--d-mute); } .qtot b { font:600 26px 'Geist Mono',monospace; letter-spacing:-.03em; }
+  @media (max-width: 760px) { .rcdesk { grid-template-columns:1fr; } .rf-wrap { margin:0 auto; } .rd-stats { margin-left:0; } .qf { width:calc(50% - 12px); } }
+  @media (prefers-reduced-motion: reduce) { .rf-art, .rf-art.b { animation:none !important; } }
+  .passpage { border:1px solid rgba(15,31,61,.16); border-radius:16px; background:#fffdf9; box-shadow:0 14px 28px -18px rgba(15,31,61,.5); padding:6px 16px; margin-bottom:12px; }
   .pp-row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px dashed #c8cede; font-size:15.5px; } .pp-row b { font-family:'Geist Mono',monospace; font-weight:500; }
   .pp-row.total { border-bottom:0; font:600 18px 'Kanit','Sarabun',sans-serif; color:var(--d-blue); } .pp-row.total b { font:600 20px 'Kanit',monospace; }
   .daycards { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); }
-  .daycard { border:2px solid var(--d-ink); border-radius:20px; background:#fffdf9; box-shadow:0 5px 0 var(--d-ink); overflow:hidden; animation:rise .3s ease both; }
-  .daycard header { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 16px; background:linear-gradient(90deg,#ffe6d2,#dfe9ff); border-bottom:2px solid var(--d-ink); }
+  .daycard { border:1px solid rgba(15,31,61,.16); border-radius:20px; background:#fffdf9; box-shadow:0 14px 28px -18px rgba(15,31,61,.5); overflow:hidden; animation:rise .3s ease both; }
+  .daycard header { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 16px; background:linear-gradient(90deg,#ffe6d2,#dfe9ff); border-bottom:1px solid rgba(15,31,61,.16); }
   .daycard header b { display:block; font:600 18px 'Kanit','Sarabun',sans-serif; } .daycard header span { font-size:13px; color:var(--d-ink2); } .daycard header strong { font:600 22px 'Kanit',monospace; color:var(--d-ink); }
-  .dc-rows { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:#c8cede; border-bottom:2px solid var(--d-ink); }
+  .dc-rows { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:#c8cede; border-bottom:1px solid rgba(15,31,61,.16); }
   .dc-rows > div { background:#fffdf9; padding:10px 12px; display:grid; gap:1px; } .dc-rows span { font:600 13px 'Kanit',sans-serif; color:var(--d-orange-ink); } .dc-rows b { font:500 14px 'Geist Mono',monospace; } .dc-rows em { font:normal 400 12.5px 'Geist Mono',monospace; color:var(--d-mute); }
   .daycard footer { padding:12px 14px; display:grid; gap:8px; }
   .dc-dep { display:flex; align-items:center; gap:10px; padding:8px 10px; border:2px solid #c8cede; border-radius:14px; background:#fff; } .dc-dep.done { border-color:#17733a; background:#effaf2; }
   .dc-dep > div { flex:1; min-width:0; } .dc-dep b { display:block; font-size:15px; } .dc-dep small { color:var(--d-mute); font-size:12.5px; }
   .dc-ic { display:grid; place-items:center; width:36px; height:36px; border-radius:11px; background:var(--d-orange-wash); color:var(--d-orange); } .dc-dep.done .dc-ic { background:#d6f2de; color:#17733a; } .dc-ic svg { width:18px; height:18px; }
-  .fundbook { margin:0 0 18px; border:2px solid var(--d-ink); border-radius:18px; background:#fffdf9; box-shadow:0 4px 0 var(--d-ink); overflow:hidden; }
-  .fundbook header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:11px 16px; border-bottom:2px solid var(--d-ink); }
+  .fundbook { margin:0 0 18px; border:1px solid rgba(15,31,61,.16); border-radius:18px; background:#fffdf9; box-shadow:0 14px 28px -18px rgba(15,31,61,.5); overflow:hidden; }
+  .fundbook header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:11px 16px; border-bottom:1px solid rgba(15,31,61,.16); }
   .fundbook.o header { background:#ffe6d2; } .fundbook.b header { background:#dfe9ff; } .fundbook.n header { background:#e9ecf3; }
   .fundbook header b { display:block; font:600 17px 'Kanit','Sarabun',sans-serif; } .fundbook header span { color:var(--d-ink2); font-size:13px; margin-right:12px; }
   .fb-tot strong { font:600 20px 'Kanit',monospace; } .fundbook table { width:100%; border-collapse:collapse; } .fundbook th { text-align:left; font-weight:600; font-size:13px; padding:7px 14px; color:var(--d-ink2); background:var(--d-wash); } .fundbook td { padding:7px 14px; border-top:1px solid var(--d-rule2); } .fundbook .num { text-align:right; }
@@ -1156,7 +1170,7 @@ var GROUPS = [
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
 var SHORT = { migrate: 'ย้ายข้อมูล', daily_close: 'วันที่ปิด', executive: 'รายงานผู้บริหาร', year_end: 'สิ้นปีงบ', bank_register: 'ทะเบียนเงินฝาก', deposit_slips: 'ใบนำฝาก', bank_statement_lines: 'รายการ statement', adjustments: 'รายการปรับปรุง', receipts: 'ใบเสร็จ', packages: 'แพ็กเกจ', collectibles: 'ยอดที่ต้องเก็บ', cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
 var DESC = {
-  receipt_days: 'กดสรุปประจำวันที่หน้าออกใบเสร็จ ระบบรวมยอดทั้งวันและเงินสดที่ต้องนำฝากแยกตามกลุ่มเงิน แล้วเอาเลขที่ใบนำฝากมากรอกเพื่อจับคู่กับวันนั้น',
+  receipt_days: 'กดสรุปประจำวันที่หน้าบันทึกใบเสร็จ ระบบรวมยอดทั้งวันและเงินสดที่ต้องนำฝากแยกตามกลุ่มเงิน แล้วเอาเลขที่ใบนำฝากมากรอกเพื่อจับคู่กับวันนั้น',
   fund_split: 'รายละเอียดย่อยของใบเสร็จแยกตามชนิดเงิน เรียงตามวันที่ มียอดสะสมแบบสมุดบัญชี ไม่นับใบที่ยกเลิก',
   migrate: 'นำเข้าข้อมูลจากไฟล์เดิมแบบตรวจก่อนแล้วจึงยืนยัน ค่าที่ว่างระบบไม่เดา ให้ผู้ใช้ระบุเอง ใช้ไฟล์ที่ส่งออกจาก Google Sheets เป็น CSV',
   daily_close: 'เปิดวัน ส่งรายงานเงินคงเหลือให้กรรมการนับเงินสดและลงนาม แล้ว ผอ. ตรวจการจ่ายบนกระดาษ การเงินกดรับคืนพร้อมภาพจึงปิดวัน (ล็อก) วันที่มีการจ่ายต้องมีเอกสาร ผอ. ที่รับคืนแล้ว',
@@ -1166,7 +1180,7 @@ var DESC = {
   deposit_slips: 'นำเงินสดตามใบเสร็จฝากเข้าบัญชีออมทรัพย์ของกลุ่มเงิน ยอดไม่ตรงกับใบเสร็จขึ้นธงส่วนต่าง',
   bank_statement_lines: 'รายการจากไฟล์ statement ที่นำเข้า ระบบจับคู่กับใบนำฝาก ใบเสร็จโอน เช็ค KTB และหักกลบ OTID ที่คู่กับเช็ค',
   adjustments: 'ยอดที่ไม่ตรงแก้ได้ด้วยรายการปรับปรุงที่มีผู้อนุมัติเท่านั้น ผู้อนุมัติต้องไม่ใช่ผู้ทำ',
-  receipts: 'ออกใบเสร็จแยกยอด 4 ช่อง ระบบหาแพ็กเกจจากยอดรวมแล้วแยกชนิดเงินย่อยให้ ถ้ายอดตรงแต่รายละเอียดต่างให้กำหนดเอง ผลรวมที่แยกต้องเท่ายอดใบเสร็จ ใบผิดใช้ยกเลิกหรือออกใบแทน ไม่ลบ',
+  receipts: 'บันทึกใบเสร็จแยกยอด 4 ช่อง ระบบหาแพ็กเกจจากยอดรวมแล้วแยกชนิดเงินย่อยให้ ถ้ายอดตรงแต่รายละเอียดต่างให้กำหนดเอง ผลรวมที่แยกต้องเท่ายอดใบเสร็จ ใบผิดใช้ยกเลิกหรือออกใบแทน ไม่ลบ',
   packages: 'แพ็กเกจแยกชนิดเงินย่อยตามยอดรวม ยอดรวมซ้ำกันได้หลายแพ็กเกจ ถ้าระบุช่องเงิน ใบเสร็จต้องมีช่องเงินตรงกันจึงแยกอัตโนมัติ',
   collectibles: 'ยอดที่ต้องเก็บรายนักเรียน (เฉพาะ บกศ. และรายได้ SMS) ผูกกับปีการศึกษาและภาคเรียน รับเกินยอดค้างไม่ได้',
   cheques: 'ทะเบียนคุมเช็คทุกใบ เลขเช็คต่อเนื่องในสมุด เช็คเสียก็ลงทะเบียน (ไม่นับยอด) พร้อมรูป จ่ายแล้วเมื่อผู้รับลงชื่อรับเช็ค',
@@ -1207,7 +1221,7 @@ var EXTRA_COLS = {
   plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
   payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
 };
-var HIDE = { daily_close: ['id', 'system_cash', 'count_received_by', 'counted_by', 'signed_at', 'director_sent_at', 'director_scan', 'received_back_at', 'closed_at', 'locked', 'snapshot'], deposit_slips: ['id', 'receipt_ids', 'fund_group', 'expected'], bank_statement_lines: ['id', 'teller_id', 'branch', 'matched_source'], adjustments: ['id', 'approved_at'], receipts: ['id', 'replaces', 'cancel_reason', 'package_id', 'manual_reason', 'deposit_slip_id', 'loan_id'], packages: ['id'], collectibles: ['id'], cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
+var HIDE = { daily_close: ['id', 'system_cash', 'count_received_by', 'counted_by', 'signed_at', 'director_sent_at', 'director_scan', 'received_back_at', 'closed_at', 'locked', 'snapshot'], deposit_slips: ['id', 'receipt_ids', 'fund_group', 'expected'], bank_statement_lines: ['id', 'teller_id', 'branch', 'matched_source'], adjustments: ['id', 'approved_at'], receipts: ['id', 'payer', 'replaces', 'cancel_reason', 'package_id', 'manual_reason', 'deposit_slip_id', 'loan_id'], packages: ['id'], collectibles: ['id'], cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
 
 /* ================= ผังภาพรวม (จากผังหน้า 1) =================
    live = ตารางที่ใช้งานได้แล้ว · uses = ข้อมูลหลักที่ขั้นนี้ต้องใช้ · step = ขั้นที่จะเปิดใช้ · hand = ส่งต่อ ผู้รับต้องกดรับ */
@@ -1215,7 +1229,7 @@ var CHART = [
   { lane: 'รายรับ', nodes: [
     { r: 'system', t: 'ตั้งยอดที่ต้องเก็บ', d: 'เฉพาะ บกศ. และรายได้ SMS', step: 5, sys: 1 },
     { r: 'payer', who: 'ผู้ชำระ', t: 'รับเงินสดหรือเงินโอน', d: 'เงินโอนตรวจยอดเข้าบัญชีก่อน', step: 5 },
-    { r: 'finance', t: 'ออกใบเสร็จ', d: 'เลขต่อเนื่อง ระบุชนิดเงิน', step: 5 },
+    { r: 'finance', t: 'บันทึกใบเสร็จ', d: 'เลขต่อเนื่อง ระบุชนิดเงิน', step: 5 },
     { r: 'system', t: 'หาแพ็กเกจ แยกชนิดเงิน', d: 'ไม่ตรงแพ็กเกจ ใช้ปุ่มกำหนดเอง', step: 5, sys: 1, uses: ['subfunds'] },
     { r: 'finance', t: 'นำฝาก ลงทะเบียนเงินฝาก', d: 'ใบนำฝากหรือเลขอ้างอิง Kcorp', step: 6, uses: ['bank_accounts'] },
   ] },
@@ -1380,7 +1394,7 @@ var PAGES = [
   { id: 'loan', no: 3, zone: 'out', label: 'เงินยืม', tables: ['loans'] },
   { id: 'khb', no: 4, zone: 'out', label: 'ขบ.', tables: ['payment_lines', 'khb'] },
   { id: 'khj', no: 5, zone: 'out', label: 'ขจ.', tables: ['khj', 'cheques', 'cheque_books', 'ktb_batches', 'tax_due'] },
-  { id: 'receipt', no: 6, zone: 'in', label: 'ออกใบเสร็จ', tables: ['receipts', 'receipt_days', 'fund_split', 'collectibles'] },
+  { id: 'receipt', no: 6, zone: 'in', label: 'บันทึกใบเสร็จ', tables: ['receipts', 'receipt_days', 'fund_split', 'collectibles'] },
   { id: 'bank', no: 7, zone: 'in', label: 'ทะเบียนเงินฝาก', tables: ['bank_register', 'deposit_slips', 'bank_statement_lines', 'adjustments', 'ledger'] },
   { id: 'close', no: 8, zone: 'end', label: 'ปิดวัน', tables: ['daily_close', 'year_end'] },
   { id: 'exec', no: 9, zone: 'end', label: 'รายงานผู้บริหาร', tables: ['executive'] },
@@ -1929,7 +1943,7 @@ var PAY_ADD = {
   deposit_slips: { label: 'บันทึกใบนำฝาก', can: function () { return hasRole(['finance', 'income']); }, open: dsAdd },
   bank_statement_lines: { label: 'นำเข้า statement', can: function () { return hasRole(['finance']); }, open: stmtImport },
   adjustments: { label: 'เพิ่มรายการปรับปรุง', can: function () { return hasRole(['finance']); }, open: adjAdd },
-  receipts: { label: 'ออกใบเสร็จ', can: function () { return hasRole(['finance', 'income']); }, open: rcAdd },
+  receipts: { label: 'บันทึกใบเสร็จ', can: function () { return hasRole(['finance', 'income']); }, open: rcAdd },
   packages: { label: 'เพิ่มแพ็กเกจ', can: function () { return hasRole(['finance', 'income']); }, open: pkAdd },
   collectibles: { label: 'ตั้งยอดที่ต้องเก็บ', can: function () { return hasRole(['finance', 'income']); }, open: clAdd },
   approval_requests: { label: 'ยื่นใบขออนุมัติ', can: function () { return true; }, open: arSubmit },
@@ -1946,7 +1960,7 @@ async function rcAdd(replaces) {
   var loans = (await load('loans')).filter(function (l) { return l.status !== 'ส่งใช้แล้ว'; });
   var rcp = await load('receipts');
   var lastBook = rcp.length ? rcp[0].book_no : '';
-  var html = '<div class="flow" style="gap:8px">' + '</div>' + fTxt('book_no', 'เล่มที่', { req: true, val: lastBook }) + fTxt('receipt_no', 'เลขที่', { req: true, hint: 'เลขต่อเนื่องในเล่ม ระบบเสนอให้เมื่อกรอกเล่มที่' }) + fTxt('date', 'วันที่', { req: true, val: ME.today }) + fTxt('payer', 'ผู้ชำระเงิน', { req: true }) + fTxt('student_id', 'รหัสนักเรียน', { hint: 'ต้องกรอกเมื่อเป็นชนิดที่ตั้งยอดที่ต้องเก็บ' }) +
+  var html = '<div class="flow" style="gap:8px">' + '</div>' + fTxt('book_no', 'เล่มที่', { req: true, val: lastBook }) + fTxt('receipt_no', 'เลขที่', { req: true, hint: 'เลขต่อเนื่องในเล่ม ระบบเสนอให้เมื่อกรอกเล่มที่' }) + fTxt('date', 'วันที่', { req: true, val: ME.today }) + fTxt('student_id', 'รหัสนักเรียน', { hint: 'ต้องกรอกเมื่อเป็นชนิดที่ตั้งยอดที่ต้องเก็บ' }) +
     '<div class="field"><label>ยอด (บาท)</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px">' + CHANS.map(function (c) { return '<div class="field" data-key="' + c[0] + '" style="margin:0"><label for="f_' + c[0] + '" class="note">' + c[1] + '</label><input type="text" id="f_' + c[0] + '" inputmode="decimal"><div class="err"></div></div>'; }).join('') + '</div></div>' +
     fTxt('kcorp_ref', 'เลขที่อ้างอิง Kcorp', { hint: 'ต้องกรอกเมื่อมียอดเงินโอน' }) +
     fSel('loan_id', 'คืนเงินยืม (ถ้าเป็นการคืนเงินยืม)', loans.map(function (l) { return { v: l.id, t: l.loan_no + ' ' + l.borrower }; })) +
@@ -1959,8 +1973,8 @@ async function rcAdd(replaces) {
     var pk = val('package_id');
     return { mode: 'manual', reason: val('manual_reason'), package_id: pk || undefined, splits: pk ? undefined : val('splits').split('\n').map(function (l) { var i = l.lastIndexOf('='); return l.trim() ? { subfund_code: l.slice(0, i).trim(), amount: l.slice(i + 1).trim() } : null; }).filter(Boolean) };
   };
-  await openDialog(replaces ? 'ออกใบเสร็จแทนใบเดิม' : 'ออกใบเสร็จ', 'การเงิน', '--r-finance', html, 'ออกใบเสร็จ', async function () {
-    var input = Object.assign({ book_no: val('book_no'), receipt_no: val('receipt_no'), date: val('date'), payer: val('payer'), student_id: val('student_id'), kcorp_ref: val('kcorp_ref'), loan_id: val('loan_id'), replaces: replaces || undefined, split: splitInput() }, chanVals());
+  await openDialog(replaces ? 'บันทึกใบเสร็จแทนใบเดิม' : 'บันทึกใบเสร็จ', 'การเงิน', '--r-finance', html, 'ออกใบเสร็จ', async function () {
+    var input = Object.assign({ book_no: val('book_no'), receipt_no: val('receipt_no'), date: val('date'), student_id: val('student_id'), kcorp_ref: val('kcorp_ref'), loan_id: val('loan_id'), replaces: replaces || undefined, split: splitInput() }, chanVals());
     var r = await svc('receipts', 'issue', [input]);
     if (!r.ok && r.errors && r.errors.some(function (e) { return e.field === 'split'; })) {
       $('manualBox').classList.remove('hidden');
@@ -1996,35 +2010,53 @@ var QR_FOCUS = false;
 async function rcQuick() {
   if (!(PAY_ADD.receipts && PAY_ADD.receipts.can())) return;
   var ws = await svc('receipts', 'workState', []); if (!ws.ok || current !== 'receipts') return; ws = ws.data;
-  var f = function (id, label, w, extra) { return '<label class="qf" style="--w:' + w + '"><span>' + label + '</span><input type="text" id="qr_' + id + '" ' + (extra || '') + ' autocomplete="off"></label>'; };
+  var f = function (id, label, extra) { return '<label class="qf"><span>' + label + '</span><input type="text" id="qr_' + id + '" ' + (extra || '') + ' autocomplete="off"></label>'; };
   var pct = Math.min(100, Math.round(ws.used * 100 / ws.size));
   var lock = ws.todaySummarized && ws.date === ME.today && !ws.day.count;
+  // แผ่นใบเสร็จล่าสุดในแฟ้ม (ใหม่สุดอยู่หน้า)
+  var sheets = ws.recent.map(function (r, i) {
+    var tone = r.bks >= r.inc ? 'o' : 'b';
+    return '<div class="rf-sheet ' + tone + '" role="listitem" style="--d:' + (ws.recent.length - 1 - i) + ';--s:' + (ws.recent.length < 2 ? 0 : (i / (ws.recent.length - 1)) * 2 - 1).toFixed(2) + ';--j:' + (((i * 37) % 7) - 3) + '">' +
+      '<span class="rf-sh-h"><b>ใบที่ ' + esc(r.no) + '</b><em>' + esc(thDate(r.date)) + '</em></span>' +
+      '<span class="rf-sh-b"><i style="width:' + Math.max(8, Math.round(r.bks * 100 / (r.total || 1))) + '%"></i></span>' +
+      '<span class="rf-sh-t"><small>สด ' + money(r.cash) + '</small><small>โอน ' + money(r.transfer) + '</small></span><strong>' + money(r.total) + '</strong></div>';
+  }).join('');
+  var folder =
+    '<div class="rf-wrap"><div class="rf" id="rf">' +
+      '<div class="rf-shadow" aria-hidden="true"></div>' +
+      '<div class="rf-back" aria-hidden="true"><div class="rf-art"></div><div class="rf-art b"></div><div class="rf-sheen"></div></div>' +
+      '<div class="rf-files" role="list" aria-label="ใบเสร็จล่าสุดในเล่ม">' + sheets + '</div>' +
+      '<div class="rf-front"><div class="rf-tint"></div><div class="rf-spec"></div>' +
+        '<button type="button" class="rf-hit" id="rf_hit" aria-expanded="false" aria-label="เปิดแฟ้มดูใบเสร็จล่าสุด"></button>' +
+        '<div class="rf-label"><span class="rf-t">เล่มที่ ' + esc(ws.book || '-') + '</span><span class="rf-m">ใช้แล้ว ' + ws.used + ' / ' + ws.size + ' ใบ</span><span class="rf-bar"><i style="width:' + pct + '%"></i></span></div>' +
+      '</div>' +
+      '<button type="button" class="rf-key" id="rf_key" aria-label="บันทึกใบนี้แล้วขึ้นใบถัดไป"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5v15M4.5 12h15"/></svg></button>' +
+    '</div></div>';
   $('tbl').insertAdjacentHTML('beforebegin',
-    '<section class="rcdesk" id="rcdesk" aria-label="โต๊ะรับเงิน">' +
-    '<div class="rd-top">' +
-      '<div class="rd-book"><span class="rd-cap">สมุดรับเงิน</span><label class="rd-bk">เล่มที่<input type="text" id="qr_book" value="' + esc(ws.book) + '" inputmode="numeric" autocomplete="off" aria-label="เล่มที่"></label>' +
-        '<div class="rd-meter" role="img" aria-label="ใช้ไปแล้ว ' + ws.used + ' จาก ' + ws.size + ' ใบ"><i style="width:' + pct + '%"></i></div><span class="rd-sub">ใช้แล้ว ' + ws.used + ' / ' + ws.size + ' ใบ</span></div>' +
-      '<div class="rd-day"><span class="rd-cap">วันที่ทำงาน</span><input type="text" id="qr_date" value="' + esc(ws.date) + '" aria-label="วันที่" inputmode="numeric" autocomplete="off"><span class="rd-sub">ใช้วันนี้ต่อไปจนกว่าจะกดสรุป</span></div>' +
-      '<div class="rd-stats"><div><b>' + ws.day.count + '</b><span>ใบวันนี้</span></div><div><b>' + money(ws.day.cash) + '</b><span>เงินสด</span></div><div><b>' + money(ws.day.transfer) + '</b><span>เงินโอน</span></div></div>' +
-      '<button type="button" class="nbtn blue" id="qr_close"' + (ws.day.count ? '' : ' disabled') + '>' + ico('receipt_days') + 'สรุปประจำวัน</button>' +
-    '</div>' +
-    (ws.full ? '<div class="msg bad rd-note">เล่ม ' + esc(ws.book) + ' ครบ ' + ws.size + ' ใบแล้ว ใส่เลขเล่มใหม่ในช่องเล่มที่ แล้วเริ่มใบที่ 1</div>' : '') +
-    (lock ? '<div class="msg ok rd-note">วันนี้สรุปแล้ว ถ้าจะออกใบเพิ่ม ให้เปลี่ยนวันที่ หรือไปแท็บสรุปประจำวันเพื่อเปิดวันนี้ใหม่</div>' : '') +
-    '<form class="rd-form" id="qrow" novalidate aria-label="กรอกใบเสร็จ">' +
-      '<div class="rd-no"><span>เลขที่</span><input type="text" id="qr_no" inputmode="numeric" autocomplete="off" aria-label="เลขที่" value="' + esc(ws.book ? ws.next : '') + '"></div>' +
-      f('payer', 'ผู้ชำระเงิน', '210px') +
-      '<fieldset class="qg bks"><legend>บกศ.</legend>' + f('bks_cash', 'สด', '84px', 'inputmode="decimal"') + f('bks_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
-      '<fieldset class="qg inc"><legend>รายได้</legend>' + f('inc_cash', 'สด', '84px', 'inputmode="decimal"') + f('inc_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
-      '<fieldset class="qg oth"><legend>อื่น ๆ</legend>' + f('other', 'จำนวนเงิน', '92px', 'inputmode="decimal"') + '</fieldset>' +
-      f('kcorp', 'เลขที่อ้างอิงโอน (Kcorp)', '170px') +
-      '<div class="qtot"><span>รวม (บาท)</span><b id="qr_total">0.00</b></div>' +
-      '<button type="submit" class="nbtn orange" id="qr_go"><span class="plus" aria-hidden="true">+</span>บันทึก แล้วขึ้นใบถัดไป</button>' +
-    '</form><div id="qr_msg" role="status" aria-live="polite"></div></section>');
+    '<section class="rcdesk" id="rcdesk" aria-label="บันทึกใบเสร็จ">' + folder +
+    '<div class="rd-side">' +
+      '<div class="rd-bar">' +
+        '<label class="rd-fld"><span>เล่มที่</span><input type="text" id="qr_book" value="' + esc(ws.book) + '" inputmode="numeric" autocomplete="off"></label>' +
+        '<label class="rd-fld"><span>เลขที่</span><input type="text" id="qr_no" inputmode="numeric" autocomplete="off" value="' + esc(ws.book ? ws.next : '') + '"></label>' +
+        '<label class="rd-fld wide"><span>วันที่ (ใช้ต่อจนกว่าจะสรุป)</span><input type="text" id="qr_date" value="' + esc(ws.date) + '" inputmode="numeric" autocomplete="off"></label>' +
+        '<div class="rd-stats"><div><b>' + ws.day.count + '</b><span>ใบวันนี้</span></div><div><b>' + money(ws.day.cash) + '</b><span>เงินสด</span></div><div><b>' + money(ws.day.transfer) + '</b><span>เงินโอน</span></div></div>' +
+        '<button type="button" class="gbtn" id="qr_close"' + (ws.day.count ? '' : ' disabled') + '>' + ico('receipt_days') + 'สรุปประจำวัน</button>' +
+      '</div>' +
+      (ws.full ? '<div class="msg bad rd-note">เล่ม ' + esc(ws.book) + ' ครบ ' + ws.size + ' ใบแล้ว ใส่เลขเล่มใหม่ในช่องเล่มที่ แล้วเริ่มใบที่ 1</div>' : '') +
+      (lock ? '<div class="msg ok rd-note">วันนี้สรุปแล้ว ถ้าจะบันทึกเพิ่ม ให้เปลี่ยนวันที่ หรือไปแท็บสรุปประจำวันเพื่อเปิดวันนี้ใหม่</div>' : '') +
+      '<form class="rd-form" id="qrow" novalidate aria-label="บันทึกใบเสร็จ">' +
+        '<fieldset class="qg bks"><legend>บกศ.</legend>' + f('bks_cash', 'เงินสด', 'inputmode="decimal"') + f('bks_transfer', 'เงินโอน', 'inputmode="decimal"') + '</fieldset>' +
+        '<fieldset class="qg inc"><legend>รายได้</legend>' + f('inc_cash', 'เงินสด', 'inputmode="decimal"') + f('inc_transfer', 'เงินโอน', 'inputmode="decimal"') + '</fieldset>' +
+        f('kcorp', 'เลขที่อ้างอิงโอน (Kcorp)') +
+        '<div class="qtot"><span>รวม (บาท)</span><b id="qr_total">0.00</b></div>' +
+        '<button type="submit" class="gbtn go" id="qr_go">บันทึก แล้วขึ้นใบถัดไป</button>' +
+      '</form><div id="qr_msg" role="status" aria-live="polite"></div>' +
+    '</div></section>');
   var q = function (id) { return $('qr_' + id); };
-  var ids = ['payer', 'bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'other', 'kcorp'];
+  var ids = ['bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'kcorp'];
   var num = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
   var recalc = function () {
-    var t = num(q('bks_cash').value) + num(q('bks_transfer').value) + num(q('inc_cash').value) + num(q('inc_transfer').value) + num(q('other').value);
+    var t = num(q('bks_cash').value) + num(q('bks_transfer').value) + num(q('inc_cash').value) + num(q('inc_transfer').value);
     $('qr_total').textContent = t.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     q('kcorp').parentNode.style.display = num(q('bks_transfer').value) + num(q('inc_transfer').value) > 0 ? '' : 'none';
   };
@@ -2032,27 +2064,34 @@ async function rcQuick() {
   ids.forEach(function (id) { q(id).addEventListener('input', recalc); });
   q('book').addEventListener('change', async function () { var b = q('book').value.trim(); if (!b) return; var r = await svc('receipts', 'nextNo', [b]); if (r.ok) q('no').value = r.data; });
   $('qrow').addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT' || e.target.id === 'qr_book' || e.target.id === 'qr_date') return;
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
     var vis = ids.filter(function (id) { return q(id).parentNode.style.display !== 'none'; }), i = vis.indexOf(e.target.id.slice(3));
     if (i >= 0 && i < vis.length - 1) { e.preventDefault(); q(vis[i + 1]).focus(); q(vis[i + 1]).select(); }
   });
   $('qrow').onsubmit = async function (e) {
     e.preventDefault();
     var btn = $('qr_go'), msg = $('qr_msg'); if (btn.disabled) return; btn.disabled = true; msg.innerHTML = '';
-    var input = { book_no: q('book').value.trim(), receipt_no: q('no').value.trim(), date: q('date').value.trim(), payer: q('payer').value.trim(), kcorp_ref: q('kcorp').value.trim(), split: { mode: 'auto' } };
-    ['bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'].forEach(function (k) { input[k] = q(k).value.trim(); });
+    var input = { book_no: q('book').value.trim(), receipt_no: q('no').value.trim(), date: q('date').value.trim(), kcorp_ref: q('kcorp').value.trim(), split: { mode: 'auto' } };
+    ['bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer'].forEach(function (k) { input[k] = q(k).value.trim(); });
     var r = await svc('receipts', 'issue', [input]); btn.disabled = false;
     if (!r.ok) {
       var splitErr = r.errors && r.errors.some(function (x) { return x.field === 'split'; });
       msg.innerHTML = '<div class="msg bad">' + esc(String(r.error || 'บันทึกไม่สำเร็จ').replace(/^split: /, '')) + (splitErr ? ' <button type="button" class="btn small" id="qr_manual">กำหนดแยกเอง</button>' : '') + '</div>';
-      if (splitErr) $('qr_manual').onclick = async function () { await rcAdd(); var map = { book: 'book_no', no: 'receipt_no', date: 'date', payer: 'payer', kcorp: 'kcorp_ref' }; ['book', 'no', 'date', 'payer', 'kcorp'].concat(['bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'other']).forEach(function (id) { var el = $('f_' + (map[id] || id)); if (el && q(id).value) el.value = q(id).value; }); };
+      if (splitErr) $('qr_manual').onclick = async function () { await rcAdd(); var map = { book: 'book_no', no: 'receipt_no', date: 'date', kcorp: 'kcorp_ref' }; ['book', 'no', 'date', 'kcorp', 'bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer'].forEach(function (id) { var el = $('f_' + (map[id] || id)); if (el && q(id).value) el.value = q(id).value; }); };
       return;
     }
     QR_FOCUS = true; cache = {};
-    show('receipts', 'ออกใบเสร็จ ' + input.book_no + '/' + input.receipt_no + ' แล้ว ใบถัดไปคือเลขที่ ' + (Number(input.receipt_no) + 1));
+    show('receipts', 'บันทึกใบเสร็จ ' + input.book_no + '/' + input.receipt_no + ' แล้ว ใบถัดไปคือเลขที่ ' + (Number(input.receipt_no) + 1));
   };
   $('qr_close').onclick = function () { rcClose(ws.date); };
-  if (QR_FOCUS) { QR_FOCUS = false; q('payer').focus(); }
+  // แฟ้ม: เอียงกระจกตามเมาส์ · กดเพื่อเปิดดูใบล่าสุด · ปุ่ม + = บันทึกใบนี้
+  var rf = $('rf'), raf = 0, px = 0, py = 0;
+  var paintRf = function () { raf = 0; rf.style.setProperty('--px', px.toFixed(3)); rf.style.setProperty('--py', py.toFixed(3)); };
+  rf.addEventListener('pointermove', function (e) { if (e.pointerType === 'touch') return; var r = rf.getBoundingClientRect(); px = ((e.clientX - r.left) / r.width) * 2 - 1; py = ((e.clientY - r.top) / r.height) * 2 - 1; if (!raf) raf = requestAnimationFrame(paintRf); });
+  rf.addEventListener('pointerleave', function () { px = 0; py = 0; if (!raf) raf = requestAnimationFrame(paintRf); });
+  $('rf_hit').onclick = function () { var on = !rf.classList.contains('open'); rf.classList.toggle('open', on); this.setAttribute('aria-expanded', String(on)); };
+  $('rf_key').onclick = function () { if ($('qrow').requestSubmit) $('qrow').requestSubmit(); else $('qr_go').click(); };
+  if (QR_FOCUS) { QR_FOCUS = false; rf.classList.add('open'); $('rf_hit').setAttribute('aria-expanded', 'true'); q('bks_cash').focus(); }
 }
 async function rcClose(date) {
   var ws = (await svc('receipts', 'workState', [])).data, d = ws.day;
@@ -2078,7 +2117,7 @@ async function renderDays() {
         return '<div class="dc-dep ' + (done ? 'done' : '') + '"><span class="dc-ic">' + ico('deposit_slips') + '</span><div><b>นำฝาก ' + esc(g.group) + ' ' + money(g.cash) + '</b><small>' + (done ? 'ใบนำฝากเลขที่ ' + esc(g.slip_no) + (g.difference ? ' · ส่วนต่าง ' + money(g.difference) : ' · ยอดตรง') : 'ยังไม่มีเลขที่ใบนำฝาก') + '</small></div>' +
           (done ? '<span class="pill ok">จับคู่แล้ว</span>' : (can ? '<button type="button" class="nbtn blue small" data-dep="' + d.date + '|' + esc(g.group) + '">กรอกเลขที่ใบฝาก</button>' : '')) + '</div>';
       }).join('') + (can && d.groups.every(function (g) { return !g.slip_no; }) ? '<button type="button" class="btn small" data-reopen="' + d.date + '">เปิดวันนี้ใหม่</button>' : '') + '</footer></article>';
-  }).join('') + '</div>' : '<p class="note">ยังไม่มีวันที่สรุป เมื่อกดสรุปประจำวันที่หน้าออกใบเสร็จ จะมาอยู่ที่นี่</p>';
+  }).join('') + '</div>' : '<p class="note">ยังไม่มีวันที่สรุป เมื่อกดสรุปประจำวันที่หน้าบันทึกใบเสร็จ จะมาอยู่ที่นี่</p>';
   $('tbl').onclick = function (e) {
     var b = e.target.closest('[data-dep]'); if (b) { var p = b.dataset.dep.split('|'); go('deposit_slips'); setTimeout(function () { dsAdd({ date: p[0], group: p[1] }); }, 350); return; }
     var o = e.target.closest('[data-reopen]'); if (o) openDialog('เปิดวันที่สรุปแล้วใหม่', 'การเงิน', '--r-finance', fTxt('reason', 'เหตุผล', { req: true }), 'เปิดใหม่', function () { return svc('receipts', 'reopenDay', [o.dataset.reopen, val('reason')]); }).then(function () { cache = {}; renderDays(); });
@@ -2093,8 +2132,8 @@ async function renderFundSplit() {
     var tone = { 'บกศ.': 'o', 'รายได้': 'b' };
     $('fsOut').innerHTML = r.data.funds.length ? r.data.funds.map(function (f) {
       return '<section class="fundbook ' + (tone[f.group] || 'n') + '"><header><div><b>' + esc(f.subfund_code) + ' ' + esc(f.name) + '</b><span>' + esc(f.group) + ' · ' + f.lines.length + ' รายการ</span></div><div class="fb-tot"><span>สด ' + money(f.cash) + '</span><span>โอน ' + money(f.transfer) + '</span><strong>' + money(f.total) + '</strong></div></header>' +
-        '<table><thead><tr><th>วันที่</th><th>ใบเสร็จ</th><th>ผู้ชำระเงิน</th><th class="num">สด</th><th class="num">โอน</th><th class="num">รวม</th><th class="num">สะสม</th></tr></thead><tbody>' + f.lines.map(function (l) {
-          return '<tr><td>' + thDate(l.date) + '</td><td>' + esc(l.ref) + '</td><td>' + esc(l.payer) + '</td><td class="num">' + money(l.cash) + '</td><td class="num">' + money(l.transfer) + '</td><td class="num">' + money(l.amount) + '</td><td class="num"><b>' + money(l.balance) + '</b></td></tr>'; }).join('') + '</tbody></table></section>';
+        '<table><thead><tr><th>วันที่</th><th>ใบเสร็จ</th><th class="num">สด</th><th class="num">โอน</th><th class="num">รวม</th><th class="num">สะสม</th></tr></thead><tbody>' + f.lines.map(function (l) {
+          return '<tr><td>' + thDate(l.date) + '</td><td>' + esc(l.ref) + '</td><td class="num">' + money(l.cash) + '</td><td class="num">' + money(l.transfer) + '</td><td class="num">' + money(l.amount) + '</td><td class="num"><b>' + money(l.balance) + '</b></td></tr>'; }).join('') + '</tbody></table></section>';
     }).join('') : '<p class="note">เดือนนี้ยังไม่มีใบเสร็จ</p>';
   };
   $('fsMonth').onchange = draw; draw();

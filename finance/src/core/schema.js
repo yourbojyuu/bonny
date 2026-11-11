@@ -299,7 +299,7 @@ export const TABLES = {
       { key: 'book_no', label: 'เล่มที่', type: 'string', required: true },
       { key: 'receipt_no', label: 'เลขที่', type: 'string', required: true },
       { key: 'date', label: 'วันที่', type: 'date', required: true },
-      { key: 'payer', label: 'ผู้ชำระเงิน', type: 'string', required: true },
+      { key: 'payer', label: 'ผู้ชำระเงิน (ไม่บังคับ)', type: 'string' },
       { key: 'student_id', label: 'รหัสนักเรียน', type: 'string' },
       { key: 'bks_cash', label: 'บกศ.สด', type: 'money', default: 0 },
       { key: 'inc_cash', label: 'รด.สด', type: 'money', default: 0 },

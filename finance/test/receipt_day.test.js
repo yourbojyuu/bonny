@@ -82,3 +82,14 @@ test('เงินแยกประเภท: รายละเอียดย
   assert.deepEqual([k.total, k.lines.length, k.lines[1].balance, k.group], [200000, 2, 200000, 'บกศ.']);
   assert.equal(funds.find((f) => f.subfund_code === 'ศูนย์กีฬา').total, 100000);
 });
+
+test('บันทึกใบเสร็จโดยไม่ต้องมีผู้ชำระเงิน · workState ส่งใบล่าสุดของเล่มไว้โชว์ (ไม่เกิน 4 ใบ ไม่นับยกเลิก)', () => {
+  const e = envD();
+  const a = e.fin.receipts.issue({ book_no: '3', receipt_no: '1', date: '2026-11-10', bks_cash: 100000, inc_cash: 50000 });
+  assert.equal(a.payer, '');
+  for (let i = 2; i <= 6; i++) e.fin.receipts.issue({ book_no: '3', receipt_no: String(i), date: '2026-11-10', bks_cash: 100000, inc_cash: 50000 });
+  e.fin.receipts.cancel(e.fin.receipts.list()[5].id, 'ผิด');
+  const w = e.fin.receipts.workState();
+  assert.deepEqual(w.recent.map((x) => x.no), ['2', '3', '4', '5']);
+  assert.deepEqual([w.recent[0].cash, w.recent[0].bks, w.recent[0].inc], [150000, 100000, 50000]);
+});
