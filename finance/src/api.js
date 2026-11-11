@@ -18,6 +18,8 @@ export const TABLE_ACCESS = {
   users: { read: 'users.read', write: 'users.manage' },
   settings: { read: 'masters.read', write: 'settings.update' },
   audit_log: { read: 'audit.read', write: null },
+  handoffs: { read: 'audit.read', write: null },
+  review_steps: { read: 'audit.read', write: null },
   login_log: { read: 'audit.read', write: null },
 };
 
@@ -62,10 +64,15 @@ export function handle(app, email, action, payload = {}) {
             .filter(([, a]) => can(ctx.user, a.read, ctx.settings))
             .map(([key, a]) => ({ key, label: app.tables[key].label, canWrite: !!a.write && can(ctx.user, a.write, ctx.settings) })),
         });
+      case 'inbox':
+        return ok(u.workflow.inbox());
+      case 'flags':
+        return ok({ overdue: u.workflow.overdue() });
       case 'list':
         needRead();
         if (table === 'users') return ok(u.users.list());
         if (table === 'audit_log') return ok(u.audit.list().slice(-500).reverse());
+        if (table === 'handoffs' || table === 'review_steps') return ok(app.store.list(table).slice(-500).reverse());
         if (table === 'login_log') return ok(u.audit.logins().slice(-500).reverse());
         if (table === 'settings') return ok(u.settings.list());
         if (table === 'payee_account_changes') return ok(u.payees.listAccountChanges());

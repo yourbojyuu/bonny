@@ -22,10 +22,10 @@ export const EMAILS = {
 };
 
 /** สร้างระบบเปล่า + ผู้ใช้สมมติชุดมาตรฐาน */
-export function setup({ now = '2026-11-10T03:00:00Z', extraTables } = {}) {
+export function setup({ now = '2026-11-10T03:00:00Z', extraTables, extraFlows } = {}) {
   const clock = fixedClock(now);
   const repo = createMemoryRepo();
-  const app = createApp({ repo, clock, extraTables });
+  const app = createApp({ repo, clock, extraTables, extraFlows });
   app.bootstrap({ name: 'ผู้ดูแล สมมติ', email: EMAILS.admin, appointment_ref: 'คำสั่งสมมติ 1/2570' });
   const admin = app.asUser(EMAILS.admin);
   const mk = (key, roles) =>

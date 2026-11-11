@@ -311,7 +311,7 @@ var GROUPS = [
   { label: 'งานแผน', color: '--r-plan', tables: ['plan_projects'] },
   { label: 'การเงิน', color: '--r-finance', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'cheque_books'] },
   { label: 'ข้อมูลหลัก', color: '--r-system', tables: ['funds', 'subfunds', 'fund_allowed_expense'] },
-  { label: 'ผู้ดูแลระบบและผู้ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log'] },
+  { label: 'ผู้ดูแลระบบและผู้ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps'] },
 ];
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
 var SHORT = { plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
@@ -327,6 +327,8 @@ var DESC = {
   users: 'บุคลากรฝ่ายแผนงานและงบประมาณ บทบาทผูกกับคำสั่งแต่งตั้ง ครูท่านอื่นไม่ต้องเพิ่ม เข้าระบบได้ในฐานะครูผู้ขอ',
   settings: 'ค่าที่มีป้ายรอยืนยันตั้งไว้ก่อน รอคำตอบจากโรงเรียน ยอดเงินในหน้านี้เป็นสตางค์',
   audit_log: 'ทุกการเพิ่มและแก้ไข 500 รายการล่าสุด แก้หรือลบไม่ได้',
+  handoffs: 'ทุกการส่งต่องาน ผู้รับต้องกดรับ งานที่ยังไม่มีผู้รับแสดงวันที่ค้าง',
+  review_steps: 'ประวัติการตรวจทุกชั้นของ ขบ./ขจ. พร้อมเหตุผลและภาพหน้าลงนาม แก้หรือลบไม่ได้',
   login_log: 'การเข้าระบบทุกครั้ง ถ้าบัญชี Google ที่เปิดอยู่ไม่ตรงกับอีเมลที่ใช้เข้า ช่องนั้นจะเป็นสีเหลือง',
 };
 var EXTRA_COLS = {
@@ -430,6 +432,7 @@ var ICON = {
   chevron: '<path d="m9 18 6-6-6-6"/>',
   panelClose: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 9-3 3 3 3"/>',
   panelOpen: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m14 9 3 3-3 3"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
   home: '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
   plan_projects: '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/>',
   payees: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -442,6 +445,8 @@ var ICON = {
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
   settings: '<line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/>',
   audit_log: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  handoffs: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+  review_steps: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
   login_log: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>',
 };
 function ico(name, cls) { return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICON[name] || '') + '</svg>'; }
@@ -455,7 +460,8 @@ var closedGroups = memGet('kwc_fin_closed', []);
 function groupOf(t) { return GROUPS.filter(function (g) { return g.tables.indexOf(t) >= 0; })[0]; }
 
 function renderSide() {
-  var html = '<button class="item home-item" data-t="home">' + ico('home') + '<span class="lbl">ภาพรวม</span></button>';
+  var html = '<button class="item home-item" data-t="home">' + ico('home') + '<span class="lbl">ภาพรวม</span></button>' +
+    '<button class="item" data-t="inbox">' + ico('inbox') + '<span class="lbl">งานของฉัน</span><span class="count" id="inboxCount"></span></button>';
   GROUPS.forEach(function (g, gi) {
     var items = g.tables.filter(tableMeta);
     if (!items.length) return;
@@ -560,6 +566,7 @@ function go(t, mine) { filterText = ''; onlyMine = !!mine; show(t); }
 async function show(key, flash) {
   current = key; markNav();
   if (key === 'home') return renderHome(flash);
+  if (key === 'inbox') return renderInbox(flash);
   var main = $('main');
   main.innerHTML = '<p class="note">กำลังโหลด</p>';
   var r = await call('list', { table: key });
@@ -568,6 +575,20 @@ async function show(key, flash) {
   var refs = ME.schema[key].columns.filter(function (c) { return c.ref && !c.refKey && tableMeta(c.ref); }).map(function (c) { return c.ref; });
   await Promise.all(refs.map(function (t) { return load(t); }));
   renderTable(key, flash);
+}
+
+/* ================= งานของฉัน ================= */
+var DOC_NAME = { khb: 'ขบ.', khj: 'ขจ.', approval: 'ใบขออนุมัติ' };
+async function renderInbox(flash) {
+  var r = await call('inbox');
+  var rows = r.ok ? r.data : [];
+  var c = $('inboxCount'); if (c) { c.textContent = rows.length || ''; c.classList.toggle('alert', rows.length > 0); }
+  var html = '<h1 class="page-title">งานของฉัน</h1><p class="page-desc">งานที่ส่งมาให้คุณกดรับ งานที่คุณกำลังตรวจ และเอกสารที่ถูกส่งคืนให้แก้ เอกสารที่คุณทำเองจะไม่ขึ้นให้รับหรือตรวจ</p>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '');
+  html += rows.length ? '<div class="register"><table><thead><tr><th>สถานะ</th><th>เอกสาร</th><th>ขั้น</th><th>ค้างมา</th><th>หมายเหตุ</th></tr></thead><tbody>' + rows.map(function (x) {
+    var pill = x.kind === 'ส่งคืนแก้' ? 'no' : x.kind === 'กำลังตรวจ' ? 'ok' : 'wait';
+    return '<tr><td><span class="pill ' + pill + '">' + esc(x.kind) + '</span></td><td>' + esc(DOC_NAME[x.doc_type] || x.doc_type) + ' ' + esc(x.doc_id) + '</td><td>' + esc(x.step_key || '') + '</td><td class="num">' + (x.days != null ? x.days + ' วัน' : '') + '</td><td class="wrap">' + esc(x.reason || '') + '</td></tr>';
+  }).join('') + '</tbody></table></div>' : '<div class="register"><table><tbody><tr><td class="empty">ไม่มีงานที่รอคุณ เมื่อมีเอกสารส่งมาให้ จะขึ้นที่นี่</td></tr></tbody></table></div>';
+  $('main').innerHTML = html;
 }
 
 /* ================= หน้าแรก ================= */

@@ -3,6 +3,8 @@ import { TABLES } from './core/schema.js';
 import { loadSettings } from './core/settings.js';
 import { requirePermission } from './core/roles.js';
 import { createStore } from './data/store.js';
+import { FLOWS } from './core/flows.js';
+import * as review from './services/review.js';
 import * as users from './services/users.js';
 import * as settingsSvc from './services/settings.js';
 import * as payees from './services/payees.js';
@@ -10,15 +12,16 @@ import { masterService, MASTER_TABLES } from './services/masters.js';
 
 const SYSTEM_USER = { id: 'system', email: 'system', roles: [] };
 
-export function createApp({ repo, clock, extraTables = {} }) {
+export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
   const tables = { ...TABLES, ...extraTables };
+  const flows = { ...FLOWS, ...extraFlows };
   let store;
   const getSettings = () => loadSettings(store);
   store = createStore(repo, { clock, tables, getSettings });
 
   function makeCtx(user) {
     return {
-      store, user, clock,
+      store, user, clock, flows,
       get settings() { return getSettings(); },
       today: () => store.today(),
     };
@@ -37,6 +40,12 @@ export function createApp({ repo, clock, extraTables = {} }) {
         approveAccountChange: b(payees.approveAccountChange),
         rejectAccountChange: b(payees.rejectAccountChange),
         listAccountChanges: b(payees.listAccountChanges),
+      },
+      workflow: {
+        submit: b(review.submitForReview), receive: b(review.receiveStage), pass: b(review.passStage), returnDoc: b(review.returnStage),
+        receiveSigned: b(review.receiveSigned), directorReturn: b(review.directorReturn),
+        status: b(review.statusOf), inbox: b(review.inbox),
+        overdue: () => { requirePermission(ctx, 'flags.read'); return review.overdue(ctx); },
       },
       audit: {
         list: () => { requirePermission(ctx, 'audit.read'); return store.list('audit_log'); },

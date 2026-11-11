@@ -58,6 +58,7 @@ export const PERMISSIONS = {
   'payees.account.approve': 'payee_account_approver_roles',
   'plan_projects.manage': ['plan'],
   'audit.read': ['admin', 'auditor'],
+  'flags.read': ['admin', 'auditor', 'director', 'plan', 'finance', 'reviewer1', 'reviewer2', 'reviewer3'],
 };
 
 export function allowedRoles(action, settings) {
