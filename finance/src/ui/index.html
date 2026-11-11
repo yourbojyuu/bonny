@@ -281,7 +281,7 @@
   #printArea { display:none; }
   body.printing #printArea { display:block; position:fixed; inset:0; background:#fff; color:#000; z-index:200; overflow:auto; padding:16px; }
   .printbar { position:sticky; top:0; background:#fff; border-bottom:1px solid #ccc; padding:8px 0; margin-bottom:12px; display:flex; gap:10px; align-items:center; z-index:1; }
-  @media print { body, body::before { background:#fff !important; } body.printing #appView, body.printing #loginView, body.printing dialog, body.printing #toasts { display:none !important; } body.printing #printArea { position:static; padding:0; overflow:visible; } .printbar { display:none !important; } }
+  @media print { body, body::before { background:#fff !important; } body.printing #appView, body.printing #loginView, body.printing #welcomeView, body.printing dialog, body.printing #toasts { display:none !important; } body.printing #printArea { position:static; padding:0; overflow:visible; } .printbar { display:none !important; } }
   @media (max-width: 1100px) { .t-hero { grid-column:span 12; grid-row:auto; } .t-3 { grid-column:span 6; } .t-4 { grid-column:span 6; } .t-8 { grid-column:span 12; } .t-6 { grid-column:span 12; } }
   @media (max-width: 980px) { .chart { grid-template-columns:1fr; } .login { grid-template-columns:1fr; } .login .art { display:none; } }
   @media (max-width: 860px) {
@@ -403,24 +403,364 @@
     main { padding:12px 4px 56px; }
     .shell { padding:6px 8px 0; }
   }
+
+  /* =====================================================================
+     พื้นหลัง WebGL (Mesh drift) · ไล่สี 3 สีประจำแต่ละแถบ · หน้าต้อนรับ · หน้าเข้าสู่ระบบ
+     ===================================================================== */
+  :root, body[data-page="blue"] { --g1:#0a4fd8; --g2:#1f86ff; --g3:#16b5d8; }
+  body[data-page="green"] { --g1:#067a45; --g2:#12b26b; --g3:#7bc62f; }
+  body[data-page="orange"] { --g1:#d85a00; --g2:#f58a14; --g3:#f2b01e; }
+  body[data-page="pink"] { --g1:#c2185b; --g2:#e8458f; --g3:#ff7a8a; }
+  body[data-page="purple"] { --g1:#5b34d6; --g2:#7a4dff; --g3:#4f8bff; }
+  #bgGL { position:fixed; inset:0; width:100%; height:100%; z-index:-2; display:block; pointer-events:none; }
+  html.gl body { background:transparent; }
+  html.gl body::before { background:
+    radial-gradient(55vmax 45vmax at 4% 0%, color-mix(in srgb, var(--g1) 16%, transparent), transparent 62%),
+    radial-gradient(50vmax 45vmax at 100% 6%, color-mix(in srgb, var(--g2) 14%, transparent), transparent 62%),
+    radial-gradient(55vmax 50vmax at 78% 100%, color-mix(in srgb, var(--g3) 16%, transparent), transparent 62%); }
+  .btn.primary { background:linear-gradient(135deg, var(--g1), var(--g2) 55%, var(--g3)); border-color:transparent; box-shadow:0 6px 18px -6px color-mix(in srgb, var(--g2) 70%, transparent), 0 1px 0 rgba(255,255,255,.3) inset; }
+  .btn.primary:hover { background:linear-gradient(135deg, var(--g1), var(--g2) 55%, var(--g3)); filter:brightness(1.08) saturate(1.05); }
+  .btn.primary:disabled { filter:grayscale(.4) opacity(.7); cursor:wait; }
+  .page-title::after { width:60px; background:linear-gradient(90deg, var(--g1), var(--g2), var(--g3)); }
+  .navpill { background:linear-gradient(120deg, var(--g1), var(--g2) 60%, var(--g3)); box-shadow:0 6px 16px -6px color-mix(in srgb, var(--g2) 75%, transparent); }
+  @keyframes spin3d { to { transform:rotateX(-14deg) rotateY(360deg); } }
+  @keyframes face3d { to { transform:rotateY(-360deg); } }
+  @keyframes bob { 0%,100% { translate:0 0; } 50% { translate:0 -8px; } }
+
+  .welcome { min-height:100vh; display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:clamp(12px,3vw,40px); align-items:center; padding:clamp(16px,4vw,48px); max-width:1320px; margin:0 auto; }
+  .welcome .copy { background:var(--glass); -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur); border:1px solid var(--glass-edge); box-shadow:var(--shadow); border-radius:32px; padding:clamp(24px,4vw,48px); }
+  .welcome .eyebrow { display:inline-flex; align-items:center; gap:10px; font-size:var(--f-md); font-weight:600; color:var(--muted); padding:6px 14px 6px 8px; border-radius:999px; background:var(--glass-strong); border:1px solid var(--glass-line); }
+  .welcome .eyebrow b { width:26px; height:26px; border-radius:9px; display:grid; place-items:center; color:#fff; font-size:13px; background:linear-gradient(135deg,#0a4fd8,#16b5d8); }
+  .welcome h1 { margin:18px 0 12px; font-size:clamp(30px,4.2vw,52px); line-height:1.18; letter-spacing:-.015em; }
+  .welcome h1 span { background:linear-gradient(100deg,#0a4fd8,#1f86ff 45%,#16b5d8); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .welcome .lead { margin:0 0 26px; color:var(--muted); font-size:var(--f-lg); max-width:46ch; }
+  .welcome .go { display:inline-flex; align-items:center; gap:10px; min-height:52px; padding:0 28px; font-size:17px; }
+  .welcome .go svg { width:20px; height:20px; transition:transform .2s; } .welcome .go:hover svg { transform:translateX(4px); }
+  .welcome .small { margin:16px 0 0; font-size:var(--f-sm); color:var(--faint); }
+  .scene { position:relative; height:min(66vh,540px); display:grid; place-items:center; perspective:1100px; min-width:0; }
+  .ring { position:relative; width:0; height:0; transform-style:preserve-3d; transform:rotateX(-14deg); animation:spin3d 54s linear infinite; }
+  .ring .card3 { position:absolute; left:-86px; top:-52px; width:172px; height:104px; transform-style:preserve-3d; transform:rotateY(calc(var(--i) * 60deg)) translateZ(var(--r, 205px)) rotateY(calc(var(--i) * -60deg)); }
+  .ring .face { width:100%; height:100%; border-radius:22px; padding:14px 16px; color:#fff; display:flex; flex-direction:column; justify-content:space-between; background:linear-gradient(135deg, var(--a), var(--b) 55%, var(--c)); border:1px solid rgba(255,255,255,.55); box-shadow:0 18px 36px -16px rgba(20,30,60,.45), 0 1px 0 rgba(255,255,255,.4) inset; animation:face3d 54s linear infinite; }
+  .ring .face b { font-size:17px; line-height:1.25; text-shadow:0 1px 2px rgba(0,0,0,.25); }
+  .ring .face span { font-size:var(--f-sm); opacity:.95; line-height:1.35; text-shadow:0 1px 2px rgba(0,0,0,.22); }
+  .core { position:absolute; width:120px; height:120px; border-radius:36px; display:grid; place-items:center; color:#fff; font-weight:700; font-size:15px; text-align:center; line-height:1.25; background:linear-gradient(135deg,#0a4fd8,#1f86ff 55%,#16b5d8); box-shadow:0 0 0 10px rgba(255,255,255,.35), 0 24px 50px -14px rgba(10,79,216,.6); animation:bob 6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .ring, .ring .face, .core { animation:none !important; } }
+  @media (max-width: 900px) { .welcome { grid-template-columns:1fr; align-content:start; } .scene { height:320px; order:-1; } .ring .card3 { --r:118px; left:-62px; top:-38px; width:124px; height:76px; } .ring .face { padding:9px 11px; border-radius:16px; } .ring .face b { font-size:14px; } .ring .face span { display:none; } .core { width:84px; height:84px; border-radius:26px; font-size:12.5px; } }
+
+  .login { align-items:center; }
+  .login .art { gap:18px; align-self:center; padding:clamp(24px,3vw,40px); }
+  .login .eyebrow { font-size:var(--f-md); font-weight:600; color:var(--muted); }
+  .rolegrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:6px; }
+  .rolegrid div { border-radius:20px; padding:14px 16px; color:#fff; background:linear-gradient(135deg, var(--a), var(--b) 55%, var(--c)); box-shadow:0 12px 24px -14px rgba(20,30,60,.5), 0 1px 0 rgba(255,255,255,.35) inset; min-width:0; }
+  .rolegrid b { display:block; font-size:16px; margin-bottom:2px; text-shadow:0 1px 2px rgba(0,0,0,.22); }
+  .rolegrid span { display:block; font-size:var(--f-sm); line-height:1.4; opacity:.96; text-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .login form { position:relative; overflow:hidden; }
+  .login form::before { content:''; position:absolute; left:28px; right:28px; top:0; height:3px; border-radius:0 0 3px 3px; background:linear-gradient(90deg,#0a4fd8,#1f86ff,#16b5d8); }
+  .login .back { display:inline-flex; align-items:center; gap:6px; margin:0 0 14px; padding:0; border:0; background:none; color:var(--muted); cursor:pointer; min-height:32px; font-size:var(--f-md); }
+  .login .back:hover { color:var(--ink); }
+  .login .field input { transition:box-shadow .15s, border-color .15s; }
+  .login .field input:focus { outline:0; border-color:var(--g2); box-shadow:0 0 0 4px color-mix(in srgb, var(--g2) 22%, transparent); }
+  @media (max-width: 980px) { .login { padding:14px; align-content:center; } }
 </style>
 </head>
 <body>
+<canvas id="bgGL" aria-hidden="true"></canvas>
+<script type="x-shader/x-fragment" id="glFrag">
+// "Mesh drift" blobs shader
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform vec3 u_colors[8];
+uniform vec4 u_scene;      // resolution.xy, time, colour count
+uniform vec4 u_shape;      // scale, intensity, paramA, warp
+uniform vec4 u_surface;    // detail, contrast, brightness, saturation
+uniform vec4 u_finish;     // hue, vignette, blur, grain
+uniform vec4 u_transform;  // seed, rotation, drift, OKLab toggle
+uniform vec4 u_space;      // offset.xy, pointer.xy
+uniform vec4 u_cursor;
+
+#define u_resolution u_scene.xy
+#define u_time u_scene.z
+#define u_colorCount u_scene.w
+#define u_scale u_shape.x
+#define u_intensity u_shape.y
+#define u_paramA u_shape.z
+#define u_warp u_shape.w
+#define u_detail u_surface.x
+#define u_contrast u_surface.y
+#define u_brightness u_surface.z
+#define u_saturation u_surface.w
+#define u_hue u_finish.x
+#define u_vignette u_finish.y
+#define u_blur u_finish.z
+#define u_grain u_finish.w
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+#define u_seed u_transform.x
+#else
+#define u_seed mod(u_transform.x, 31.0)
+#endif
+#define u_rotate u_transform.y
+#define u_drift u_transform.z
+#define u_oklab u_transform.w
+#define u_offset u_space.xy
+#define u_mouse u_space.zw
+#define u_cursorPresence u_cursor.x
+#define u_cursorEffect u_cursor.y
+#define u_cursorStrength u_cursor.z
+#define u_cursorRadius u_cursor.w
+
+float hash21(vec2 p) {
+#ifndef GL_FRAGMENT_PRECISION_HIGH
+  p = mod(p, 31.0);
+#endif
+  p = fract(p * vec2(234.34, 435.345));
+  p += dot(p, p + 34.23);
+  return fract(p.x * p.y);
+}
+
+float grainHash(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+vec2 hash22(vec2 p) {
+#ifndef GL_FRAGMENT_PRECISION_HIGH
+  p = mod(p, 31.0);
+#endif
+  float n = sin(dot(p, vec2(41.0, 289.0)));
+  return fract(vec2(15731.743, 7892.321) * n);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+    mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+    u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 5; i++) {
+    v += a * noise(p);
+    p = p * 2.03 + vec2(17.0, 9.2);
+    a *= 0.5;
+  }
+  return v;
+}
+
+vec3 srgbToLinear(vec3 c) {
+  return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)),
+    step(0.04045, c));
+}
+vec3 linearToSrgb(vec3 c) {
+  return mix(c * 12.92, 1.055 * pow(max(c, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055,
+    step(0.0031308, c));
+}
+vec3 linToOklab(vec3 c) {
+  float l = 0.4122214708 * c.r + 0.5363325363 * c.g + 0.0514459929 * c.b;
+  float m = 0.2119034982 * c.r + 0.6806995451 * c.g + 0.1073969566 * c.b;
+  float s = 0.0883024619 * c.r + 0.2817188376 * c.g + 0.6299787005 * c.b;
+  l = pow(max(l, 0.0), 1.0 / 3.0);
+  m = pow(max(m, 0.0), 1.0 / 3.0);
+  s = pow(max(s, 0.0), 1.0 / 3.0);
+  return vec3(
+    0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s);
+}
+vec3 oklabToLin(vec3 c) {
+  float l = c.x + 0.3963377774 * c.y + 0.2158037573 * c.z;
+  float m = c.x - 0.1055613458 * c.y - 0.0638541728 * c.z;
+  float s = c.x - 0.0894841775 * c.y - 1.2914855480 * c.z;
+  l = l * l * l; m = m * m * m; s = s * s * s;
+  return vec3(
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s);
+}
+vec3 mixColour(vec3 a, vec3 b, float t) {
+  if (u_oklab > 0.5) {
+    vec3 la = linToOklab(srgbToLinear(a));
+    vec3 lb = linToOklab(srgbToLinear(b));
+    return clamp(linearToSrgb(oklabToLin(mix(la, lb, t))), 0.0, 1.0);
+  }
+  return mix(a, b, t);
+}
+
+vec3 palette(float x) {
+  float n = max(u_colorCount - 1.0, 1.0);
+  float f = clamp(x, 0.0, 1.0) * n;
+  vec3 col = u_colors[0];
+  for (int i = 0; i < 7; i++) {
+    if (float(i) < n)
+      col = mixColour(col, u_colors[i + 1],
+        smoothstep(0.0, 1.0, clamp(f - float(i), 0.0, 1.0)));
+  }
+  return col;
+}
+
+vec3 hueRotate(vec3 col, float a) {
+  const mat3 toYIQ = mat3(0.299, 0.596, 0.211,
+                          0.587, -0.274, -0.523,
+                          0.114, -0.322, 0.312);
+  const mat3 toRGB = mat3(1.0, 1.0, 1.0,
+                          0.956, -0.272, -1.106,
+                          0.621, -0.647, 1.703);
+  vec3 yiq = toYIQ * col;
+  float ca = cos(a), sa = sin(a);
+  yiq = vec3(yiq.x, yiq.y * ca - yiq.z * sa, yiq.y * sa + yiq.z * ca);
+  return toRGB * yiq;
+}
+
+vec3 shade(vec2 uv, vec2 p, float t) {
+  vec3 acc = u_colors[0] * 0.15;
+  float total = 0.15;
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= u_colorCount) break;
+    float fi = float(i);
+    vec2 c = vec2(
+      sin(t * (0.21 + fi * 0.071) + fi * 2.4 + u_seed),
+      cos(t * (0.17 + fi * 0.093) + fi * 1.7)) * (0.45 + u_intensity * 0.35);
+    float w = exp(-dot(p - c, p - c) * 6.0);
+    acc += u_colors[i] * w;
+    total += w;
+  }
+  return acc / total;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 screenUv = uv;
+  vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution.xy)
+    / min(u_resolution.x, u_resolution.y);
+  float cursorMask = 0.0;
+
+  if (u_cursorPresence > 0.001) {
+    vec2 cursor = (0.5 * u_mouse * u_resolution.xy)
+      / min(u_resolution.x, u_resolution.y);
+    vec2 cursorDelta = p - cursor;
+    if (u_cursorEffect < 0.5) {
+      p += cursor * u_cursorPresence * u_cursorStrength * 0.55;
+    } else {
+      float cursorDistance = length(cursorDelta);
+      vec2 cursorDirection = cursorDelta / max(cursorDistance, 0.0001);
+      cursorMask = u_cursorPresence
+        * (1.0 - smoothstep(0.0, u_cursorRadius, cursorDistance));
+      if (u_cursorEffect < 1.5) {
+        p -= cursorDirection * cursorMask * u_cursorStrength * 0.24;
+      } else if (u_cursorEffect < 2.5) {
+        float cursorAngle = cursorMask * u_cursorStrength * 2.2;
+        float cc = cos(cursorAngle), cs = sin(cursorAngle);
+        p = cursor + mat2(cc, -cs, cs, cc) * cursorDelta;
+      } else if (u_cursorEffect < 3.5) {
+        float ripple = sin(
+          cursorDistance / max(u_cursorRadius, 0.001) * 18.0 - u_time * 5.0);
+        p -= cursorDirection * ripple * cursorMask * u_cursorStrength * 0.07;
+      }
+    }
+  }
+
+  uv = p * min(u_resolution.x, u_resolution.y) / u_resolution.xy + 0.5;
+  p *= u_scale;
+  if (abs(u_rotate) > 0.0001) {
+    float cr = cos(u_rotate), sr = sin(u_rotate);
+    p = mat2(cr, -sr, sr, cr) * p;
+  }
+  p += u_offset;
+  if (u_drift > 0.0001)
+    p += u_drift * vec2(sin(u_time * 0.31), cos(u_time * 0.23));
+  if (u_warp > 0.0) {
+    p += u_warp * (vec2(
+      fbm(p * u_detail + u_seed),
+      fbm(p * u_detail + vec2(5.2, 1.3))) - 0.5);
+  }
+  vec3 col;
+  if (u_blur > 0.0) {
+    float e = u_blur;
+    float pe = e * u_scale;
+    vec2 uvE = vec2(e) * min(u_resolution.x, u_resolution.y) / u_resolution.xy;
+    col  = shade(uv, p, u_time) * 0.36;
+    col += shade(uv + vec2(uvE.x, 0.0), p + vec2(pe, 0.0), u_time) * 0.16;
+    col += shade(uv - vec2(uvE.x, 0.0), p - vec2(pe, 0.0), u_time) * 0.16;
+    col += shade(uv + vec2(0.0, uvE.y), p + vec2(0.0, pe), u_time) * 0.16;
+    col += shade(uv - vec2(0.0, uvE.y), p - vec2(0.0, pe), u_time) * 0.16;
+  } else {
+    col = shade(uv, p, u_time);
+  }
+  if (abs(u_contrast - 1.0) > 0.0001)
+    col = (col - 0.5) * u_contrast + 0.5;
+  if (abs(u_saturation - 1.0) > 0.0001) {
+    float luma = dot(col, vec3(0.299, 0.587, 0.114));
+    col = mix(vec3(luma), col, u_saturation);
+  }
+  if (abs(u_hue) > 0.0001)
+    col = hueRotate(col, u_hue);
+  if (abs(u_brightness) > 0.0001)
+    col += u_brightness;
+  if (u_vignette > 0.0001) {
+    float vd = length(screenUv - 0.5) * 1.41421356;
+    col *= 1.0 - u_vignette * smoothstep(0.35, 1.0, vd);
+  }
+  if (u_cursorPresence > 0.001 && u_cursorEffect > 3.5)
+    col += (vec3(0.18) + col * 0.12) * cursorMask * u_cursorStrength;
+  if (u_grain > 0.0001)
+    col += (grainHash(
+      gl_FragCoord.xy + vec2(u_seed * 17.0, u_seed * 31.0)) - 0.5) * u_grain;
+  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+</script>
+
+<!-- ===== หน้าต้อนรับ ===== -->
+<section class="welcome hidden" id="welcomeView">
+  <div class="copy">
+    <span class="eyebrow"><b>฿</b>ระบบการเงิน โรงเรียนกาวิละวิทยาลัย</span>
+    <h1>ยินดีต้อนรับสู่<br><span>กลุ่มบริหารงานแผนงานและงบประมาณ</span></h1>
+    <p class="lead">ระบบรับ จ่าย และตรวจสอบเงินของโรงเรียน กรอกข้อมูลครั้งเดียว เอกสารทุกใบใช้ข้อมูลชุดเดียวกัน</p>
+    <button type="button" class="btn primary go" id="startBtn">เข้าสู่ระบบ<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <p class="small">ระบบบันทึกการเข้าใช้ทุกครั้งเพื่อตรวจสอบย้อนหลัง</p>
+  </div>
+  <div class="scene" aria-hidden="true">
+    <div class="core">กาวิละ<br>วิทยาลัย</div>
+    <div class="ring">
+      <div class="card3" style="--i:0;--a:#d85a00;--b:#f58a14;--c:#f2b01e"><div class="face"><b>งานจ่าย</b><span>ขอเบิก ทำเช็ค โอนเงิน</span></div></div>
+      <div class="card3" style="--i:1;--a:#067a45;--b:#12b26b;--c:#7bc62f"><div class="face"><b>งานรับ</b><span>รับเงิน ออกใบเสร็จ</span></div></div>
+      <div class="card3" style="--i:2;--a:#c2185b;--b:#e8458f;--c:#ff7a8a"><div class="face"><b>งานแผน</b><span>โครงการและงบประมาณ</span></div></div>
+      <div class="card3" style="--i:3;--a:#0a4fd8;--b:#1f86ff;--c:#16b5d8"><div class="face"><b>ธนาคาร</b><span>ตรวจยอดกับรายการเดินบัญชี</span></div></div>
+      <div class="card3" style="--i:4;--a:#5b34d6;--b:#7a4dff;--c:#4f8bff"><div class="face"><b>ย้ายข้อมูล</b><span>นำข้อมูลเดิมเข้าระบบ</span></div></div>
+      <div class="card3" style="--i:5;--a:#0a4fd8;--b:#16b5d8;--c:#7bc62f"><div class="face"><b>ปิดวัน</b><span>สรุปและรายงานประจำวัน</span></div></div>
+    </div>
+  </div>
+</section>
 
 <!-- ===== เข้าสู่ระบบ ===== -->
 <section class="login hidden" id="loginView">
-  <div class="art" aria-hidden="true">
-    <h1>ระบบการเงิน<br><span style="white-space:nowrap">โรงเรียนกาวิละวิทยาลัย</span></h1>
-    <p>กรอกครั้งเดียว แล้วเอกสารทุกใบสร้างจากข้อมูลชุดเดียวกัน งานที่ส่งต่อทุกชิ้นมีคนกดรับ คนทำกับคนตรวจเป็นคนละคน</p>
-    <div class="chart" id="miniChart"></div>
+  <div class="art">
+    <span class="eyebrow">ระบบการเงิน โรงเรียนกาวิละวิทยาลัย</span>
+    <h1>เมนูที่เห็นขึ้นอยู่กับบทบาทของคุณ</h1>
+    <p>ระบบกำหนดสิทธิ์ที่ฝั่งเซิร์ฟเวอร์ ซ่อนปุ่มอย่างเดียวไม่พอ คนทำรายการกับคนตรวจเป็นคนละคนเสมอ</p>
+    <div class="rolegrid">
+      <div style="--a:#0a4fd8;--b:#1f86ff;--c:#16b5d8"><b>งานการเงิน</b><span>รับ จ่าย ทำเช็ค ปิดวัน</span></div>
+      <div style="--a:#c2185b;--b:#e8458f;--c:#ff7a8a"><b>งานแผน</b><span>โครงการและงบประมาณ</span></div>
+      <div style="--a:#067a45;--b:#12b26b;--c:#7bc62f"><b>ครูเจ้าของโครงการ</b><span>ดูความคืบหน้าโครงการของตัวเอง</span></div>
+      <div style="--a:#5b34d6;--b:#7a4dff;--c:#4f8bff"><b>ผู้ดูแลและผู้ตรวจสอบ</b><span>ดูบันทึกและสิทธิ์ ไม่ทำรายการเงิน</span></div>
+    </div>
   </div>
   <div class="formside">
     <form id="loginForm" autocomplete="on" novalidate>
+      <button type="button" class="back" id="backBtn">← กลับหน้าต้อนรับ</button>
       <h2>เข้าสู่ระบบ</h2>
-      <p class="note" style="margin:0 0 18px">ใช้อีเมลโรงเรียนของคุณ บุคลากรฝ่ายแผนงานและงบประมาณเห็นเมนูตามบทบาทที่ได้รับแต่งตั้ง ครูท่านอื่นดูโครงการตามแผนได้</p>
+      <p class="note" style="margin:0 0 18px">กรอกชื่อผู้ใช้และรหัสผ่านที่โรงเรียนกำหนดให้</p>
       <div class="formmsg"></div>
       <div class="field" data-key="email">
-        <label for="l_email">อีเมลโรงเรียน</label>
+        <label for="l_email">ชื่อผู้ใช้</label>
         <div class="suffix"><input type="text" id="l_email" autocomplete="username" placeholder="ชื่อผู้ใช้" autocapitalize="off" spellcheck="false"><span>@kwc.ac.th</span></div>
         <div class="err"></div>
       </div>
@@ -637,9 +977,14 @@ function usesHtml(n) {
 }
 
 /* ================= เข้า/ออกระบบ ================= */
+function showWelcome() {
+  $('appView').classList.add('hidden'); $('loginView').classList.add('hidden'); $('welcomeView').classList.remove('hidden');
+  document.body.dataset.page = 'blue';
+}
+$('startBtn').onclick = function () { showLogin(''); };
+$('backBtn').onclick = showWelcome;
 function showLogin(msg) {
-  $('appView').classList.add('hidden'); $('loginView').classList.remove('hidden');
-  $('miniChart').innerHTML = chartHtml(true);
+  $('appView').classList.add('hidden'); $('welcomeView').classList.add('hidden'); $('loginView').classList.remove('hidden');
   $('loginForm').querySelector('.formmsg').innerHTML = msg ? '<div class="msg bad">' + esc(msg) + '</div>' : '';
   setTimeout(function () { $('l_email').focus(); }, 30);
 }
@@ -652,14 +997,14 @@ $('loginForm').onsubmit = async function (e) {
   saveToken(r.data.token); $('l_pw').value = '';
   boot();
 };
-$('logoutBtn').onclick = async function () { await call('logout'); saveToken(null); ME = null; cache = {}; current = 'home'; showLogin(''); };
+$('logoutBtn').onclick = async function () { await call('logout'); saveToken(null); ME = null; cache = {}; current = 'home'; showWelcome(); };
 
 async function boot() {
-  if (!TOKEN) return showLogin('');
+  if (!TOKEN) return location.hash === '#login' ? showLogin('') : showWelcome();
   var r = await call('me');
   if (!r || !r.ok) return showLogin(r && r.error);
   ME = r.data;
-  $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
+  $('loginView').classList.add('hidden'); $('welcomeView').classList.add('hidden'); $('appView').classList.remove('hidden');
   $('whoName').textContent = ME.user.name;
   $('whoRoles').innerHTML = ''; $('whoRolesMenu').innerHTML = ME.user.roles.map(roleTag).join(' ');
   $('runheadDate').textContent = thDay(ME.today);
@@ -748,6 +1093,7 @@ function renderSide() {
 }
 // เปิดแถวเมนูย่อยของกลุ่มเดียวในแต่ละครั้ง (แท็บบนสุด + แถวรายการใต้แท็บ)
 function openGroup(label) {
+  document.body.dataset.page = PAGE_COLOR[label] || 'blue';
   [].forEach.call(document.querySelectorAll('.grp-items'), function (el) { el.classList.toggle('hidden', el.dataset.g !== label); });
   [].forEach.call(document.querySelectorAll('.grp-head'), function (el) { var on = el.dataset.g === label; el.setAttribute('aria-expanded', String(on)); el.classList.toggle('on', on); });
   placePill();
@@ -1605,6 +1951,47 @@ async function rowAction(act, id) {
 }
 
 boot().catch(function (e) { showLogin(e.message || String(e)); });
+</script>
+<script>
+/* พื้นหลัง WebGL1 "Mesh drift": สามเหลี่ยมเต็มจอ ไม่ใช้ไลบรารี · DPR ไม่เกิน 2 · หยุดวาดเมื่อแท็บถูกซ่อน · ถ้าไม่มี WebGL ใช้พื้นหลัง CSS เดิม */
+(function () {
+  var cv = document.getElementById('bgGL'); if (!cv) return;
+  var gl; try { gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' }); } catch (e) {}
+  if (!gl) return;
+  function mk(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { if (window.console) console.warn(gl.getShaderInfoLog(s)); return null; } return s; }
+  var vs = mk(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}');
+  var fs = mk(gl.FRAGMENT_SHADER, document.getElementById('glFrag').textContent);
+  if (!vs || !fs) return;
+  var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
+  gl.useProgram(pr);
+  var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  var U = function (n) { return gl.getUniformLocation(pr, n); };
+  // #3DAFDB → #6ED3DE → #F8D8C9 → #FBF0D0 (ต่ำ → สูง)
+  gl.uniform3fv(U('u_colors'), new Float32Array([0.239, 0.686, 0.859, 0.431, 0.827, 0.871, 0.973, 0.847, 0.788, 0.984, 0.941, 0.816, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+  gl.uniform4f(U('u_shape'), 1.16, 0.34, 0.50, 0.00);
+  gl.uniform4f(U('u_surface'), 2.40, 1.16, 0.00, 1.00);
+  gl.uniform4f(U('u_finish'), 0.00, 0.00, 0.000, 0.09);
+  gl.uniform4f(U('u_transform'), 1453.0, 0.00, 0.00, 0.0);
+  gl.uniform4f(U('u_space'), 0, 0, 0, 0);
+  gl.uniform4f(U('u_cursor'), 0, 2.0, 0.65, 0.46);
+  var uScene = U('u_scene'), t0 = performance.now(), raf = 0, W = 0, H = 0;
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function frame(now) {
+    var d = Math.min(window.devicePixelRatio || 1, 2), w = Math.max(1, Math.floor(cv.clientWidth * d)), h = Math.max(1, Math.floor(cv.clientHeight * d));
+    if (w !== W || h !== H) { W = w; H = h; cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
+    gl.uniform4f(uScene, w, h, (still ? 6000 : (now || performance.now()) - t0) / 1000 * 0.73, 4.0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!document.documentElement.classList.contains('gl')) document.documentElement.classList.add('gl');
+    raf = (still || document.hidden) ? 0 : requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else if (!raf && !still) raf = requestAnimationFrame(frame); });
+  window.addEventListener('resize', function () { if (still) frame(); });
+  cv.addEventListener('webglcontextlost', function (e) { e.preventDefault(); cancelAnimationFrame(raf); raf = 0; document.documentElement.classList.remove('gl'); });
+  frame();
+})();
 </script>
 </body>
 </html>
