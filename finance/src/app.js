@@ -32,13 +32,16 @@ export function createApp({ repo, clock, extraTables = {} }) {
       settings: { update: b(settingsSvc.updateSetting), list: b(settingsSvc.listSettings), pending: b(settingsSvc.pendingSettings) },
       payees: {
         create: b(payees.createPayee), update: b(payees.updatePayee),
-        list: () => store.list('payees'), get: (id) => store.get('payees', id),
+        list: b(payees.listPayees), get: b(payees.getPayee),
         requestAccountChange: b(payees.requestAccountChange),
         approveAccountChange: b(payees.approveAccountChange),
         rejectAccountChange: b(payees.rejectAccountChange),
         listAccountChanges: b(payees.listAccountChanges),
       },
-      audit: { list: () => { requirePermission(ctx, 'audit.read'); return store.list('audit_log'); } },
+      audit: {
+        list: () => { requirePermission(ctx, 'audit.read'); return store.list('audit_log'); },
+        logins: () => { requirePermission(ctx, 'audit.read'); return store.list('login_log'); },
+      },
     };
     for (const t of MASTER_TABLES) {
       const s = masterService(t);
@@ -57,9 +60,11 @@ export function createApp({ repo, clock, extraTables = {} }) {
       settingsSvc.seedSettings(ctx);
       return users.bootstrapAdmin(ctx, input);
     },
+    /** ค่าตั้งปัจจุบัน สำหรับขั้นล็อกอิน (ก่อนรู้ว่าเป็นใคร) */
+    asSystemSettings: () => getSettings(),
     /** ทุกคำขอเริ่มที่นี่: อีเมลที่ Google ยืนยัน → ผู้ใช้ในระบบ */
     asUser(email) {
-      return bind(makeCtx(users.resolveUser(store, email)));
+      return bind(makeCtx(users.resolveUser(store, email, getSettings())));
     },
   };
 }

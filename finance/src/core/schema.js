@@ -1,5 +1,6 @@
 // นิยามตารางทั้งหมดไว้ที่เดียว · 1 ตาราง = 1 ชีต · แถวแรกเป็นชื่อคอลัมน์
 // ชนิด: id · string · int · money (สตางค์ จำนวนเต็ม) · bool · date (YYYY-MM-DD) · list (array ข้อความ) · enum
+// list ที่ itemType: 'email' = รายการอีเมล (ไม่ใช่บทบาท)
 // enum ที่ optionsSetting = รายการมาจาก settings (แก้ได้โดยไม่ต้องแก้โค้ด)
 // readonly = ผู้ใช้กรอกเองไม่ได้ ระบบเติมให้
 
@@ -66,7 +67,7 @@ export const TABLES = {
     label: 'ค่าใช้จ่ายที่ประเภทเงินอนุญาต', idPrefix: 'FX',
     columns: [
       id,
-      { key: 'fund_code', label: 'รหัสเงิน', type: 'string', required: true },
+      { key: 'fund_code', label: 'รหัสเงิน', type: 'string', required: true, ref: 'funds', refKey: 'fund_code' },
       { key: 'expense_category', label: 'หมวดค่าใช้จ่าย', type: 'string', required: true },
       active,
     ],
@@ -111,8 +112,9 @@ export const TABLES = {
       id,
       { key: 'fiscal_year', label: 'ปีงบ', type: 'int', readonly: true },
       { key: 'name', label: 'ชื่อโครงการ/กิจกรรม', type: 'string', required: true },
-      { key: 'fund_code', label: 'รหัสเงิน', type: 'string', required: true },
+      { key: 'fund_code', label: 'รหัสเงิน', type: 'string', required: true, ref: 'funds', refKey: 'fund_code' },
       { key: 'budget', label: 'วงเงิน', type: 'money', required: true },
+      { key: 'owner_emails', label: 'ผู้รับผิดชอบ (อีเมลโรงเรียน)', type: 'list', itemType: 'email' },
       active,
     ],
   },
@@ -124,6 +126,16 @@ export const TABLES = {
       { key: 'first_no', label: 'เลขเช็คแรก', type: 'string', required: true },
       { key: 'last_no', label: 'เลขเช็คสุดท้าย', type: 'string', required: true },
       { key: 'note', label: 'หมายเหตุ', type: 'string' },
+    ],
+  },
+  login_log: {
+    label: 'บันทึกการเข้าระบบ', idPrefix: 'LG', noCommon: true, appendOnly: true, noAudit: true,
+    columns: [
+      id,
+      { key: 'at', label: 'เวลา', type: 'string' },
+      { key: 'email', label: 'อีเมลที่ใช้เข้า', type: 'string' },
+      { key: 'google_email', label: 'บัญชี Google ที่เปิดอยู่', type: 'string' },
+      { key: 'result', label: 'ผล', type: 'string' },
     ],
   },
   audit_log: {

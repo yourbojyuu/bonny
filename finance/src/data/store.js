@@ -41,7 +41,7 @@ export function createStore(repo, { clock, tables, getSettings }) {
       const now = nowIso();
       const saved = { ...out, created_by: user.email, created_at: now, updated_at: now };
       repo.insert(t, saved);
-      audit(user, 'insert', t, saved.id, null, saved, reason);
+      if (!d.noAudit) audit(user, 'insert', t, saved.id, null, saved, reason);
       return saved;
     },
 

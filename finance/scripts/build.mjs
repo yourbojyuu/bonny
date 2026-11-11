@@ -2,7 +2,7 @@
 import { build } from 'esbuild';
 import { mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 
-const ENTRY_FUNCS = ['doGet', 'api', 'setupSheets', 'bootstrapFirstAdmin'];
+const ENTRY_FUNCS = ['doGet', 'api', 'setupSheets', 'bootstrapFirstAdmin', 'setLoginPassword'];
 mkdirSync('dist', { recursive: true });
 const r = await build({
   entryPoints: ['src/gas/main.js'],

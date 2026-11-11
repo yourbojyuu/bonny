@@ -3,257 +3,538 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบการเงิน · ข้อมูลหลัก</title>
+<title>ระบบการเงิน · โรงเรียนกาวิละวิทยาลัย</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#f6f5f1; --card:#fff; --ink:#1f2328; --muted:#646a73; --line:#dcd9d0; --accent:#2457c5; --bad:#b42318; --warn:#9a6700; --ok:#1a7f37; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:'Sarabun','TH Sarabun New',sans-serif; font-size:16px; background:var(--bg); color:var(--ink); }
-  header { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); }
-  header h1 { font-size:18px; margin:0; }
-  header .who { color:var(--muted); font-size:14px; }
-  nav { display:flex; flex-wrap:wrap; gap:6px; padding:12px 16px 0; }
-  nav button { border:1px solid var(--line); background:var(--card); padding:6px 12px; border-radius:6px; cursor:pointer; font:inherit; font-size:15px; }
-  nav button[aria-current="true"] { background:var(--accent); color:#fff; border-color:var(--accent); }
-  main { padding:12px 16px 40px; }
-  .bar { display:flex; gap:8px; align-items:center; margin:8px 0 12px; flex-wrap:wrap; }
-  .bar h2 { margin:0; font-size:18px; flex:1; }
-  button.primary { background:var(--accent); color:#fff; border:0; padding:7px 14px; border-radius:6px; font:inherit; cursor:pointer; }
-  button.ghost { background:none; border:1px solid var(--line); padding:4px 10px; border-radius:6px; font:inherit; font-size:14px; cursor:pointer; }
-  .tablewrap { overflow-x:auto; background:var(--card); border:1px solid var(--line); border-radius:8px; }
+  /* สไตล์เดียวกับ "ผังขั้นตอนระบบการเงิน-A4": พื้นครีม · การ์ดขาวแถบสีตามบทบาท · กล่องระบบสีฟ้าเทา · ป้าย ส่ง → รับ */
+  :root {
+    --paper:#ffffff; --lane:#f3f1ea; --lane-line:#e4e0d4; --ink:#1d1f24; --muted:#6b6f78; --line:#d9d6cc;
+    --sys-bg:#e8eef7; --sys-line:#9fb1cc; --decide-bg:#fdf3d6; --decide-line:#d9b65c;
+    --group-bg:#eef5e6; --group-line:#7aa64a; --handoff:#0f6e78;
+    --r-plan:#7b3fd1; --r-finance:#2563eb; --r-proc:#b4561b; --r-review:#4f7d12; --r-committee:#be1d6c;
+    --r-exec:#0f766e; --r-system:#6b7280; --r-teacher:#475569; --r-unit:#3f6212; --r-admin:#334155; --r-audit:#7c5e10;
+    --bad:#b42318; --bad-bg:#fdecea; --ok:#1a7f37; --ok-bg:#e3f6e8; --warn:#8a5a00; --warn-bg:#fdf3d6;
+    --radius:10px;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:'Sarabun','TH Sarabun New',sans-serif; font-size:16px; line-height:1.5; color:var(--ink); background:var(--lane); }
+  button, input, select, textarea { font:inherit; color:inherit; }
+  a { color:var(--r-finance); }
+  .hidden { display:none !important; }
+
+  /* ---------- หัวกระดาษแบบผัง ---------- */
+  .runhead { display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--muted); padding:8px 20px; background:var(--paper); border-bottom:1px solid var(--line); }
+  .topbar { display:flex; align-items:center; gap:12px 20px; flex-wrap:wrap; padding:12px 20px; background:var(--paper); border-bottom:1px solid var(--line); }
+  .brand { display:flex; align-items:center; gap:10px; flex:1; min-width:220px; }
+  .brand .mark { width:34px; height:34px; border-radius:8px; background:var(--r-finance); color:#fff; display:grid; place-items:center; font-weight:700; }
+  .brand b { font-size:18px; display:block; line-height:1.2; }
+  .brand span { font-size:13px; color:var(--muted); }
+  .who { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .who .name { font-weight:600; }
+  .rtag { display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; padding:1px 9px; border-radius:20px; border:1px solid currentColor; background:#fff; white-space:nowrap; }
+  .rtag::before { content:''; width:7px; height:7px; border-radius:2px; background:currentColor; }
+  .btn { border:1px solid var(--line); background:var(--paper); padding:6px 14px; border-radius:8px; cursor:pointer; }
+  .btn:hover { border-color:#b9b5a8; }
+  .btn.primary { background:var(--r-finance); border-color:var(--r-finance); color:#fff; font-weight:600; }
+  .btn.primary:hover { filter:brightness(1.07); }
+  .btn.small { padding:3px 10px; font-size:14px; }
+  .btn.ok { color:var(--ok); border-color:#9fd3ae; } .btn.no { color:var(--bad); border-color:#efb1aa; }
+
+  /* ---------- โครงหน้า ---------- */
+  .shell { display:grid; grid-template-columns:250px 1fr; min-height:calc(100vh - 110px); }
+  .side { background:var(--paper); border-right:1px solid var(--line); padding:14px 12px 30px; }
+  .side h4 { margin:16px 8px 6px; font-size:12.5px; letter-spacing:.02em; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:6px; }
+  .side h4 i { width:4px; height:14px; border-radius:2px; display:inline-block; }
+  .side button { display:block; width:100%; text-align:left; border:0; background:none; padding:7px 10px 7px 12px; border-radius:8px; cursor:pointer; border-left:3px solid transparent; }
+  .side button:hover { background:var(--lane); }
+  .side button[aria-current="true"] { background:var(--sys-bg); border-left-color:var(--r-finance); font-weight:600; }
+  .side .count { float:right; font-size:12.5px; color:var(--muted); }
+  main { padding:22px 26px 60px; max-width:1200px; width:100%; }
+  .sec-title { font-size:24px; font-weight:700; margin:0; }
+  .sec-desc { color:var(--muted); margin:2px 0 16px; max-width:820px; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .toolbar .grow { flex:1; }
+  .search { padding:7px 12px; border:1px solid var(--line); border-radius:8px; min-width:220px; background:var(--paper); }
+
+  /* ---------- การ์ดแบบโหนดในผัง ---------- */
+  .node { position:relative; background:var(--paper); border:1.5px solid #2b2d33; border-radius:var(--radius); padding:10px 14px 12px 18px; overflow:hidden; }
+  .node::before { content:''; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--bar, var(--r-system)); }
+  .node .role { font-size:12.5px; font-weight:700; color:var(--bar, var(--r-system)); }
+  .node .t { font-size:17px; font-weight:700; line-height:1.3; }
+  .node .d { font-size:14px; color:var(--muted); }
+  .node.sys { background:var(--sys-bg); border-color:var(--sys-line); }
+  .node.decide { background:var(--decide-bg); border-color:var(--decide-line); }
+  .node.decide .role { color:var(--warn); }
+  .node .big { font-size:28px; font-weight:700; line-height:1.1; margin-top:4px; }
+  .grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); }
+  .group { border:1.5px dashed var(--group-line); background:var(--group-bg); border-radius:14px; padding:14px; margin-top:18px; }
+  .group > .gl { font-size:13px; font-weight:700; color:var(--group-line); margin-bottom:10px; text-align:right; }
+  .handoff { display:inline-flex; align-items:center; gap:4px; font-style:italic; font-weight:600; font-size:13px; color:var(--handoff); border:1.5px solid var(--handoff); border-radius:20px; padding:0 12px; background:#fff; white-space:nowrap; }
+  .flow { display:flex; align-items:stretch; gap:8px; flex-wrap:wrap; }
+  .flow .step { flex:1 1 140px; }
+  .flow .arrow { align-self:center; color:#444; font-size:18px; }
+  .legend { display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:28px; padding-top:12px; border-top:1px solid var(--line); font-size:13.5px; color:var(--muted); }
+  .legend span { display:inline-flex; gap:6px; align-items:center; }
+  .sw { width:22px; height:13px; border-radius:4px; border:1.5px solid #333; background:#fff; display:inline-block; }
+  .sw.sys { background:var(--sys-bg); border-color:var(--sys-line); }
+  .sw.dec { width:13px; transform:rotate(45deg) scale(.8); background:var(--decide-bg); border-color:var(--decide-line); border-radius:2px; }
+
+  /* ---------- ตาราง ---------- */
+  .tablewrap { overflow-x:auto; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); }
   table { border-collapse:collapse; width:100%; font-size:15px; }
-  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); white-space:nowrap; vertical-align:top; }
-  th { background:#efede6; font-weight:600; }
+  th, td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--lane-line); white-space:nowrap; vertical-align:top; }
+  th { background:#f8f6f0; font-weight:600; font-size:14px; color:#3d4048; position:sticky; top:0; }
   td.num { text-align:right; font-variant-numeric:tabular-nums; }
-  tr.clickable:hover { background:#f2f6ff; cursor:pointer; }
-  .pill { display:inline-block; padding:0 8px; border-radius:10px; font-size:13px; background:#eee; }
-  .pill.wait { background:#fff3cd; color:var(--warn); } .pill.ok { background:#dafbe1; color:var(--ok); } .pill.no { background:#ffebe9; color:var(--bad); }
-  dialog { border:1px solid var(--line); border-radius:10px; padding:0; width:min(560px, calc(100vw - 32px)); }
-  dialog form { padding:16px; }
-  dialog h3 { margin:0 0 12px; }
-  .field { margin-bottom:10px; }
-  .field label { display:block; font-size:14px; color:var(--muted); margin-bottom:2px; }
-  .field input[type=text], .field select, .field textarea { width:100%; font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; }
-  .field .err { color:var(--bad); font-size:14px; }
-  .field.bad input, .field.bad select, .field.bad textarea { border-color:var(--bad); }
-  .checks label { display:inline-flex; gap:4px; margin:0 12px 4px 0; color:var(--ink); font-size:15px; }
-  .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
-  .msg { padding:8px 12px; border-radius:6px; margin:8px 0; }
-  .msg.bad { background:#ffebe9; color:var(--bad); } .msg.ok { background:#dafbe1; color:var(--ok); }
+  td.wrap { white-space:normal; min-width:180px; }
+  tbody tr.clickable:hover { background:#f4f7fd; cursor:pointer; }
+  tr.mine td:first-child { box-shadow:inset 4px 0 0 var(--r-plan); }
+  .empty { padding:28px; text-align:center; color:var(--muted); }
+  .pill { display:inline-block; padding:0 10px; border-radius:20px; font-size:13px; font-weight:600; }
+  .pill.wait { background:var(--warn-bg); color:var(--warn); } .pill.ok { background:var(--ok-bg); color:var(--ok); } .pill.no { background:var(--bad-bg); color:var(--bad); } .pill.mute { background:#eee; color:#555; }
+  .chip { display:inline-block; font-size:13px; padding:0 8px; border-radius:6px; background:var(--lane); border:1px solid var(--lane-line); margin:0 4px 2px 0; }
+  .chip.me { background:#f1e9fd; border-color:#d4c0f3; color:var(--r-plan); font-weight:600; }
+  code { font-size:13.5px; background:var(--lane); padding:1px 6px; border-radius:4px; }
+
+  /* ---------- ฟอร์ม/กล่องโต้ตอบ ---------- */
+  dialog { border:0; padding:0; background:transparent; width:min(600px, calc(100vw - 24px)); }
+  dialog::backdrop { background:rgba(29,31,36,.38); }
+  dialog .node { padding:18px 20px 16px 24px; max-height:calc(100vh - 40px); overflow:auto; }
+  .field { margin-bottom:12px; }
+  .field > label { display:block; font-size:14px; font-weight:600; color:#3d4048; margin-bottom:3px; }
+  .field .hint { font-size:13px; color:var(--muted); }
+  .field input[type=text], .field input[type=password], .field select, .field textarea { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline:2px solid #bcd0f7; border-color:var(--r-finance); }
+  .field .err { color:var(--bad); font-size:13.5px; min-height:0; }
+  .field.bad input, .field.bad select, .field.bad textarea { border-color:var(--bad); background:#fffafa; }
+  .checks { display:flex; flex-wrap:wrap; gap:4px 14px; }
+  .checks label { display:inline-flex; gap:6px; align-items:center; font-size:15px; }
+  .suffix { display:flex; } .suffix input { border-radius:8px 0 0 8px !important; } .suffix span { border:1px solid var(--line); border-left:0; border-radius:0 8px 8px 0; padding:8px 10px; background:var(--lane); color:var(--muted); white-space:nowrap; }
+  .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+  .msg { padding:9px 14px; border-radius:8px; margin:0 0 12px; }
+  .msg.bad { background:var(--bad-bg); color:var(--bad); } .msg.ok { background:var(--ok-bg); color:var(--ok); }
   .note { color:var(--muted); font-size:14px; }
+
+  /* ---------- หน้าเข้าสู่ระบบ ---------- */
+  .login { min-height:100vh; display:grid; place-items:center; padding:24px 16px; }
+  .login .box { width:min(440px, 100%); }
+  .login .node { --bar:var(--r-finance); padding:24px 26px 20px 30px; }
+  .login h1 { font-size:26px; margin:2px 0 4px; }
+  .login .flow { margin-top:18px; font-size:13px; }
+  .login .foot { text-align:center; font-size:13px; color:var(--muted); margin-top:14px; }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns:1fr; }
+    .side { border-right:0; border-bottom:1px solid var(--line); padding:8px 12px; display:flex; gap:6px; overflow-x:auto; }
+    .side h4 { display:none; }
+    .side button { width:auto; white-space:nowrap; border-left:0; border-bottom:3px solid transparent; border-radius:8px 8px 0 0; }
+    .side button[aria-current="true"] { border-bottom-color:var(--r-finance); }
+    .side .count { float:none; margin-left:4px; }
+    main { padding:16px 16px 50px; }
+    .runhead span:last-child { display:none; }
+    .search { min-width:0; width:100%; }
+  }
 </style>
 </head>
 <body>
-<header><h1>ระบบการเงิน · ข้อมูลหลัก</h1><span class="who" id="who">กำลังโหลด…</span></header>
-<nav id="tabs"></nav>
-<main id="main"></main>
-<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+
+<!-- ===== หน้าเข้าสู่ระบบ ===== -->
+<section class="login hidden" id="loginView">
+  <div class="box">
+    <div class="node">
+      <div class="role">ระบบการเงิน · โรงเรียนกาวิละวิทยาลัย</div>
+      <h1>เข้าสู่ระบบ</h1>
+      <div class="note" style="margin-bottom:16px">ใช้อีเมลโรงเรียนของคุณ · บุคลากรฝ่ายแผนงานและงบประมาณเห็นเมนูตามบทบาทที่ได้รับแต่งตั้ง ครูท่านอื่นดูโครงการตามแผนได้</div>
+      <form id="loginForm" autocomplete="on">
+        <div class="formmsg"></div>
+        <div class="field" data-key="email">
+          <label for="l_email">อีเมลโรงเรียน</label>
+          <div class="suffix"><input type="text" id="l_email" autocomplete="username" placeholder="ชื่อผู้ใช้" autocapitalize="off" spellcheck="false"><span>@kwc.ac.th</span></div>
+          <div class="err"></div>
+        </div>
+        <div class="field" data-key="password">
+          <label for="l_pw">รหัสผ่าน</label>
+          <input type="password" id="l_pw" autocomplete="current-password">
+          <div class="err"></div>
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;padding:9px" id="loginBtn">เข้าสู่ระบบ</button>
+      </form>
+      <div class="flow">
+        <span class="handoff">ส่ง → รับ</span><span class="note">ทุกเอกสารที่ส่งต่อ ผู้รับต้องกดรับ · คนทำ ≠ คนตรวจ · ไม่ลบ แค่ยกเลิก</span>
+      </div>
+    </div>
+    <div class="foot">การเข้าระบบทุกครั้งถูกบันทึกไว้ตรวจสอบย้อนหลัง</div>
+  </div>
+</section>
+
+<!-- ===== ตัวระบบ ===== -->
+<section id="appView" class="hidden">
+  <div class="runhead"><span>ระบบการเงิน · โรงเรียนกาวิละวิทยาลัย</span><span id="runhead-r"></span></div>
+  <div class="topbar">
+    <div class="brand"><div class="mark">฿</div><div><b>ระบบการเงิน</b><span>กลุ่มบริหารงานแผนและงบประมาณ</span></div></div>
+    <div class="who"><span class="name" id="whoName"></span><span id="whoRoles"></span><button class="btn small" id="logoutBtn">ออกจากระบบ</button></div>
+  </div>
+  <div class="shell">
+    <nav class="side" id="side"></nav>
+    <main id="main"></main>
+  </div>
+</section>
+
+<dialog id="dlg"><div class="node" id="dlgNode"><form method="dialog" id="dlgForm"></form></div></dialog>
 
 <script>
-// เรียก server ผ่าน google.script.run · error ชี้ช่องแสดงใต้ช่องนั้น
+/* ================= เชื่อมต่อ server ================= */
+var TOKEN = null;
+try { TOKEN = sessionStorage.getItem('kwc_fin_token'); } catch (e) {}
+function saveToken(t) { TOKEN = t; try { t ? sessionStorage.setItem('kwc_fin_token', t) : sessionStorage.removeItem('kwc_fin_token'); } catch (e) {} }
 function call(action, payload) {
   return new Promise(function (resolve, reject) {
-    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).api(action, payload || {});
+    google.script.run.withSuccessHandler(function (r) {
+      if (r && r.code === 'AUTH') { saveToken(null); showLogin(r.error); return; }
+      resolve(r);
+    }).withFailureHandler(reject).api({ token: TOKEN, action: action, payload: payload || {} });
   });
 }
-var ME = null, current = null, rowsCache = {};
+
+/* ================= ตัวช่วย ================= */
+var ME = null, current = 'home', cache = {}, filterText = '', onlyMine = false;
+var $ = function (id) { return document.getElementById(id); };
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 function money(s) { if (s == null || s === '') return ''; var neg = s < 0, a = Math.abs(s); return (neg ? '-' : '') + Math.floor(a / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + String(a % 100).padStart(2, '0'); }
-var TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-function thDate(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? (+m[3]) + ' ' + TH_MONTHS[+m[2] - 1] + ' ' + (+m[1] + 543) : (iso || ''); }
+var TH_M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+var TH_MF = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+function thDate(iso, full) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? (+m[3]) + ' ' + (full ? TH_MF : TH_M)[+m[2] - 1] + ' ' + (+m[1] + 543) : (iso || ''); }
+function thDateTime(iso) { if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return iso; var b = new Date(d.getTime() + 7 * 3600e3).toISOString(); return thDate(b.slice(0, 10)) + ' ' + b.slice(11, 16) + ' น.'; }
 function hasRole(list) { return ME.user.roles.some(function (r) { return list.indexOf(r) >= 0; }); }
 
-// ช่องที่คำนวณเพิ่มตอนแสดง
+// สีบทบาท (ตามผังขั้นตอน)
+var ROLE_COLOR = { requester:'--r-teacher', plan:'--r-plan', finance:'--r-finance', khj_maker:'--r-finance', reviewer1:'--r-review', reviewer2:'--r-review', reviewer3:'--r-review',
+  director:'--r-exec', procurement:'--r-proc', cash_committee:'--r-committee', unit_head:'--r-unit', auditor:'--r-audit', admin:'--r-admin' };
+function roleVar(r) { return 'var(' + (ROLE_COLOR[r] || '--r-system') + ')'; }
+function roleTag(r) { return '<span class="rtag" style="color:' + roleVar(r) + '">' + esc(ME.roles[r] || r) + '</span>'; }
+
+// เมนู: กลุ่ม · สี (บทบาทที่ดูแล) · คำอธิบาย
+var GROUPS = [
+  { label: 'งานแผน', color: '--r-plan', tables: ['plan_projects'] },
+  { label: 'การเงิน · ผู้รับเงิน', color: '--r-finance', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'cheque_books'] },
+  { label: 'ข้อมูลหลัก', color: '--r-system', tables: ['funds', 'subfunds', 'fund_allowed_expense'] },
+  { label: 'ผู้ดูแลระบบ · ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log'] },
+];
+var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
+var DESC = {
+  plan_projects: 'โครงการ/กิจกรรมตามแผนปฏิบัติการที่อนุมัติแล้ว พร้อมวงเงิน · ติดแท็กผู้รับผิดชอบเพื่อให้เจ้าของโครงการติดตามการเบิกจ่ายของตนได้',
+  payees: 'ทะเบียนผู้รับเงิน — ใช้ได้เฉพาะผู้รับที่อยู่ในทะเบียนนี้ · วิธีจ่ายต้องเลือกเอง ไม่มีค่าเริ่มต้น · เลขบัญชีแก้ผ่านคำขอที่มีผู้อนุมัติเท่านั้น',
+  payee_account_changes: 'คำขอเปลี่ยนเลขบัญชีผู้รับเงิน · ผู้อนุมัติต้องไม่ใช่ผู้ยื่น · บัญชีที่แก้ภายใน 30 วันจะขึ้นธงทุกครั้งที่จ่าย',
+  bank_accounts: 'บัญชีธนาคารของโรงเรียน แยก 3 กลุ่มเงิน · บัญชีกระแสรายวัน (เช็ค) จับคู่กับบัญชีออมทรัพย์ (โอนอัตโนมัติ OTID)',
+  cheque_books: 'สมุดเช็คต่อบัญชีกระแสรายวัน (มีได้หลายเล่ม) · ช่วงเลขห้ามทับกัน',
+  funds: 'ประเภทเงินฝั่งจ่าย (รหัสเงิน) ผูกกับบัญชีธนาคารกลุ่มเงินเดียวกัน',
+  subfunds: 'ชนิดเงินย่อยฝั่งรับ ใช้แยกยอดใบเสร็จ',
+  fund_allowed_expense: 'ค่าใช้จ่ายที่ประเภทเงินแต่ละประเภทอนุญาต (ตอนนี้ระบบขึ้นธงเมื่อไม่ตรง ยังไม่บล็อก)',
+  users: 'บุคลากรฝ่ายแผนงานและงบประมาณ · บทบาทผูกกับคำสั่งแต่งตั้ง · ครูท่านอื่นไม่ต้องเพิ่ม (เข้าได้ในฐานะครูผู้ขอ)',
+  settings: 'ค่าตั้งของระบบ · ป้าย "รอยืนยัน" = ค่าที่ตั้งไว้ก่อน รอคำตอบจากโรงเรียน · ยอดเงินในตั้งค่าเป็นสตางค์',
+  audit_log: 'ประวัติการเพิ่ม/แก้ไขทุกรายการ (500 รายการล่าสุด) · แก้หรือลบไม่ได้',
+  login_log: 'การเข้าระบบทุกครั้ง พร้อมบัญชี Google ที่เปิดอยู่ (ถ้ารู้) ใช้ตรวจว่ามีใครเข้าแทนใครหรือไม่',
+};
 var EXTRA_COLS = {
   cheque_books: [{ key: 'account_no', label: 'เลขบัญชี' }, { key: 'fund_group', label: 'กลุ่มเงิน' }],
   plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
   payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
 };
-var HIDE_IN_LIST = { audit_log: ['before', 'after'] };
+var HIDE = { audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
+
+/* ================= เข้า/ออกระบบ ================= */
+function showLogin(msg) {
+  $('appView').classList.add('hidden'); $('loginView').classList.remove('hidden');
+  var m = $('loginForm').querySelector('.formmsg');
+  m.innerHTML = msg ? '<div class="msg bad">' + esc(msg) + '</div>' : '';
+  setTimeout(function () { $('l_email').focus(); }, 30);
+}
+$('loginForm').onsubmit = async function (e) {
+  e.preventDefault();
+  var btn = $('loginBtn'); btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ…';
+  var raw = $('l_email').value.trim();
+  var r = await call('login', { email: raw.indexOf('@') >= 0 ? raw : raw, password: $('l_pw').value });
+  btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+  if (!r.ok) { showErrors($('loginForm'), r); return; }
+  saveToken(r.data.token); $('l_pw').value = '';
+  boot();
+};
+$('logoutBtn').onclick = async function () { await call('logout'); saveToken(null); ME = null; cache = {}; showLogin(''); };
 
 async function boot() {
+  if (!TOKEN) return showLogin('');
   var r = await call('me');
-  if (!r.ok) { document.getElementById('who').textContent = ''; document.getElementById('main').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+  if (!r || !r.ok) return showLogin(r && r.error);
   ME = r.data;
-  document.getElementById('who').textContent = ME.user.name + ' · ' + ME.user.roles.map(function (k) { return ME.roles[k]; }).join(', ') + ' · วันนี้ ' + thDate(ME.today);
-  var nav = document.getElementById('tabs');
-  nav.innerHTML = ME.tables.map(function (t) { return '<button data-t="' + t.key + '">' + esc(t.label) + '</button>'; }).join('');
-  nav.onclick = function (e) { var b = e.target.closest('button'); if (b) show(b.dataset.t); };
-  show(ME.tables[0].key);
+  $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
+  $('whoName').textContent = ME.user.name;
+  $('whoRoles').innerHTML = ME.user.roles.map(roleTag).join(' ');
+  $('runhead-r').textContent = 'วันนี้ ' + thDate(ME.today, true);
+  renderSide();
+  show(current);
 }
 
+/* ================= เมนู ================= */
 function tableMeta(key) { return ME.tables.filter(function (t) { return t.key === key; })[0]; }
+function renderSide() {
+  var html = '<h4><i style="background:var(--r-finance)"></i>ภาพรวม</h4><button data-t="home">หน้าแรก</button>';
+  GROUPS.forEach(function (g) {
+    var items = g.tables.filter(tableMeta);
+    if (!items.length) return;
+    html += '<h4><i style="background:var(' + g.color + ')"></i>' + esc(g.label) + '</h4>' + items.map(function (t) {
+      return '<button data-t="' + t + '">' + esc(tableMeta(t).label) + '<span class="count" data-count="' + t + '"></span></button>';
+    }).join('');
+  });
+  $('side').innerHTML = html;
+  $('side').onclick = function (e) { var b = e.target.closest('button[data-t]'); if (b) { filterText = ''; show(b.dataset.t); } };
+}
+function markNav() { [].forEach.call(document.querySelectorAll('.side button'), function (b) { b.setAttribute('aria-current', b.dataset.t === current); }); }
+
+async function load(t, force) {
+  if (!cache[t] || force) { var r = await call('list', { table: t }); cache[t] = r.ok ? r.data : []; }
+  var c = document.querySelector('[data-count="' + t + '"]'); if (c) c.textContent = cache[t].length;
+  return cache[t];
+}
 
 async function show(key, flash) {
-  current = key;
-  [].forEach.call(document.querySelectorAll('nav button'), function (b) { b.setAttribute('aria-current', b.dataset.t === key); });
-  var main = document.getElementById('main');
+  current = key; markNav();
+  if (key === 'home') return renderHome(flash);
+  var main = $('main');
   main.innerHTML = '<p class="note">กำลังโหลด…</p>';
   var r = await call('list', { table: key });
   if (!r.ok) { main.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
-  rowsCache[key] = r.data;
-  var meta = tableMeta(key);
-  var html = '<div class="bar"><h2>' + esc(meta.label) + ' <span class="note">(' + r.data.length + ' รายการ)</span></h2>';
-  if (meta.canWrite && key !== 'settings' && key !== 'payee_account_changes' && key !== 'audit_log') html += '<button class="primary" id="addBtn">+ เพิ่ม</button>';
-  html += '</div>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '');
-  if (key === 'settings') html += settingsTable(r.data);
-  else html += listTable(key, r.data, meta);
+  cache[key] = r.data; load(key);
+  renderTable(key, flash);
+}
+
+/* ================= หน้าแรก ================= */
+var CAN_DO = {
+  requester: ['ดูโครงการ/กิจกรรมตามแผนและวงเงิน', 'โครงการที่คุณเป็นผู้รับผิดชอบมีแถบสีม่วงกำกับ', 'เร็ว ๆ นี้: ยื่นใบขออนุมัติใช้เงิน · ติดตามการเบิกจ่ายของโครงการตน'],
+  plan: ['เพิ่ม/แก้โครงการตามแผนและวงเงิน', 'ติดแท็กผู้รับผิดชอบโครงการ'],
+  finance: ['ดูแลทะเบียนผู้รับเงิน · สมุดเช็ค', 'ยื่นคำขอเปลี่ยนเลขบัญชีผู้รับเงิน'],
+  reviewer1: ['อนุมัติ/ไม่อนุมัติคำขอเปลี่ยนเลขบัญชี (ที่คนอื่นยื่น)', 'เร็ว ๆ นี้: ตรวจ ขบ./ขจ. ชั้น 1'],
+  reviewer2: ['เร็ว ๆ นี้: ตรวจ ขบ./ขจ. ชั้น 2'], reviewer3: ['เร็ว ๆ นี้: ตรวจ ขบ./ขจ. ชั้น 3'],
+  admin: ['เพิ่มผู้ใช้และกำหนดบทบาทตามคำสั่งแต่งตั้ง', 'ตั้งค่าระบบ · บัญชีธนาคาร · ประเภทเงิน'],
+  auditor: ['อ่านได้ทุกอย่าง รวมประวัติแก้ไขและการเข้าระบบ'],
+  director: ['ดูข้อมูลหลักทั้งหมด'], procurement: ['ดูข้อมูลหลักทั้งหมด · งานพัสดุเปิดในขั้นถัดไป'],
+  khj_maker: ['ดูข้อมูลหลักทั้งหมด · งาน ขจ. เปิดในขั้นถัดไป'], cash_committee: ['ดูข้อมูลหลักทั้งหมด · งานตรวจนับเปิดในขั้นถัดไป'], unit_head: ['ดูข้อมูลหลักทั้งหมด'],
+};
+var STEPS = ['โครง + ข้อมูลหลัก', 'ส่ง-รับ + ตรวจ 3 ชั้น', 'ฝั่งจ่าย ขบ./ขจ.', 'จ่ายเงิน เช็ค/KTB', 'ฝั่งรับ ใบเสร็จ', 'ธนาคาร', 'รายวัน/เดือน/ปี', 'ย้ายข้อมูล', 'พิมพ์เอกสาร'];
+
+async function renderHome(flash) {
+  var main = $('main');
+  var staff = ME.user.roles.some(function (r) { return r !== 'requester'; });
+  var html = '<h1 class="sec-title">สวัสดี ' + esc(ME.user.name) + '</h1><p class="sec-desc">' + thDate(ME.today, true) + ' · เข้าระบบในบทบาท ' + ME.user.roles.map(function (r) { return esc(ME.roles[r]); }).join(', ') + '</p>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '');
+  html += '<div class="grid">' + ME.user.roles.map(function (r) {
+    return '<div class="node" style="--bar:' + roleVar(r) + '"><div class="role">' + esc(ME.roles[r]) + '</div><div class="t">สิ่งที่คุณทำได้</div><div class="d">' + (CAN_DO[r] || []).map(esc).join('<br>') + '</div></div>';
+  }).join('') + '</div>';
+  html += '<div class="group"><div class="gl">ระบบสรุปให้จากข้อมูลชุดเดียว · ไม่ต้องพิมพ์ซ้ำ</div><div class="grid" id="stats"><p class="note">กำลังโหลด…</p></div></div>';
+  if (staff) {
+    html += '<h2 style="margin:26px 0 8px;font-size:18px">ความคืบหน้าการสร้างระบบ</h2><div class="flow">' + STEPS.map(function (s, i) {
+      return (i ? '<span class="arrow">→</span>' : '') + '<div class="step node ' + (i === 0 ? '' : 'sys') + '" style="--bar:' + (i === 0 ? 'var(--ok)' : 'var(--r-system)') + ';padding:8px 10px 8px 16px"><div class="role">ขั้น ' + (i + 1) + (i === 0 ? ' · ใช้งานได้' : '') + '</div><div style="font-weight:600;font-size:14.5px">' + esc(s) + '</div></div>';
+    }).join('') + '</div>';
+  }
+  html += '<div class="legend"><span><i class="sw"></i>คนทำ (แถบสี = บทบาท)</span><span><i class="sw sys"></i>ระบบทำเอง</span><span><i class="sw dec"></i>จุดตัดสินใจ / รอยืนยัน</span><span><span class="handoff">ส่ง → รับ</span> ผู้รับต้องกดรับ</span></div>';
   main.innerHTML = html;
-  var add = document.getElementById('addBtn');
-  if (add) add.onclick = function () { openForm(key, null); };
-  main.onclick = function (e) {
+
+  var cards = [];
+  var proj = await load('plan_projects');
+  var mine = proj.filter(function (p) { return p.is_mine; });
+  var total = proj.reduce(function (s, p) { return s + (p.budget || 0); }, 0);
+  cards.push(stat('ระบบ', 'โครงการตามแผน', proj.length + ' โครงการ', 'วงเงินรวม ' + money(total) + ' บาท', 'plan_projects'));
+  if (mine.length || !staff) cards.push(stat('งานของฉัน', 'โครงการที่ฉันรับผิดชอบ', mine.length + ' โครงการ', mine.length ? mine.map(function (p) { return esc(p.name); }).slice(0, 3).join(' · ') : 'ยังไม่มีโครงการที่ติดแท็กชื่อคุณ', 'plan_projects', '--r-plan', true));
+  if (tableMeta('payee_account_changes')) {
+    var ch = await load('payee_account_changes');
+    var wait = ch.filter(function (c) { return c.status === 'รออนุมัติ'; }).length;
+    cards.push(stat('รอผู้อนุมัติ', 'คำขอเปลี่ยนเลขบัญชี', wait + ' รายการ', '<span class="handoff">ส่ง → รออนุมัติ</span>', 'payee_account_changes', wait ? 'decide' : null));
+  }
+  if (tableMeta('payees')) { var py = await load('payees'); cards.push(stat('ระบบ', 'ผู้รับเงินในทะเบียน', py.filter(function (p) { return p.active; }).length + ' ราย', 'ใช้งานอยู่', 'payees')); }
+  if (tableMeta('settings')) { var st = await load('settings'); var pend = st.filter(function (s) { return s.pending; }).length; cards.push(stat('รอยืนยัน', 'ค่าตั้งที่ยังรอคำตอบ', pend + ' ค่า', 'ตั้งไว้ก่อน แก้ได้ภายหลัง', 'settings', pend ? 'decide' : null)); }
+  var box = $('stats'); if (box) box.innerHTML = cards.join('');
+  if (box) box.onclick = function (e) { var n = e.target.closest('[data-go]'); if (n) { onlyMine = n.dataset.mine === '1'; show(n.dataset.go); } };
+}
+function stat(role, title, big, sub, go, kind, mineFlag) {
+  var cls = kind === 'decide' ? 'node decide' : kind && kind.indexOf('--') === 0 ? 'node' : 'node sys';
+  var bar = kind && kind.indexOf('--') === 0 ? 'var(' + kind + ')' : kind === 'decide' ? 'var(--decide-line)' : 'var(--r-system)';
+  return '<div class="' + cls + '" style="--bar:' + bar + ';cursor:pointer" data-go="' + go + '" data-mine="' + (mineFlag ? 1 : 0) + '"><div class="role">' + esc(role) + '</div><div class="t">' + esc(title) + '</div><div class="big">' + big + '</div><div class="d">' + sub + '</div></div>';
+}
+
+/* ================= ตาราง ================= */
+function cols(key) {
+  var hide = HIDE[key] || [];
+  return ME.schema[key].columns.filter(function (c) { return hide.indexOf(c.key) < 0; }).concat(EXTRA_COLS[key] || []);
+}
+function cell(col, v, row) {
+  if (col.type === 'money') return '<td class="num">' + money(v) + '</td>';
+  if (col.type === 'bool') return '<td>' + (v ? '<span class="pill ok">ใช่</span>' : '<span class="pill mute">—</span>') + '</td>';
+  if (col.itemType === 'email') return '<td class="wrap">' + (v || []).map(function (e) { return '<span class="chip' + (e === ME.user.email ? ' me' : '') + '">' + esc(e.split('@')[0]) + '</span>'; }).join('') + '</td>';
+  if (col.type === 'list') return '<td>' + (v || []).map(roleTag).join(' ') + '</td>';
+  if (col.type === 'date') return '<td>' + thDate(v) + '</td>';
+  if (col.key === 'status') { var cls = v === 'รออนุมัติ' ? 'wait' : v === 'อนุมัติแล้ว' ? 'ok' : 'no'; return '<td><span class="pill ' + cls + '">' + esc(v) + '</span></td>'; }
+  if (col.key === 'at' || col.key === 'decided_at') return '<td>' + thDateTime(v) + '</td>';
+  if (col.key === 'result') return '<td><span class="pill ' + (v === 'สำเร็จ' ? 'ok' : 'no') + '">' + esc(v) + '</span></td>';
+  if (col.key === 'google_email' && v && row && v !== row.email) return '<td><span class="pill wait">' + esc(v) + '</span></td>';
+  return '<td>' + esc(v) + '</td>';
+}
+function matches(row) {
+  if (onlyMine && current === 'plan_projects' && !row.is_mine) return false;
+  if (!filterText) return true;
+  return JSON.stringify(row).toLowerCase().indexOf(filterText.toLowerCase()) >= 0;
+}
+
+function renderTable(key, flash) {
+  var meta = tableMeta(key), rows = cache[key] || [];
+  var writable = meta.canWrite && ['settings', 'payee_account_changes', 'audit_log', 'login_log'].indexOf(key) < 0;
+  var html = '<h1 class="sec-title" style="display:flex;gap:10px;align-items:center"><i style="width:6px;height:26px;border-radius:3px;background:var(' + (OWNER_COLOR[key] || '--r-system') + ')"></i>' + esc(meta.label) + '</h1>' +
+    '<p class="sec-desc">' + esc(DESC[key] || '') + '</p>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '') +
+    '<div class="toolbar"><input class="search" id="q" placeholder="ค้นหา…" value="' + esc(filterText) + '">' +
+    (key === 'plan_projects' ? '<label class="checks"><label><input type="checkbox" id="mineOnly"' + (onlyMine ? ' checked' : '') + '> เฉพาะโครงการของฉัน</label></label>' : '') +
+    '<span class="grow"></span><span class="note" id="cnt"></span>' + (writable ? '<button class="btn primary" id="addBtn">+ เพิ่ม</button>' : '') + '</div><div id="tbl"></div>';
+  $('main').innerHTML = html;
+  $('q').oninput = function () { filterText = this.value; drawRows(key); };
+  if ($('mineOnly')) $('mineOnly').onchange = function () { onlyMine = this.checked; drawRows(key); };
+  if ($('addBtn')) $('addBtn').onclick = function () { openForm(key, null); };
+  drawRows(key);
+  $('tbl').onclick = function (e) {
     var btn = e.target.closest('button[data-act]');
     if (btn) { e.stopPropagation(); return rowAction(btn.dataset.act, btn.dataset.id); }
-    var tr = e.target.closest('tr.clickable');
-    if (!tr) return;
+    var tr = e.target.closest('tr.clickable'); if (!tr) return;
     if (key === 'settings') openSetting(tr.dataset.id); else openForm(key, tr.dataset.id);
   };
 }
 
-function cols(key) {
-  var schema = ME.schema[key];
-  var c = schema.columns.filter(function (x) { return (HIDE_IN_LIST[key] || []).indexOf(x.key) < 0; });
-  return c.concat(EXTRA_COLS[key] || []);
-}
-
-function cell(col, v) {
-  if (col.type === 'money') return '<td class="num">' + money(v) + '</td>';
-  if (col.type === 'bool') return '<td>' + (v ? '✓' : '—') + '</td>';
-  if (col.type === 'list') return '<td>' + esc((v || []).map(function (x) { return ME.roles[x] || x; }).join(', ')) + '</td>';
-  if (col.type === 'date') return '<td>' + thDate(v) + '</td>';
-  if (col.key === 'status') { var cls = v === 'รออนุมัติ' ? 'wait' : v === 'อนุมัติแล้ว' ? 'ok' : 'no'; return '<td><span class="pill ' + cls + '">' + esc(v) + '</span></td>'; }
-  return '<td>' + esc(v) + '</td>';
-}
-
-function listTable(key, rows, meta) {
+function drawRows(key) {
+  var meta = tableMeta(key), all = cache[key] || [], rows = all.filter(matches);
+  $('cnt').textContent = rows.length === all.length ? all.length + ' รายการ' : rows.length + ' จาก ' + all.length + ' รายการ';
+  if (key === 'settings') { $('tbl').innerHTML = settingsTable(rows); return; }
   var c = cols(key);
-  var canApprove = hasRole(ME.settings.payee_account_approver_roles || []);
-  var head = '<tr>' + c.map(function (x) { return '<th>' + esc(x.label || x.key) + '</th>'; }).join('') + (key === 'payees' || key === 'payee_account_changes' ? '<th></th>' : '') + '</tr>';
+  var canApprove = hasRole((ME.settings && ME.settings.payee_account_approver_roles) || []);
+  var clickable = meta.canWrite && ['audit_log', 'login_log', 'payee_account_changes'].indexOf(key) < 0;
+  var act = key === 'payees' && hasRole(['finance']) || key === 'payee_account_changes';
+  var head = '<thead><tr>' + c.map(function (x) { return '<th>' + esc(x.label || x.key) + '</th>'; }).join('') + (act ? '<th></th>' : '') + '</tr></thead>';
   var body = rows.map(function (r) {
     var extra = '';
-    if (key === 'payees' && hasRole(['finance'])) extra = '<td><button class="ghost" data-act="reqacct" data-id="' + esc(r.id) + '">ขอเปลี่ยนบัญชี</button></td>';
-    if (key === 'payees' && !hasRole(['finance'])) extra = '<td></td>';
+    if (key === 'payees' && act) extra = '<td><button class="btn small" data-act="reqacct" data-id="' + esc(r.id) + '">ขอเปลี่ยนบัญชี</button></td>';
     if (key === 'payee_account_changes') extra = '<td>' + (r.status === 'รออนุมัติ' && canApprove && r.requested_by !== ME.user.email
-      ? '<button class="ghost" data-act="approve" data-id="' + esc(r.id) + '">อนุมัติ</button> <button class="ghost" data-act="reject" data-id="' + esc(r.id) + '">ไม่อนุมัติ</button>' : '') + '</td>';
-    return '<tr class="' + (meta.canWrite && key !== 'audit_log' && key !== 'payee_account_changes' ? 'clickable' : '') + '" data-id="' + esc(r.id) + '">' + c.map(function (x) { return cell(x, r[x.key]); }).join('') + extra + '</tr>';
+      ? '<button class="btn small ok" data-act="approve" data-id="' + esc(r.id) + '">อนุมัติ</button> <button class="btn small no" data-act="reject" data-id="' + esc(r.id) + '">ไม่อนุมัติ</button>'
+      : r.status === 'รออนุมัติ' ? '<span class="handoff">ส่ง → รออนุมัติ</span>' : '') + '</td>';
+    var cls = (clickable ? 'clickable ' : '') + (r.is_mine ? 'mine' : '');
+    return '<tr class="' + cls + '" data-id="' + esc(r.id) + '">' + c.map(function (x) { return cell(x, r[x.key], r); }).join('') + extra + '</tr>';
   }).join('');
-  return '<div class="tablewrap"><table>' + head + (body || '<tr><td colspan="99" class="note">ยังไม่มีรายการ</td></tr>') + '</table></div>';
+  $('tbl').innerHTML = '<div class="tablewrap"><table>' + head + '<tbody>' + (body || '<tr><td colspan="99" class="empty">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีรายการ') + '</td></tr>') + '</tbody></table></div>';
 }
 
 function settingsTable(rows) {
-  return '<p class="note">ค่าที่มีป้าย "รอยืนยัน" คือค่าที่ตั้งไว้ก่อน ยังรอคำตอบจากโรงเรียน · ยอดเงินในตั้งค่าเป็นสตางค์</p>' +
-    '<div class="tablewrap"><table><tr><th>ค่า</th><th>ค่าปัจจุบัน</th><th>สถานะ</th></tr>' + rows.map(function (s) {
-      return '<tr class="' + (tableMeta('settings').canWrite ? 'clickable' : '') + '" data-id="' + esc(s.key) + '"><td>' + esc(s.label) + '<br><span class="note">' + esc(s.key) + '</span></td><td><code>' + esc(JSON.stringify(s.value)) + '</code></td><td>' + (s.pending ? '<span class="pill wait">รอยืนยัน · ' + esc(s.pending) + '</span>' : '') + '</td></tr>';
-    }).join('') + '</table></div>';
+  var can = tableMeta('settings').canWrite;
+  return '<div class="tablewrap"><table><thead><tr><th>ค่าตั้ง</th><th>ค่าปัจจุบัน</th><th>สถานะ</th></tr></thead><tbody>' + rows.map(function (s) {
+    return '<tr class="' + (can ? 'clickable' : '') + '" data-id="' + esc(s.key) + '"><td class="wrap"><b>' + esc(s.label) + '</b><br><span class="note">' + esc(s.key) + '</span></td><td class="wrap"><code>' + esc(JSON.stringify(s.value)) + '</code></td><td>' + (s.pending ? '<span class="pill wait">รอยืนยัน · ' + esc(s.pending) + '</span>' : '<span class="pill ok">ใช้งาน</span>') + '</td></tr>';
+  }).join('') + '</tbody></table></div>';
 }
 
-// ---------- ฟอร์ม ----------
-async function refOptions(table) {
-  if (!rowsCache[table]) { var r = await call('list', { table: table }); rowsCache[table] = r.ok ? r.data : []; }
-  return rowsCache[table].map(function (x) { return { v: x.id, t: [x.account_no, x.type, x.fund_group, x.name].filter(Boolean).join(' · ') }; });
+/* ================= ฟอร์ม ================= */
+async function refOptions(table, key) {
+  var rows = await load(table);
+  return rows.filter(function (x) { return x.active !== false; }).map(function (x) { return { v: x[key || 'id'], t: [x.fund_code, x.account_no, x.type, x.fund_group, x.name].filter(Boolean).join(' · ') }; });
 }
-
 async function fieldHtml(col, val) {
-  var id = 'f_' + col.key, v = val == null ? (col.default != null ? col.default : '') : val;
-  var inner;
-  if (col.type === 'bool') inner = '<label class="checks"><label><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> ใช่</label></label>';
-  else if (col.type === 'list') inner = '<div class="checks" id="' + id + '">' + Object.keys(ME.roles).map(function (k) { return '<label><input type="checkbox" value="' + k + '"' + ((v || []).indexOf(k) >= 0 ? ' checked' : '') + '> ' + esc(ME.roles[k]) + '</label>'; }).join('') + '</div>';
+  var id = 'f_' + col.key, v = val == null ? (col.default != null ? col.default : '') : val, inner, hint = '';
+  if (col.type === 'bool') inner = '<div class="checks"><label><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> ใช่</label></div>';
+  else if (col.itemType === 'email') { inner = '<textarea id="' + id + '" rows="2" placeholder="เช่น somchai, malee@kwc.ac.th">' + esc((v || []).join(', ')) + '</textarea>'; hint = 'คั่นด้วยจุลภาคหรือขึ้นบรรทัดใหม่ · พิมพ์แค่ชื่อหน้า @ ได้'; }
+  else if (col.type === 'list') inner = '<div class="checks" id="' + id + '">' + Object.keys(ME.roles).map(function (k) { return '<label><input type="checkbox" value="' + k + '"' + ((v || []).indexOf(k) >= 0 ? ' checked' : '') + '> ' + roleTag(k) + '</label>'; }).join('') + '</div>';
   else if (col.type === 'enum') {
     var opts = col.optionsSetting ? ME.settings[col.optionsSetting] : col.options;
     inner = '<select id="' + id + '"><option value="">— เลือก —</option>' + opts.filter(Boolean).map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
   } else if (col.ref) {
-    var ro = await refOptions(col.ref);
+    var ro = await refOptions(col.ref, col.refKey);
     inner = '<select id="' + id + '"><option value="">— เลือก —</option>' + ro.map(function (o) { return '<option value="' + esc(o.v) + '"' + (o.v === v ? ' selected' : '') + '>' + esc(o.t) + '</option>'; }).join('') + '</select>';
   } else {
-    inner = '<input type="text" id="' + id + '" value="' + esc(col.type === 'money' ? money(v) : v) + '"' + (col.type === 'money' ? ' inputmode="decimal" placeholder="บาท เช่น 1,250.50"' : col.type === 'date' ? ' placeholder="YYYY-MM-DD"' : '') + '>';
+    inner = '<input type="text" id="' + id + '" value="' + esc(col.type === 'money' ? money(v) : v) + '"' + (col.type === 'money' ? ' inputmode="decimal" placeholder="บาท เช่น 12,500.50"' : col.type === 'date' ? ' placeholder="YYYY-MM-DD"' : '') + '>';
   }
-  return '<div class="field" data-key="' + col.key + '"><label for="' + id + '">' + esc(col.label || col.key) + (col.required ? ' *' : '') + '</label>' + inner + '<div class="err"></div></div>';
+  return '<div class="field" data-key="' + col.key + '"><label for="' + id + '">' + esc(col.label || col.key) + (col.required ? ' <span style="color:var(--bad)">*</span>' : '') + '</label>' + inner + (hint ? '<div class="hint">' + hint + '</div>' : '') + '<div class="err"></div></div>';
 }
-
 function readField(col) {
-  var el = document.getElementById('f_' + col.key);
+  var el = $('f_' + col.key);
   if (col.type === 'bool') return el.checked;
+  if (col.itemType === 'email') return el.value.split(/[\s,;]+/).filter(Boolean).map(function (e) { return e.indexOf('@') >= 0 ? e : e + '@' + (ME.settings.allowed_email_domain || 'kwc.ac.th'); });
   if (col.type === 'list') return [].map.call(el.querySelectorAll('input:checked'), function (x) { return x.value; });
   return el.value;
 }
-
 function showErrors(form, r) {
   [].forEach.call(form.querySelectorAll('.field'), function (f) { f.classList.remove('bad'); f.querySelector('.err').textContent = ''; });
-  var top = form.querySelector('.formmsg');
-  top.innerHTML = '';
+  var top = form.querySelector('.formmsg'); top.innerHTML = '';
   var shown = false;
   (r.errors || []).forEach(function (e) {
     var f = form.querySelector('.field[data-key="' + e.field + '"]');
     if (f) { f.classList.add('bad'); f.querySelector('.err').textContent = e.message; shown = true; }
   });
-  if (!shown || !r.errors) top.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>';
+  if (!shown) top.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>';
 }
-
-async function openDialog(title, fieldsHtml, onSubmit) {
-  var form = document.getElementById('dlgForm');
-  form.innerHTML = '<h3>' + esc(title) + '</h3><div class="formmsg"></div>' + fieldsHtml +
-    '<div class="actions"><button type="button" class="ghost" id="dlgCancel">ยกเลิก</button><button type="submit" class="primary">บันทึก</button></div>';
-  var dlg = document.getElementById('dlg');
-  document.getElementById('dlgCancel').onclick = function () { dlg.close(); };
+async function openDialog(title, role, color, fieldsHtml, onSubmit) {
+  var form = $('dlgForm');
+  $('dlgNode').style.setProperty('--bar', 'var(' + color + ')');
+  form.innerHTML = '<div class="role">' + esc(role) + '</div><h3 style="margin:0 0 12px;font-size:20px">' + esc(title) + '</h3><div class="formmsg"></div>' + fieldsHtml +
+    '<div class="actions"><button type="button" class="btn" id="dlgCancel">ยกเลิก</button><button type="submit" class="btn primary" id="dlgOk">บันทึก</button></div>';
+  var dlg = $('dlg');
+  $('dlgCancel').onclick = function () { dlg.close(); };
   form.onsubmit = async function (e) {
     e.preventDefault();
+    $('dlgOk').disabled = true;
     var r = await onSubmit();
-    if (r.ok) { dlg.close(); show(current, 'บันทึกแล้ว'); } else showErrors(form, r);
+    $('dlgOk').disabled = false;
+    if (r.ok) { dlg.close(); cache = {}; show(current, 'บันทึกแล้ว'); } else showErrors(form, r);
   };
   dlg.showModal();
+  var first = form.querySelector('input,select,textarea'); if (first) first.focus();
 }
-
-var reasonField = '<div class="field" data-key="reason"><label for="f_reason">เหตุผลที่แก้ไข *</label><input type="text" id="f_reason"><div class="err"></div></div>';
+var reasonField = '<div class="field" data-key="reason"><label for="f_reason">เหตุผลที่แก้ไข <span style="color:var(--bad)">*</span></label><input type="text" id="f_reason"><div class="hint">บันทึกไว้ในประวัติการแก้ไข</div><div class="err"></div></div>';
 
 async function openForm(key, id) {
-  var meta = tableMeta(key);
-  if (!meta.canWrite) return;
-  var row = id ? rowsCache[key].filter(function (r) { return r.id === id; })[0] : {};
+  var meta = tableMeta(key); if (!meta.canWrite) return;
+  var row = id ? cache[key].filter(function (r) { return r.id === id; })[0] : {};
   var editable = ME.schema[key].columns.filter(function (c) { return c.type !== 'id' && !c.readonly; });
   var html = '';
   for (var i = 0; i < editable.length; i++) html += await fieldHtml(editable[i], row[editable[i].key]);
   if (key === 'payees') html += '<p class="note">เลขบัญชีแก้ที่ปุ่ม "ขอเปลี่ยนบัญชี" ต้องมีผู้อนุมัติ</p>';
-  await openDialog((id ? 'แก้ไข' : 'เพิ่ม') + meta.label, html + (id ? reasonField : ''), function () {
-    var rec = {};
-    editable.forEach(function (c) { rec[c.key] = readField(c); });
-    return id ? call('update', { table: key, id: id, record: rec, reason: document.getElementById('f_reason').value })
-      : call('create', { table: key, record: rec });
+  await openDialog((id ? 'แก้ไข' : 'เพิ่ม') + meta.label, id ? 'แก้ไขรายการ' : 'รายการใหม่', OWNER_COLOR[key] || '--r-system', html + (id ? reasonField : ''), function () {
+    var rec = {}; editable.forEach(function (c) { rec[c.key] = readField(c); });
+    return id ? call('update', { table: key, id: id, record: rec, reason: $('f_reason').value }) : call('create', { table: key, record: rec });
   });
 }
-
 async function openSetting(key) {
-  var s = rowsCache.settings.filter(function (x) { return x.key === key; })[0];
-  var html = '<p class="note">' + esc(s.label) + ' (' + esc(key) + ') · ใส่ค่าแบบ JSON เช่น ["KTB","เช็ค"] หรือ 30</p>' +
-    '<div class="field" data-key="value"><label for="f_value">ค่าใหม่ *</label><textarea id="f_value" rows="3">' + esc(JSON.stringify(s.value)) + '</textarea><div class="err"></div></div>' + reasonField;
-  await openDialog('แก้ค่าตั้ง', html, function () {
-    return call('settings.update', { key: key, value: document.getElementById('f_value').value, reason: document.getElementById('f_reason').value });
+  var s = cache.settings.filter(function (x) { return x.key === key; })[0];
+  var html = '<p class="note">' + esc(key) + ' · ใส่ค่าแบบ JSON เช่น ["KTB","เช็ค"] หรือ 30</p>' +
+    '<div class="field" data-key="value"><label for="f_value">ค่าใหม่ <span style="color:var(--bad)">*</span></label><textarea id="f_value" rows="3">' + esc(JSON.stringify(s.value)) + '</textarea><div class="err"></div></div>' + reasonField;
+  await openDialog(s.label, 'แก้ค่าตั้ง', '--r-admin', html, function () {
+    return call('settings.update', { key: key, value: $('f_value').value, reason: $('f_reason').value });
   });
 }
-
 async function rowAction(act, id) {
   if (act === 'reqacct') {
-    var html = '<div class="field" data-key="bank"><label for="f_bank">ธนาคาร *</label><input type="text" id="f_bank"><div class="err"></div></div>' +
+    var p = cache.payees.filter(function (x) { return x.id === id; })[0];
+    var html = '<p class="note">' + esc(p.name) + (p.account_no ? ' · บัญชีเดิม ' + esc(p.bank) + ' ' + esc(p.account_no) : ' · ยังไม่มีเลขบัญชี') + '</p>' +
+      '<div class="field" data-key="bank"><label for="f_bank">ธนาคาร *</label><input type="text" id="f_bank"><div class="err"></div></div>' +
       '<div class="field" data-key="account_no"><label for="f_acct">เลขที่บัญชีใหม่ *</label><input type="text" id="f_acct" inputmode="numeric"><div class="err"></div></div>' +
       '<div class="field" data-key="reason"><label for="f_reason">เหตุผล/หลักฐาน *</label><input type="text" id="f_reason"><div class="err"></div></div>' +
-      '<p class="note">คำขอนี้ต้องมีผู้อนุมัติที่ไม่ใช่คุณ จึงจะมีผล</p>';
-    return openDialog('ขอเปลี่ยนบัญชีผู้รับเงิน', html, function () {
-      return call('payees.requestAccountChange', { payee_id: id, bank: document.getElementById('f_bank').value, account_no: document.getElementById('f_acct').value, reason: document.getElementById('f_reason').value });
+      '<div class="flow"><span class="handoff">ส่ง → รออนุมัติ</span><span class="note">มีผลเมื่อผู้อนุมัติที่ไม่ใช่คุณกดอนุมัติ</span></div>';
+    return openDialog('ขอเปลี่ยนบัญชีผู้รับเงิน', 'การเงิน', '--r-finance', html, function () {
+      return call('payees.requestAccountChange', { payee_id: id, bank: $('f_bank').value, account_no: $('f_acct').value, reason: $('f_reason').value });
     });
   }
   if (act === 'approve') {
-    if (!confirm('อนุมัติการเปลี่ยนบัญชีนี้?')) return;
-    var r = await call('payees.approveAccountChange', { id: id });
-    return r.ok ? show(current, 'อนุมัติแล้ว') : alert(r.error);
+    var c = cache.payee_account_changes.filter(function (x) { return x.id === id; })[0];
+    return openDialog('อนุมัติการเปลี่ยนบัญชี', 'ผู้อนุมัติ', '--r-review',
+      '<div class="node decide" style="--bar:var(--decide-line);margin-bottom:8px"><div class="d">บัญชีเดิม: ' + esc(c.old_bank) + ' ' + esc(c.old_account_no || '—') + '</div><div class="t">บัญชีใหม่: ' + esc(c.new_bank) + ' ' + esc(c.new_account_no) + '</div><div class="d">เหตุผล: ' + esc(c.reason) + ' · ยื่นโดย ' + esc(c.requested_by) + '</div></div>',
+      function () { return call('payees.approveAccountChange', { id: id }); });
   }
   if (act === 'reject') {
-    return openDialog('ไม่อนุมัติคำขอ', '<div class="field" data-key="reason"><label for="f_reason">เหตุผล *</label><input type="text" id="f_reason"><div class="err"></div></div>', function () {
-      return call('payees.rejectAccountChange', { id: id, reason: document.getElementById('f_reason').value });
+    return openDialog('ไม่อนุมัติคำขอ', 'ผู้อนุมัติ', '--r-review', '<div class="field" data-key="reason"><label for="f_reason">เหตุผล *</label><input type="text" id="f_reason"><div class="err"></div></div>', function () {
+      return call('payees.rejectAccountChange', { id: id, reason: $('f_reason').value });
     });
   }
 }
 
-boot().catch(function (e) { document.getElementById('main').innerHTML = '<div class="msg bad">' + esc(e.message || e) + '</div>'; });
+boot().catch(function (e) { showLogin(e.message || String(e)); });
 </script>
 </body>
 </html>

@@ -89,9 +89,15 @@ test('ตารางรายการค่าใช้จ่ายที่�
   assert.ok(admin.fund_allowed_expense.create({ fund_code: 'บกศ. ง/1', expense_category: 'ค่าจ้าง' }));
 });
 
-test('ทุกคนที่ใช้งานอยู่อ่านข้อมูลหลักได้ แต่ผู้ตรวจสอบแก้ไม่ได้', () => {
+test('บุคลากรฝ่ายแผนฯ อ่านข้อมูลหลักได้ · ครูอ่านไม่ได้ · ผู้ตรวจสอบแก้ไม่ได้', () => {
   const env = setup();
   seedBankAndFund(env);
-  assert.equal(env.as('teacher').funds.list().length, 1);
+  assert.equal(env.as('auditor').funds.list().length, 1);
+  assert.equal(env.as('finance').funds.list().length, 1);
+  for (const t of ['funds', 'bank_accounts', 'subfunds', 'cheque_books', 'fund_allowed_expense']) {
+    assert.throws(() => env.as('teacher')[t].list(), PermissionError, t);
+  }
+  assert.throws(() => env.as('teacher').payees.list(), PermissionError);
+  assert.throws(() => env.as('teacher').settings.list(), PermissionError);
   assert.throws(() => env.as('auditor').funds.create({ fund_code: 'z', name: 'z', fund_group: 'บกศ.', bank_account_id: 'x' }), PermissionError);
 });

@@ -5,18 +5,20 @@ import { can, ROLES } from './core/roles.js';
 import { SETTING_SPECS } from './core/settings.js';
 
 // ใครอ่าน/เขียนตารางไหนได้ (ผ่านหน้าเว็บ)
+// ลำดับนี้ = ลำดับเมนูในหน้าเว็บ
 export const TABLE_ACCESS = {
-  users: { read: 'users.read', write: 'users.manage' },
-  settings: { read: 'any', write: 'settings.update' },
-  bank_accounts: { read: 'any', write: 'bank_accounts.manage' },
-  funds: { read: 'any', write: 'funds.manage' },
-  subfunds: { read: 'any', write: 'subfunds.manage' },
-  fund_allowed_expense: { read: 'any', write: 'fund_allowed_expense.manage' },
-  payees: { read: 'any', write: 'payees.manage' },
-  payee_account_changes: { read: 'any', write: 'payees.account.request' },
   plan_projects: { read: 'any', write: 'plan_projects.manage' },
-  cheque_books: { read: 'any', write: 'cheque_books.manage' },
+  payees: { read: 'masters.read', write: 'payees.manage' },
+  payee_account_changes: { read: 'masters.read', write: 'payees.account.request' },
+  bank_accounts: { read: 'masters.read', write: 'bank_accounts.manage' },
+  cheque_books: { read: 'masters.read', write: 'cheque_books.manage' },
+  funds: { read: 'masters.read', write: 'funds.manage' },
+  subfunds: { read: 'masters.read', write: 'subfunds.manage' },
+  fund_allowed_expense: { read: 'masters.read', write: 'fund_allowed_expense.manage' },
+  users: { read: 'users.read', write: 'users.manage' },
+  settings: { read: 'masters.read', write: 'settings.update' },
   audit_log: { read: 'audit.read', write: null },
+  login_log: { read: 'audit.read', write: null },
 };
 
 const ok = (data) => ({ ok: true, data });
@@ -54,7 +56,7 @@ export function handle(app, email, action, payload = {}) {
           user: { id: ctx.user.id, name: ctx.user.name, email: ctx.user.email, roles: ctx.user.roles },
           roles: ROLES,
           today: ctx.today(),
-          settings: ctx.settings,
+          settings: can(ctx.user, 'masters.read', ctx.settings) ? ctx.settings : {},
           schema: publicSchema(app),
           tables: Object.entries(TABLE_ACCESS)
             .filter(([, a]) => can(ctx.user, a.read, ctx.settings))
@@ -64,6 +66,7 @@ export function handle(app, email, action, payload = {}) {
         needRead();
         if (table === 'users') return ok(u.users.list());
         if (table === 'audit_log') return ok(u.audit.list().slice(-500).reverse());
+        if (table === 'login_log') return ok(u.audit.logins().slice(-500).reverse());
         if (table === 'settings') return ok(u.settings.list());
         if (table === 'payee_account_changes') return ok(u.payees.listAccountChanges());
         return ok(u[table].list());
@@ -94,4 +97,25 @@ export function handle(app, email, action, payload = {}) {
     if (e instanceof ValidationError) return { ok: false, errors: e.errors, error: e.message };
     return { ok: false, error: e.message };
   }
+}
+
+/**
+ * จุดเข้าเดียวจากหน้าเว็บ: { token, action, payload } · action 'login' ไม่ต้องมี token
+ * googleEmail = บัญชี Google ที่เปิดอยู่ (ถ้า Apps Script รู้) ใช้บันทึกใน login_log เท่านั้น
+ */
+export function handleRequest({ app, auth }, req = {}, googleEmail = '') {
+  const { token, action, payload = {} } = req;
+  try {
+    if (action === 'login') {
+      const r = auth.login({ email: payload.email, password: payload.password, googleEmail });
+      return ok({ token: r.token, email: r.email });
+    }
+    if (action === 'logout') { auth.logout(token); return ok(true); }
+  } catch (e) {
+    if (e instanceof ValidationError) return { ok: false, errors: e.errors, error: e.message };
+    return { ok: false, error: e.message };
+  }
+  const email = auth.emailOf(token);
+  if (!email) return { ok: false, code: 'AUTH', error: 'กรุณาเข้าสู่ระบบ (หมดเวลาหรือยังไม่ได้ล็อกอิน)' };
+  return handle(app, email, action, payload);
 }

@@ -8,11 +8,11 @@ import { createFakeSpreadsheet } from './fakeSpreadsheet.js';
 
 // ---------- api: สิ่งที่หน้าเว็บเรียก ----------
 
-test('api: ผู้ใช้ที่ไม่อยู่ในระบบถูกปฏิเสธ', () => {
+test('api: อีเมลนอกโดเมนโรงเรียนถูกปฏิเสธ', () => {
   const { app } = setup();
-  const r = handle(app, 'stranger.test@kwc.ac.th', 'me', {});
+  const r = handle(app, 'stranger@gmail.com', 'me', {});
   assert.equal(r.ok, false);
-  assert.match(r.error, /ไม่พบผู้ใช้/);
+  assert.match(r.error, /kwc\.ac\.th/);
 });
 
 test('api: me คืนบทบาทและตารางที่อ่าน/แก้ได้', () => {

@@ -16,6 +16,7 @@ export function updateSetting(ctx, key, value, reason) {
 }
 
 export function listSettings(ctx) {
+  requirePermission(ctx, 'masters.read');
   const s = ctx.settings;
   return Object.entries(SETTING_SPECS).map(([key, spec]) => ({ key, label: spec.label, value: s[key], pending: spec.pending || '' }));
 }

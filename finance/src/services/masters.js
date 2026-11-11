@@ -39,6 +39,10 @@ const RULES = {
     if (out.fund_code && !findFund(ctx, out.fund_code)) c.add('fund_code', 'ไม่พบรหัสเงินนี้');
   },
   plan_projects(ctx, out, c) {
+    const domain = `@${ctx.settings.allowed_email_domain}`;
+    out.owner_emails = [...new Set(out.owner_emails.map((e) => e.trim().toLowerCase()).filter(Boolean))];
+    const bad = out.owner_emails.filter((e) => !e.endsWith(domain) || e.length <= domain.length);
+    if (bad.length) c.add('owner_emails', `ผู้รับผิดชอบต้องเป็นอีเมล ${domain}: ${bad.join(', ')}`);
     if (out.fund_code && !findFund(ctx, out.fund_code)) c.add('fund_code', 'ไม่พบรหัสเงินนี้');
     if (Number.isInteger(out.budget) && out.budget <= 0) c.add('budget', 'วงเงินต้องมากกว่า 0');
   },
@@ -73,7 +77,7 @@ const VIEWS = {
   plan_projects(ctx, p) {
     // ขั้น 3–4 จะคำนวณยอดผูกพัน/จ่ายจริงจากรหัสอนุมัติและ ledger
     const committed = 0, spent = 0;
-    return { ...p, committed, spent, remaining: p.budget - committed - spent };
+    return { ...p, committed, spent, remaining: p.budget - committed - spent, is_mine: (p.owner_emails || []).includes(ctx.user.email) };
   },
 };
 
@@ -85,6 +89,10 @@ function prepare(ctx, table, rec, selfId) {
   if (table === 'plan_projects' && !selfId) rec.fiscal_year = fiscalYearOf(ctx.today(), ctx.settings.fiscal_year_start_month);
   return validateWith(ctx, table, rec, (out, c) => RULES[table](ctx, out, c, selfId));
 }
+
+// ใครอ่านตารางไหนได้ · โครงการตามแผนทุกคนดูได้ (ครูดูเพื่อรู้ว่าโครงการไหนเป็นของตน)
+const READ = { plan_projects: 'any' };
+export const readPermissionOf = (table) => READ[table] || 'masters.read';
 
 export function masterService(table) {
   const view = (ctx, r) => (VIEWS[table] ? VIEWS[table](ctx, r) : r);
@@ -101,8 +109,8 @@ export function masterService(table) {
       const { created_by, created_at, updated_at, ...plain } = getOrFail(ctx, table, id);
       return view(ctx, ctx.store.update(ctx.user, table, id, prepare(ctx, table, { ...plain, ...patch }, id), { reason: why }));
     },
-    list: (ctx) => ctx.store.list(table).map((r) => view(ctx, r)),
-    get: (ctx, id) => view(ctx, getOrFail(ctx, table, id)),
+    list: (ctx) => { requirePermission(ctx, readPermissionOf(table)); return ctx.store.list(table).map((r) => view(ctx, r)); },
+    get: (ctx, id) => { requirePermission(ctx, readPermissionOf(table)); return view(ctx, getOrFail(ctx, table, id)); },
   };
 }
 

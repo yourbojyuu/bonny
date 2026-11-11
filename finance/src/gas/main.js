@@ -1,9 +1,10 @@
 // จุดเข้า Apps Script · ใช้ได้เฉพาะใน Google (SpreadsheetApp, Session, ...) ไม่มี test บน Node
-// web app ตั้งให้ execute as owner + เข้าได้เฉพาะในโดเมน (appsscript.json)
+// web app ตั้งให้ execute as owner + เข้าได้เฉพาะในโดเมน (appsscript.json) + ล็อกอินด้วยรหัสผ่านกลางอีกชั้น
 // ผู้ใช้จึงแก้ชีตตรงไม่ได้ (ชีตถูก protect ให้เจ้าของคนเดียว) ต้องเขียนผ่านระบบเท่านั้น
-/* global SpreadsheetApp, LockService, Utilities, Session, HtmlService, PropertiesService */
+/* global SpreadsheetApp, LockService, Utilities, Session, HtmlService, PropertiesService, CacheService */
 import { createApp } from '../app.js';
-import { handle } from '../api.js';
+import { handleRequest } from '../api.js';
+import { createAuth, makePasswordVerifier, hashPassword } from '../services/auth.js';
 import { TABLES } from '../core/schema.js';
 import { createSheetsRepo } from '../data/sheetsRepo.js';
 
@@ -25,8 +26,35 @@ function makeRepo(ss) {
   });
 }
 
+const CLOCK = { now: () => new Date() };
+
 function makeApp() {
-  return createApp({ repo: makeRepo(openSpreadsheet()), clock: { now: () => new Date() } });
+  return createApp({ repo: makeRepo(openSpreadsheet()), clock: CLOCK });
+}
+
+function sha256(text) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8)
+    .map((b) => ((b + 256) % 256).toString(16).padStart(2, '0')).join('');
+}
+
+// session เก็บใน CacheService (อายุสูงสุด 6 ชม. ตรงกับ SESSION_TTL_SEC)
+const cacheSessions = () => {
+  const c = CacheService.getScriptCache();
+  return { get: (k) => c.get(k), put: (k, v, ttl) => c.put(k, String(v), ttl), remove: (k) => c.remove(k) };
+};
+
+function makeAuth(app) {
+  return createAuth({
+    app,
+    sessions: cacheSessions(),
+    clock: CLOCK,
+    verifyPassword: makePasswordVerifier({
+      salt: props().getProperty('LOGIN_PASSWORD_SALT'),
+      hash: props().getProperty('LOGIN_PASSWORD_HASH'),
+      sha256,
+    }),
+    newToken: () => Utilities.getUuid() + Utilities.getUuid(),
+  });
 }
 
 export function doGet() {
@@ -35,10 +63,29 @@ export function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-/** หน้าเว็บเรียกผ่าน google.script.run.api(action, payload) · อีเมลมาจาก Google ไม่รับจากหน้าเว็บ */
-export function api(action, payload) {
-  const email = Session.getActiveUser().getEmail();
-  return JSON.parse(JSON.stringify(handle(makeApp(), email, action, payload || {})));
+/**
+ * หน้าเว็บเรียกผ่าน google.script.run.api({ token, action, payload })
+ * ตัวตนมาจาก token ที่ได้ตอนล็อกอิน · บัญชี Google ที่เปิดอยู่ (ถ้ารู้) ใช้บันทึกใน login_log เท่านั้น
+ */
+export function api(req) {
+  const app = makeApp();
+  let google = '';
+  try { google = Session.getActiveUser().getEmail(); } catch (e) { google = ''; }
+  return JSON.parse(JSON.stringify(handleRequest({ app, auth: makeAuth(app) }, req || {}, google)));
+}
+
+/**
+ * ตั้ง/เปลี่ยนรหัสผ่านกลาง: ใส่ Script Property LOGIN_PASSWORD_NEW แล้วรันฟังก์ชันนี้จาก editor
+ * ระบบเก็บเป็น hash + salt แล้วลบรหัสตัวจริงออกจาก Script Properties ทันที
+ */
+export function setLoginPassword() {
+  const p = props();
+  const pw = p.getProperty('LOGIN_PASSWORD_NEW');
+  if (!pw) throw new Error('ใส่ Script Property LOGIN_PASSWORD_NEW ก่อน');
+  const salt = Utilities.getUuid();
+  p.setProperties({ LOGIN_PASSWORD_SALT: salt, LOGIN_PASSWORD_HASH: hashPassword(sha256, salt, pw) });
+  p.deleteProperty('LOGIN_PASSWORD_NEW');
+  return 'ตั้งรหัสผ่านแล้ว (เก็บเป็น hash)';
 }
 
 /**

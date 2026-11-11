@@ -40,7 +40,11 @@ export function roleConflicts(roles) {
 }
 
 // การกระทำ → บทบาทที่ทำได้ · ค่าเป็น string = ดึงรายการบทบาทจาก settings
+// ครูทั่วไป (ไม่มีชื่อในตารางผู้ใช้) ได้บทบาท requester อย่างเดียว · ข้อมูลหลักอ่านได้เฉพาะบุคลากรที่ได้รับแต่งตั้ง
+export const STAFF_ROLES = Object.keys(ROLES).filter((r) => r !== 'requester');
+
 export const PERMISSIONS = {
+  'masters.read': STAFF_ROLES,
   'users.read': ['admin', 'auditor'],
   'users.manage': ['admin'],
   'settings.update': ['admin'],

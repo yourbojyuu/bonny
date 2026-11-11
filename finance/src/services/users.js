@@ -37,13 +37,23 @@ export function listUsers(ctx) {
   return ctx.store.list('users');
 }
 
-/** หาผู้ใช้จากอีเมลที่ Google ยืนยันแล้ว · ไม่พบหรือปิดใช้งาน = เข้าไม่ได้ */
-export function resolveUser(store, email) {
+/**
+ * หาผู้ใช้จากอีเมลที่ล็อกอินแล้ว
+ * - มีชื่อในตารางผู้ใช้ → ใช้บทบาทตามที่ตั้ง (ปิดใช้งาน = เข้าไม่ได้ ไม่ตกไปเป็นครู)
+ * - ไม่มีชื่อ แต่เป็นอีเมลโรงเรียน → "ครูผู้ขอ" (ไม่บันทึกลงตารางผู้ใช้)
+ */
+export function resolveUser(store, email, settings) {
   const e = String(email || '').trim().toLowerCase();
-  const u = e && store.find('users', (x) => x.email.toLowerCase() === e)[0];
-  if (!u) throw new PermissionError(`ไม่พบผู้ใช้ ${email || '(ไม่ทราบอีเมล)'} ในระบบ ติดต่อผู้ดูแลระบบ`);
-  if (!u.active) throw new PermissionError('บัญชีนี้ถูกปิดใช้งาน');
-  return u;
+  const all = store.list('users');
+  if (!all.length) throw new PermissionError('ระบบยังไม่ได้ตั้งผู้ดูแลระบบ');
+  const u = e && all.find((x) => x.email.toLowerCase() === e);
+  if (u) {
+    if (!u.active) throw new PermissionError('บัญชีนี้ถูกปิดใช้งาน ติดต่อผู้ดูแลระบบ');
+    return u;
+  }
+  const domain = `@${settings.allowed_email_domain}`;
+  if (!e.endsWith(domain) || e.length <= domain.length) throw new PermissionError(`เข้าได้เฉพาะอีเมล ${domain}`);
+  return { id: `teacher:${e}`, name: e.slice(0, -domain.length), email: e, roles: ['requester'], appointment_ref: '', active: true, virtual: true };
 }
 
 /** ตั้งผู้ดูแลระบบคนแรก ทำได้ครั้งเดียวตอนยังไม่มีผู้ใช้ */

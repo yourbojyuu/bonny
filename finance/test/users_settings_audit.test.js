@@ -63,7 +63,7 @@ test('ปิดบัญชีผู้ใช้แล้วเข้าระ�
   const t = app.store.find('users', (u) => u.email === EMAILS.teacher)[0];
   admin.users.update(t.id, { active: false }, 'ย้ายโรงเรียน');
   assert.throws(() => app.asUser(EMAILS.teacher), PermissionError);
-  assert.throws(() => app.asUser('nobody.test@kwc.ac.th'), PermissionError);
+  assert.throws(() => app.asUser('nobody@gmail.com'), PermissionError);
   assert.equal(admin.users.delete, undefined);
   assert.equal(app.store.delete, undefined);
 });

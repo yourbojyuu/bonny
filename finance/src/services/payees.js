@@ -79,7 +79,20 @@ export function rejectAccountChange(ctx, reqId, reason) {
   return decide(ctx, reqId, 'reject', why);
 }
 
-export const listAccountChanges = (ctx) => ctx.store.list('payee_account_changes').map(withStatus);
+export function listAccountChanges(ctx) {
+  requirePermission(ctx, 'masters.read');
+  return ctx.store.list('payee_account_changes').map(withStatus);
+}
+
+export function listPayees(ctx) {
+  requirePermission(ctx, 'masters.read');
+  return ctx.store.list('payees');
+}
+
+export function getPayee(ctx, id) {
+  requirePermission(ctx, 'masters.read');
+  return getOrFail(ctx, 'payees', id, 'ผู้รับเงิน');
+}
 
 /** บัญชีที่ถูกแก้ภายใน N วัน → ขึ้นธงทุกครั้งที่จ่าย (ใช้ในขั้น 4) */
 export function isAccountRecentlyChanged(payee, today, days) {
