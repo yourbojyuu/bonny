@@ -57,6 +57,7 @@ const CALLS = {
   bank: ['reconcile', 'register', 'signMonth'],
   daily: ['open', 'receiveCount', 'recordCount', 'explainDiff', 'sign', 'sendToDirector', 'receiveBack', 'close', 'report'],
   reports: ['executive', 'planSummary', 'yearEnd'],
+  print: ['render'],
   migrate: ['payees', 'packages', 'opening', 'loans', 'audit'],
   receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
   packages: ['create'],

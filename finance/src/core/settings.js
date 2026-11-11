@@ -7,6 +7,8 @@ const isInt = (v) => Number.isInteger(v);
 
 export const SETTING_SPECS = {
   allowed_email_domain: { label: 'โดเมนอีเมลที่เข้าระบบได้', default: 'kwc.ac.th', check: (v) => isStr(v) && /^[a-z0-9.-]+$/.test(v) },
+  school_name: { label: 'ชื่อโรงเรียนในหัวเอกสาร', default: 'โรงเรียนกาวิละวิทยาลัย', check: (v) => isStr(v) && v.trim() !== '' },
+  director_name: { label: 'ชื่อผู้อำนวยการในช่องลงนาม (เว้นว่างได้)', default: '', check: isStr },
   fiscal_year_start_month: { label: 'เดือนแรกของปีงบ', default: 10, check: (v) => isInt(v) && v >= 1 && v <= 12 },
 
   doc_prefix_approval: { label: 'ตัวนำเลขรหัสอนุมัติ', default: 'อม.', pending: 'HANDOFF 14.4 [รอยืนยัน]', check: isStr },

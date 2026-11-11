@@ -195,6 +195,11 @@
   .login h2 { font-size:24px; margin:0 0 4px; }
   .login .foot { margin-top:18px; font-size:13.5px; color:var(--muted); }
 
+  /* ---------- มุมมองพิมพ์ ---------- */
+  #printArea { display:none; }
+  body.printing #printArea { display:block; position:fixed; inset:0; background:#fff; z-index:200; overflow:auto; padding:16px; }
+  .printbar { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--rule); padding:8px 0; margin-bottom:12px; display:flex; gap:10px; align-items:center; z-index:1; }
+  @media print { body.printing #appView, body.printing #loginView, body.printing dialog { display:none !important; } body.printing #printArea { position:static; padding:0; overflow:visible; } .printbar { display:none !important; } }
   @media (max-width: 980px) { .chart { grid-template-columns:1fr; } .login { grid-template-columns:1fr; } .login .art { display:none; } }
   @media (max-width: 860px) {
     .shell { grid-template-columns:minmax(0, 1fr); }
@@ -270,6 +275,8 @@
   <div id="cmdEmpty" class="hidden"></div>
   <div id="cmdHint">ลูกศรขึ้นลงเพื่อเลือก Enter เพื่อเปิด Esc เพื่อปิด</div>
 </div></dialog>
+
+<div id="printArea" aria-label="ตัวอย่างก่อนพิมพ์"></div>
 
 <dialog id="dlg"><div class="node" id="dlgNode"><form method="dialog" id="dlgForm"></form></div></dialog>
 
@@ -736,6 +743,7 @@ function renderTable(key, flash) {
   drawRows(key);
   if (key === 'ledger') taxBox();
   if (key === 'receipts') rcSummaryBox();
+  if (key === 'cheques') chequeRegButton();
   $('tbl').onclick = function (e) {
     var btn = e.target.closest('button[data-act]');
     if (btn) { e.stopPropagation(); return rowAction(btn.dataset.act, btn.dataset.id); }
@@ -816,9 +824,10 @@ function rowButtons(key, r) {
       if (r.status === 'การเงินรับแล้ว' && !r.route) h += btn('ar_classify', r.id, 'จำแนก 3 ทาง');
     }
     if (r.status === 'ส่งแล้ว รอแผนรับ' || r.status === 'รอ ผอ. เซ็น') h += '<span class="handoff">ส่ง → รับ</span>';
+    h += prBtn('approval', r.id);
   }
   if (key === 'daily_close') {
-    h += btn('dc_report', r.date, 'ดูรายงาน');
+    h += btn('dc_report', r.date, 'ดูรายงาน') + prBtn('daily', r.date, 'พิมพ์รายงาน');
     if (!r.locked) {
       if (hasRole(['cash_committee'])) {
         if (!r.count_received_by) h += btn('dc_receive', r.date, 'กดรับ', 'ok');
@@ -838,6 +847,7 @@ function rowButtons(key, r) {
   if (key === 'payment_lines' && hasRole(['finance']) && r.locked && r.status !== 'ทำรายการกลับ' && !r.reverses) h += btn('pl_reverse', r.id, 'ทำรายการกลับ', 'no');
   if (key === 'khb' || key === 'khj') {
     var f = r.flow || {}, t = key, mk = r.maker === me();
+    h += prBtn(key, r.id);
     if ((f.stage === 'draft' || f.stage === 'returned') && mk) h += btn('doc_submit', t + ':' + r.id, 'ส่งตรวจ', 'ok');
     if (STAGE_ROLE[f.stage] && f.phase === 'wait' && hasRole([STAGE_ROLE[f.stage]]) && !mk) h += btn('doc_receive', t + ':' + r.id, 'กดรับตรวจ', 'ok');
     if (f.phase === 'review' && f.reviewer === me()) h += btn('doc_pass', t + ':' + r.id, 'เซ็นผ่าน', 'ok') + btn('doc_return', t + ':' + r.id, 'ส่งคืน', 'no');
@@ -848,6 +858,7 @@ function rowButtons(key, r) {
     if (r.pay_method === 'เช็ค') h += btn('ck_issue', r.id, 'ออกเช็ค', 'ok');
     if (r.pay_method === 'KTB' && !(cache.ktb_batches || []).some(function (b) { return b.khj_id === r.id; })) h += btn('kt_create', r.id, 'สร้างชุดโอน KTB', 'ok');
   }
+  if (key === 'cheques' && r.status !== 'เสีย') h += prBtn('cheque', r.id, 'พิมพ์เช็ค+ใบแนบ');
   if (key === 'cheques' && hasRole(['finance'])) {
     if (r.status === 'ออกแล้ว') h += btn('ck_sign', r.id, 'ส่งลงนาม', 'ok');
     if (r.status === 'ลงนามแล้ว') h += btn('ck_recv', r.id, 'ผู้รับลงชื่อรับเช็คแล้ว', 'ok');
@@ -925,15 +936,22 @@ async function clAdd() {
   var html = fTxt('student_id', 'รหัสนักเรียน', { req: true }) + fSel('subfund_code', 'ชนิดเงินย่อย', subs.map(function (x) { return { v: x.code, t: x.code + ' ' + x.name }; }), { req: true }) + fTxt('academic_year', 'ปีการศึกษา (พ.ศ.)', { req: true, val: ME.today.slice(0, 4) * 1 + 543 }) + fTxt('term', 'ภาคเรียน', { req: true, val: '1' }) + fTxt('amount_due', 'ยอดที่ต้องเก็บ (บาท)', { req: true, money: true });
   openDialog('ตั้งยอดที่ต้องเก็บ', 'การเงิน', '--r-finance', html, 'บันทึก', function () { return svc('collectibles', 'set', [{ student_id: val('student_id'), subfund_code: val('subfund_code'), academic_year: Number(val('academic_year')), term: val('term'), amount_due: val('amount_due') }]); });
 }
+async function chequeRegButton() {
+  var accts = (await load('bank_accounts')).filter(function (a) { return a.type === 'กระแสรายวัน'; });
+  if (!accts.length) return;
+  $('tbl').insertAdjacentHTML('afterend', '<div class="toolbar" style="margin-top:14px"><select class="search" id="crAcct" style="width:300px">' + accts.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.fund_group + ' · ' + a.account_no) + '</option>'; }).join('') + '</select><button class="btn" id="prCr">พิมพ์ทะเบียนคุมเช็ค</button></div>');
+  $('prCr').onclick = function () { printDoc('cheque_register', $('crAcct').value); };
+}
 async function rcSummaryBox() {
   var ym = ME.today.slice(0, 7);
-  $('tbl').insertAdjacentHTML('afterend', '<h2 style="font-size:19px;margin:26px 0 8px">สรุปรายรับรายเดือนแยกชนิดเงินย่อย</h2><div class="toolbar"><input class="search" id="rcMonth" style="width:140px" value="' + ym + '" aria-label="เดือน"><span class="note">รูปแบบ ปี ค.ศ.-เดือน</span></div><div id="rcOut"></div>');
+  $('tbl').insertAdjacentHTML('afterend', '<h2 style="font-size:19px;margin:26px 0 8px">สรุปรายรับรายเดือนแยกชนิดเงินย่อย</h2><div class="toolbar"><input class="search" id="rcMonth" style="width:140px" value="' + ym + '" aria-label="เดือน"><span class="note">รูปแบบ ปี ค.ศ.-เดือน</span><button class="btn" id="prRc">พิมพ์สรุปรายรับ</button></div><div id="rcOut"></div>');
   var draw = async function () {
     var r = await svc('receipts', 'monthlySummary', [$('rcMonth').value]);
     if (!r.ok) { $('rcOut').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
     var rows = r.data.rows;
     $('rcOut').innerHTML = rows.length ? '<div class="register"><table><thead><tr><th>ชนิดเงินย่อย</th><th>ยอดที่ต้องเก็บ</th><th>รับเงินสด</th><th>รับโอน</th><th>รับรวม</th><th>ค้างชำระ</th><th>เก็บได้ (%)</th></tr></thead><tbody>' + rows.map(function (x) { return '<tr><td>' + esc(x.subfund_code) + ' ' + esc(x.name) + '</td><td class="num">' + (x.due == null ? '<span class="note">ไม่ตั้งยอด</span>' : money(x.due)) + '</td><td class="num">' + money(x.cash) + '</td><td class="num">' + money(x.transfer) + '</td><td class="num">' + money(x.total) + '</td><td class="num">' + (x.outstanding == null ? '' : money(x.outstanding)) + '</td><td class="num">' + (x.pct == null ? '' : x.pct + '%') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">เดือนนี้ยังไม่มีรายรับ</p>';
   };
+  $('prRc').onclick = function () { printDoc('receipts_month', $('rcMonth').value); };
   $('rcMonth').onchange = draw; draw();
 }
 async function arSubmit() {
@@ -999,17 +1017,19 @@ function voidDialog(khjId, no) {
 }
 async function taxBox() {
   var ym = ME.today.slice(0, 7);
-  $('tbl').insertAdjacentHTML('afterend', '<h2 style="font-size:19px;margin:26px 0 8px">สรุปภาษีหัก ณ ที่จ่ายรายเดือน</h2><div class="toolbar"><input class="search" id="taxMonth" style="width:140px" value="' + ym + '" aria-label="เดือน (ปี ค.ศ.-เดือน)"><span class="note">รูปแบบ ปี ค.ศ.-เดือน เช่น ' + ym + ' นับตามวันที่จ่าย</span></div><div id="taxOut"></div>');
+  $('tbl').insertAdjacentHTML('afterend', '<h2 style="font-size:19px;margin:26px 0 8px">สรุปภาษีหัก ณ ที่จ่ายรายเดือน</h2><div class="toolbar"><input class="search" id="taxMonth" style="width:140px" value="' + ym + '" aria-label="เดือน (ปี ค.ศ.-เดือน)"><span class="note">รูปแบบ ปี ค.ศ.-เดือน เช่น ' + ym + ' นับตามวันที่จ่าย</span><button class="btn" id="prTax">พิมพ์สรุปภาษี</button></div><div id="taxOut"></div>');
   var draw = async function () {
     var r = await svc('ledger', 'taxSummary', [$('taxMonth').value]);
     if (!r.ok) { $('taxOut').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
     var d = r.data;
     $('taxOut').innerHTML = d.forms.length ? '<div class="register"><table><thead><tr><th>แบบ</th><th>ผู้รับ</th><th>มูลค่า</th><th>ภาษีที่หัก</th></tr></thead><tbody>' + d.forms.map(function (f) { return f.rows.map(function (x) { return '<tr><td>' + esc(f.form) + '</td><td>' + esc(x.name) + '</td><td class="num">' + money(x.base) + '</td><td class="num">' + money(x.tax) + '</td></tr>'; }).join('') + '<tr><td colspan="2"><b>รวม ' + esc(f.form) + '</b></td><td class="num"><b>' + money(f.base) + '</b></td><td class="num"><b>' + money(f.tax) + '</b></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">เดือนนี้ยังไม่มีภาษีที่หักจากรายการที่จ่ายแล้ว</p>';
   };
+  $('prTax').onclick = function () { printDoc('tax', $('taxMonth').value); };
   $('taxMonth').onchange = draw; draw();
 }
 
 var PAY_ACT = {
+  print: function (x) { var i = x.indexOf('|'); return printDoc(x.slice(0, i), x.slice(i + 1)); },
   dc_report: async function (date) { var r = await svc('daily', 'report', [date]); if (!r.ok) return; var d = r.data; openDialog('รายงานเงินคงเหลือประจำวัน ' + thDate(date, true), 'ระบบ', '--r-system', '<div class="register"><table><thead><tr><th>ประเภทเงิน</th><th>ยกมา</th><th>รับ</th><th>จ่าย</th><th>คงเหลือ</th></tr></thead><tbody>' + d.groups.map(function (g) { return '<tr><td>' + esc(g.group) + '</td><td class="num">' + money(g.carried) + '</td><td class="num">' + money(g.in) + '</td><td class="num">' + money(g.out) + '</td><td class="num">' + money(g.balance) + '</td></tr>'; }).join('') + '<tr><td><b>รวม</b></td><td class="num"><b>' + money(d.total.carried) + '</b></td><td class="num"><b>' + money(d.total.in) + '</b></td><td class="num"><b>' + money(d.total.out) + '</b></td><td class="num"><b>' + money(d.total.balance) + '</b></td></tr></tbody></table></div><p class="note">เงินสดในระบบ ' + money(d.system_cash) + ' บาท · รับ ' + d.receipts_count + ' ใบเสร็จ · จ่าย ' + d.payments_count + ' แถว</p>', 'ปิด', function () { return Promise.resolve({ ok: true }); }); },
   dc_receive: function (d) { return run('daily', 'receiveCount', [d], 'กรรมการกดรับรายงานแล้ว'); },
   dc_count: function (d) { return openDialog('บันทึกผลตรวจนับเงินสด', 'กรรมการ', '--r-committee', fTxt('counted_cash', 'เงินสดที่นับได้ (บาท)', { req: true, money: true }) + '<p class="note">ระบบเทียบกับเงินสดในระบบให้ ไม่ตรงต้องให้การเงินบันทึกส่วนต่างพร้อมคำอธิบาย</p>', 'บันทึก', function () { return svc('daily', 'recordCount', [d, { counted_cash: val('counted_cash') }]); }); },
@@ -1100,8 +1120,9 @@ async function renderBankRegister(flash) {
   var main = $('main');
   main.innerHTML = '<h1 class="page-title">ทะเบียนเงินฝากและงบกระทบยอด</h1><p class="page-desc">' + esc(DESC.bank_register) + '</p>' + (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '') +
     '<div class="toolbar"><select class="search" id="regAcct" style="width:300px">' + accts.map(function (a) { return '<option value="' + esc(a.id) + '"' + (a.id === regAcct ? ' selected' : '') + '>' + esc(a.fund_group + ' · ' + a.type + ' · ' + a.account_no) + '</option>'; }).join('') + '</select><input class="search" id="regMonth" style="width:130px" value="' + esc(regMonth) + '" aria-label="เดือน"><span class="note">เดือน (ปี ค.ศ.-เดือน)</span><span class="grow"></span>' +
-    (hasRole(['finance']) ? '<button class="btn" id="openBal">ตั้งยอดยกมา</button>' : '') + '</div><div id="regOut"><p class="note">กำลังโหลด</p></div>';
+    (hasRole(['finance']) ? '<button class="btn" id="openBal">ตั้งยอดยกมา</button>' : '') + '<button class="btn" id="prReg">พิมพ์ทะเบียน</button></div><div id="regOut"><p class="note">กำลังโหลด</p></div>';
   $('regAcct').onchange = function () { regAcct = this.value; drawReg(); }; $('regMonth').onchange = function () { regMonth = this.value; drawReg(); };
+  $('prReg').onclick = function () { printDoc('deposit_register', { account_id: regAcct, month: regMonth }); };
   if ($('openBal')) $('openBal').onclick = function () {
     openDialog('ตั้งยอดยกมา', 'การเงิน', '--r-finance', fTxt('amount', 'ยอดยกมา (บาท)', { req: true, money: true }) + fTxt('date', 'ณ วันที่', { req: true, val: ME.today }) + '<p class="note">ใช้ตรวจกับ statement ของบัญชีที่เลือก ต้องตรงกับ statement วันเริ่มใช้ระบบ</p>', 'บันทึก', async function () {
       var r = await svc('ledger', 'opening', [{ account_id: regAcct, amount: val('amount'), date: val('date') }]); return r;
@@ -1156,10 +1177,11 @@ async function renderYearEnd() {
   var main = $('main');
   if (!r.ok) { main.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
   var d = r.data, p = d.plan;
-  main.innerHTML = '<h1 class="page-title">สิ้นปีงบ สรุปผลตามแผน</h1><p class="page-desc">' + esc(DESC.year_end) + '</p><div class="toolbar"><input class="search" id="yeFy" style="width:120px" value="' + yeFY + '" aria-label="ปีงบ พ.ศ."><span class="note">ปีงบ พ.ศ. · ' + thDate(d.from) + ' ถึง ' + thDate(d.to) + '</span></div>' +
+  main.innerHTML = '<h1 class="page-title">สิ้นปีงบ สรุปผลตามแผน</h1><p class="page-desc">' + esc(DESC.year_end) + '</p><div class="toolbar"><input class="search" id="yeFy" style="width:120px" value="' + yeFY + '" aria-label="ปีงบ พ.ศ."><span class="note">ปีงบ พ.ศ. · ' + thDate(d.from) + ' ถึง ' + thDate(d.to) + '</span><button class="btn" id="prYe">พิมพ์สรุปตามแผน</button></div>' +
     '<h2 style="font-size:19px;margin:12px 0 8px">สรุปผลการใช้เงินตามแผน</h2><div class="register"><table><thead><tr><th>โครงการ/กิจกรรม</th><th>รหัสเงิน</th><th>วงเงิน</th><th>ผูกพัน</th><th>จ่ายจริง</th><th>คงเหลือ</th><th>ใช้ไป (%)</th></tr></thead><tbody>' + (p.rows.length ? p.rows.map(function (x) { return '<tr><td class="wrap">' + esc(x.name) + '</td><td>' + esc(x.fund_code) + '</td><td class="num">' + money(x.budget) + '</td><td class="num">' + money(x.committed) + '</td><td class="num">' + money(x.spent) + '</td><td class="num">' + money(x.remaining) + '</td><td class="num">' + x.pct + '%</td></tr>'; }).join('') + '<tr><td colspan="2"><b>รวม</b></td><td class="num"><b>' + money(p.total.budget) + '</b></td><td class="num"><b>' + money(p.total.committed) + '</b></td><td class="num"><b>' + money(p.total.spent) + '</b></td><td class="num"><b>' + money(p.total.remaining) + '</b></td><td></td></tr>' : '<tr><td colspan="7" class="empty">ไม่มีโครงการในปีงบนี้</td></tr>') + '</tbody></table></div>' +
     '<h2 style="font-size:19px;margin:24px 0 8px">ยอดยกไป (= ยอดยกมาของปีถัดไป)</h2>' + (d.closing.length ? '<div class="register"><table><thead><tr><th>ประเภทเงิน</th><th>ยอดยกไป</th></tr></thead><tbody>' + d.closing.map(function (x) { return '<tr><td>' + esc(x.group) + '</td><td class="num">' + money(x.balance) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ยังไม่มียอดคงเหลือ</p>') +
     '<h2 style="font-size:19px;margin:24px 0 8px">เช็คค้างจ่ายยกข้ามปี</h2>' + (d.outstanding_cheques.length ? '<div class="register"><table><thead><tr><th>เลขเช็ค</th><th>วันที่</th><th>ผู้รับ</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>' + d.outstanding_cheques.map(function (x) { return '<tr><td>' + esc(x.cheque_no) + '</td><td>' + thDate(x.date) + '</td><td>' + esc(x.print_name) + '</td><td class="num">' + money(x.amount) + '</td><td>' + esc(x.status) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ไม่มีเช็คค้างจ่าย</p>');
+  $('prYe').onclick = function () { printDoc('plan_summary', yeFY); };
   $('yeFy').onchange = function () { yeFY = +this.value; renderYearEnd(); };
 }
 
@@ -1213,6 +1235,19 @@ function renderMigrateResult(t, d, commit) {
   }
   $('mgOut').innerHTML = h;
 }
+
+
+/* ================= พิมพ์เอกสาร ================= */
+async function printDoc(kind, arg) {
+  var r = await svc('print', 'render', [kind, arg]);
+  if (!r.ok) { alert(r.error); return; }
+  var pa = $('printArea');
+  pa.innerHTML = '<div class="printbar"><button class="btn primary" id="doPrint">พิมพ์</button><button class="btn" id="closePrint">ปิด</button><span class="note">' + esc(r.data.title) + ' · กระดาษ A4 · ถ้าไม่ขึ้นหน้าต่างพิมพ์ ให้เปิดระบบในแท็บของเบราว์เซอร์แล้วลองอีกครั้ง</span></div>' + r.data.html;
+  document.body.classList.add('printing');
+  $('doPrint').onclick = function () { window.print(); };
+  $('closePrint').onclick = function () { document.body.classList.remove('printing'); pa.innerHTML = ''; };
+}
+function prBtn(kind, arg, label) { return btn('print', kind + '|' + arg, label || 'พิมพ์'); }
 
 /* ================= ฟอร์ม ================= */
 async function refOptions(table, key) {
