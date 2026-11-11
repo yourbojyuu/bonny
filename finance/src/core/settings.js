@@ -34,6 +34,9 @@ export const SETTING_SPECS = {
 
   loan_due_days: { label: 'เงินยืมต้องส่งใช้ภายใน (วัน)', default: 30, pending: 'HANDOFF 12.11 [รอยืนยัน]', check: (v) => isInt(v) && v > 0 },
   close_code_mode: { label: 'ปิดรหัสอนุมัติ (manual = การเงินกดปิดเอง · auto = ปิดเมื่อจ่ายครบทุกแถวของรหัส)', default: 'manual', pending: 'HANDOFF 12.6 [รอยืนยัน]', check: (v) => v === 'manual' || v === 'auto' },
+  statement_codes: { label: 'รหัสรายการใน statement (deposit · ktb · interest · cheque · overdraft)', default: { deposit: ['PBSDT'], ktb: ['BPSWT'], interest: ['IIPS'], cheque: ['CWTPC', 'CWTRC', 'CBCA'], overdraft: ['OTID'] }, pending: 'HANDOFF 12.16 [รอตัวอย่าง statement แต่ละบัญชี]', check: (v) => v && typeof v === 'object' && ['deposit', 'ktb', 'interest', 'cheque', 'overdraft'].every((k) => Array.isArray(v[k])) },
+  adjustment_approver_roles: { label: 'บทบาทที่อนุมัติรายการปรับปรุง (≠ ผู้ทำ)', default: ['reviewer1', 'reviewer2', 'reviewer3'], pending: 'ขั้น 6 [รอยืนยัน]', check: isStrList },
+  deposit_match_days: { label: 'ใบนำฝากกับ statement วันที่ห่างกันได้ (วัน)', default: 3, check: (v) => isInt(v) && v >= 0 },
   review_restart: { label: 'ส่งคืนแล้วแก้ ให้เริ่มตรวจที่ (first = ชั้น 1 ใหม่ · returned = ชั้นที่ส่งคืน)', default: 'first', pending: 'HANDOFF 12.5 [รอยืนยัน]', check: (v) => v === 'first' || v === 'returned' },
   require_scan: { label: 'ต้องแนบภาพหน้าที่ ผอ. ลงนามทุกครั้ง', default: true, pending: 'HANDOFF 12.8 [รอยืนยัน]', check: (v) => typeof v === 'boolean' },
   fund_allowed_expense_mode: { label: 'กฎค่าใช้จ่ายตามประเภทเงิน', default: 'flag', check: (v) => v === 'flag' || v === 'block' },

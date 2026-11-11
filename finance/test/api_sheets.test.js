@@ -60,7 +60,7 @@ function sheetsEnv() {
 
 test('sheetsRepo: สร้างชีตพร้อมหัวคอลัมน์ทุกตาราง (1 ตาราง = 1 ชีต)', () => {
   const { ss } = sheetsEnv();
-  for (const [name, t] of Object.entries(TABLES)) {
+  for (const [name, t] of Object.entries(TABLES).filter(([, d]) => !d.virtual)) {
     assert.ok(headersOf(t).includes('id'));
     const sh = ss.getSheetByName(name);
     assert.ok(sh, name);
@@ -103,4 +103,14 @@ test('sheetsRepo: withLock ใช้ LockService และปล่อย lock �
   const repo = createSheetsRepo({ spreadsheet: createFakeSpreadsheet(), lock, tables: TABLES, newUuid: () => 'x' });
   assert.throws(() => repo.withLock(() => { throw new Error('boom'); }), /boom/);
   assert.deepEqual(calls, [['wait', 30000], ['release']]);
+});
+
+test('api call: ยอดเงินจากหน้าเว็บเป็นบาทแปลงเป็นสตางค์ครั้งเดียว (ยอดยกมา 5,000 บาท = 500,000 สตางค์)', () => {
+  const env = setup();
+  const { sav } = seedBankAndFund(env);
+  const r = handle(env.app, EMAILS.finance, 'call', { svc: 'ledger', method: 'opening', args: [{ account_id: sav.id, amount: '5,000', date: '2026-11-01' }] });
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.equal(r.data.debit, 500000);
+  const bad = handle(env.app, EMAILS.finance, 'call', { svc: 'ledger', method: 'ไม่มี', args: [] });
+  assert.equal(bad.ok, false);
 });

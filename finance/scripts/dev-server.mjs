@@ -13,7 +13,7 @@ const D = 'kwc.ac.th';
 const app = createApp({ repo: createMemoryRepo(), clock: { now: () => new Date() } });
 app.bootstrap({ name: 'ผู้ดูแล สมมติ', email: `admin@${D}`, appointment_ref: 'คำสั่งสมมติ 1/2570' });
 const admin = app.asUser(`admin@${D}`);
-const people = { finance: ['finance'], head: ['finance', 'reviewer1'], reviewer1: ['reviewer1'], reviewer2: ['reviewer2'], reviewer3: ['reviewer3'], khj: ['khj_maker'], proc: ['procurement'], plan: ['plan'], auditor: ['auditor'] };
+const people = { finance: ['finance'], head: ['finance', 'reviewer1'], reviewer1: ['reviewer1'], reviewer2: ['reviewer2'], reviewer3: ['reviewer3'], khj: ['khj_maker'], proc: ['procurement'], unit: ['unit_head'], plan: ['plan'], auditor: ['auditor'] };
 for (const [k, roles] of Object.entries(people)) admin.users.create({ name: `ผู้ใช้สมมติ ${k}`, email: `${k}@${D}`, roles, appointment_ref: `คำสั่งสมมติ ${k}` });
 const sav = admin.bank_accounts.create({ account_no: '0000000001', bank: 'ธนาคารสมมติ', branch: 'สาขาสมมติ', type: 'ออมทรัพย์', fund_group: 'บกศ.' });
 const cur = admin.bank_accounts.create({ account_no: '0000000002', bank: 'ธนาคารสมมติ', branch: 'สาขาสมมติ', type: 'กระแสรายวัน', fund_group: 'บกศ.', linked_account_id: sav.id });

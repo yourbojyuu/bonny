@@ -78,7 +78,7 @@ export function createSheetsRepo({ spreadsheet, lock, tables, newUuid, flush = (
     },
     /** สร้างชีตที่ยังไม่มี + หัวคอลัมน์ + รูปแบบข้อความ · ชีตที่มีอยู่แล้วตรวจหัวคอลัมน์ */
     ensureSheets() {
-      for (const t of Object.keys(tables)) {
+      for (const t of Object.keys(tables).filter((x) => !tables[x].virtual)) {
         let sh = spreadsheet.getSheetByName(t);
         const headers = headersOf(def(t));
         if (!sh) {

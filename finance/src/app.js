@@ -14,6 +14,7 @@ import * as cheques from './services/cheques.js';
 import * as ktb from './services/ktb.js';
 import * as ledger from './services/ledger.js';
 import * as receipts from './services/receipts.js';
+import * as bank from './services/bank.js';
 import * as users from './services/users.js';
 import * as settingsSvc from './services/settings.js';
 import * as payees from './services/payees.js';
@@ -74,7 +75,11 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
         issue: b(receipts.issue), preview: b(receipts.preview), cancel: b(receipts.cancel), nextNo: b((c, book) => { requirePermission(c, 'masters.read'); return receipts.nextNo(c, book); }),
         list: b(receipts.listReceipts), splits: b(receipts.splitsOf), monthlySummary: b(receipts.monthlySummary),
       },
-      ledger: { list: b(ledger.listLedger), balance: b(ledger.balance), taxSummary: b(ledger.taxSummary) },
+      deposits: { create: b(bank.createDeposit), undeposited: b(bank.undeposited) },
+      statements: { import: b(bank.importStatement), lines: b(bank.statementLines) },
+      adjustments: { create: b(bank.createAdjustment), approve: b(bank.approveAdjustment), list: b(bank.listAdjustments) },
+      bank: { reconcile: b(bank.reconcile), register: b(bank.register), signMonth: b(bank.signMonth) },
+      ledger: { opening: b(ledger.opening), list: b(ledger.listLedger), balance: b(ledger.balance), taxSummary: b(ledger.taxSummary) },
       workflow: {
         submit: b(review.submitForReview), receive: b(review.receiveStage), pass: b(review.passStage), returnDoc: b(review.returnStage),
         receiveSigned: b(review.receiveSigned), directorReturn: b(review.directorReturn),

@@ -17,6 +17,10 @@ export const TABLE_ACCESS = {
   cheques: { read: 'masters.read', write: null },
   ktb_batches: { read: 'masters.read', write: null },
   ledger: { read: 'masters.read', write: null },
+  bank_register: { read: 'masters.read', write: null },
+  deposit_slips: { read: 'masters.read', write: null },
+  bank_statement_lines: { read: 'masters.read', write: null },
+  adjustments: { read: 'masters.read', write: null },
   receipts: { read: 'masters.read', write: null },
   packages: { read: 'masters.read', write: null },
   collectibles: { read: 'masters.read', write: null },
@@ -42,7 +46,11 @@ const CALLS = {
   approvals: ['submit', 'resubmit', 'receive', 'returnToRequester', 'propose', 'recordDecision', 'financeReceive', 'classify', 'closeCode'],
   cheques: ['propose', 'confirm', 'voidCheque', 'register', 'sendForSignature', 'markReceived'],
   ktb: ['createBatch', 'fileContent', 'markUploaded', 'recordApproval', 'recordTxn', 'approvers'],
-  ledger: ['balance', 'taxSummary'],
+  ledger: ['balance', 'taxSummary', 'opening'],
+  deposits: ['create', 'undeposited'],
+  statements: ['import'],
+  adjustments: ['create', 'approve'],
+  bank: ['reconcile', 'register', 'signMonth'],
   receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
   packages: ['create'],
   collectibles: ['set'],
@@ -148,6 +156,10 @@ export function handle(app, email, action, payload = {}, deps = {}) {
         if (table === 'ktb_batches') return ok(u.ktb.list());
         if (table === 'ledger') return ok(u.ledger.list().slice().reverse());
         if (table === 'receipts') return ok(u.receipts.list().slice().reverse());
+        if (table === 'bank_register') return ok(u.bank_accounts.list());
+        if (table === 'deposit_slips') return ok(app.store.list('deposit_slips').slice().reverse());
+        if (table === 'bank_statement_lines') return ok(app.store.list('bank_statement_lines').slice(-1000).reverse());
+        if (table === 'adjustments') return ok(u.adjustments.list().slice().reverse());
         if (table === 'packages') return ok(u.packages.list());
         if (table === 'collectibles') return ok(u.collectibles.list());
         return ok(u[table].list());

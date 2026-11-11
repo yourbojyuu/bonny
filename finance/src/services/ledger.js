@@ -2,6 +2,9 @@
 // ภาษีที่หักไว้ยังอยู่ในบัญชีจนกว่าจะจ่ายเป็นแถว "ภาษีนำส่ง"
 import { requirePermission } from '../core/roles.js';
 import { closeIfComplete } from './approvals.js';
+import { hasRole } from './handoffs.js';
+import { fail, PermissionError } from '../core/errors.js';
+import { isValidDate } from '../core/thaidate.js';
 
 /** บันทึกว่าจ่ายแล้ว: แถวเป็น "จ่ายแล้ว" + ledger (ผู้เรียกถือ lock) */
 export function recordPaid(ctx, lines, patch = {}) {
@@ -29,7 +32,7 @@ export function balance(ctx) {
     const r = m.get(key) || { fund_code: key, debit: 0, credit: 0 };
     r.debit += e.debit; r.credit += e.credit; m.set(key, r);
   }
-  return [...m.values()].map((r) => ({ ...r, balance: r.debit - r.credit }));
+  return [...m.values()].filter((r) => r.fund_code).map((r) => ({ ...r, balance: r.debit - r.credit }));
 }
 
 /** สรุปภาษีหัก ณ ที่จ่ายรายเดือน (ตามวันที่จ่าย) แยก ภ.ง.ด.3 / 53 ต่อผู้รับ */
@@ -46,4 +49,14 @@ export function taxSummary(ctx, ym) {
     if (byPayee.size) { const rows = [...byPayee.values()]; forms.push({ form, base: rows.reduce((s, r) => s + r.base, 0), tax: rows.reduce((s, r) => s + r.tax, 0), rows }); }
   }
   return { month: ym, forms, total_tax: forms.reduce((s, f) => s + f.tax, 0) };
+}
+
+/** ยอดยกมา ณ วันเริ่มใช้ระบบ ต่อบัญชีธนาคาร (ใช้ตรวจกับ statement) · ย้ายข้อมูลขั้น 8 ใช้ต่อ */
+export function opening(ctx, { account_id, amount, date } = {}) {
+  if (!hasRole(ctx.user, 'finance')) throw new PermissionError('เฉพาะการเงินบันทึกยอดยกมา');
+  if (!account_id || !ctx.store.get('bank_accounts', account_id)) fail('account_id', 'ไม่พบบัญชีธนาคาร');
+  if (!Number.isInteger(amount)) fail('amount', 'ยอดต้องเป็นสตางค์จำนวนเต็ม');
+  if (!isValidDate(date)) fail('date', 'วันที่ไม่ถูกต้อง');
+  if (amount === 0) return null;
+  return ctx.store.insert(ctx.user, 'ledger', { date, fund_code: '', subfund_code: '', location: account_id, debit: amount > 0 ? amount : 0, credit: amount < 0 ? -amount : 0, source_type: 'opening', source_id: account_id, memo: 'ยอดยกมา' }, { reason: 'ยอดยกมาตั้งต้น' });
 }
