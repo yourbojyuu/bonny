@@ -17,6 +17,7 @@ export const TABLE_ACCESS = {
   cheques: { read: 'masters.read', write: null },
   ktb_batches: { read: 'masters.read', write: null },
   ledger: { read: 'masters.read', write: null },
+  migrate: { read: 'payees.manage', write: null },
   daily_close: { read: 'masters.read', write: null },
   executive: { read: 'masters.read', write: null },
   year_end: { read: 'masters.read', write: null },
@@ -56,6 +57,7 @@ const CALLS = {
   bank: ['reconcile', 'register', 'signMonth'],
   daily: ['open', 'receiveCount', 'recordCount', 'explainDiff', 'sign', 'sendToDirector', 'receiveBack', 'close', 'report'],
   reports: ['executive', 'planSummary', 'yearEnd'],
+  migrate: ['payees', 'packages', 'opening', 'loans', 'audit'],
   receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
   packages: ['create'],
   collectibles: ['set'],
@@ -163,7 +165,7 @@ export function handle(app, email, action, payload = {}, deps = {}) {
         if (table === 'receipts') return ok(u.receipts.list().slice().reverse());
         if (table === 'bank_register') return ok(u.bank_accounts.list());
         if (table === 'daily_close') return ok(u.daily.list());
-        if (table === 'executive' || table === 'year_end') return ok([]);
+        if (table === 'executive' || table === 'year_end' || table === 'migrate') return ok([]);
         if (table === 'deposit_slips') return ok(app.store.list('deposit_slips').slice().reverse());
         if (table === 'bank_statement_lines') return ok(app.store.list('bank_statement_lines').slice(-1000).reverse());
         if (table === 'adjustments') return ok(u.adjustments.list().slice().reverse());

@@ -160,6 +160,8 @@ export const TABLES = {
       { key: 'fund_code', label: 'รหัสเงิน', type: 'string', readonly: true },
       { key: 'date', label: 'วันที่ยืม', type: 'date', readonly: true },
       { key: 'due_date', label: 'ครบกำหนดส่งใช้', type: 'date', readonly: true },
+      { key: 'legacy_settled', label: 'ส่งใช้แล้วก่อนใช้ระบบ (ย้ายข้อมูล)', type: 'money', readonly: true, default: 0 },
+      { key: 'legacy_settled_date', label: 'วันที่ส่งใช้เดิม', type: 'date', readonly: true },
     ],
   },
   procurements: {
@@ -339,6 +341,7 @@ export const TABLES = {
     ],
   },
   bank_register: { label: 'ทะเบียนเงินฝากและงบกระทบยอด', idPrefix: 'BR', virtual: true, columns: [id] },
+  migrate: { label: 'ย้ายข้อมูลจากไฟล์เดิม', idPrefix: 'MG', virtual: true, columns: [id] },
   executive: { label: 'รายงานผู้บริหาร', idPrefix: 'EX', virtual: true, columns: [id] },
   year_end: { label: 'สิ้นปีงบ สรุปผลตามแผน', idPrefix: 'YE', virtual: true, columns: [id] },
   daily_close: {

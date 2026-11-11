@@ -310,6 +310,7 @@ function roleTag(r) { return '<span class="rtag" style="color:' + roleVar(r) + '
 var GROUPS = [
   { label: 'งานแผน', color: '--r-plan', tables: ['plan_projects'] },
   { label: 'ฝั่งจ่าย', color: '--r-finance', tables: ['approval_requests', 'payment_lines', 'khb', 'khj', 'loans', 'procurements'] },
+  { label: 'ย้ายข้อมูล', color: '--r-proc', tables: ['migrate'] },
   { label: 'ปิดวันและรายงาน', color: '--r-committee', tables: ['daily_close', 'executive', 'year_end'] },
   { label: 'ธนาคาร', color: '--r-finance', tables: ['bank_register', 'deposit_slips', 'bank_statement_lines', 'adjustments'] },
   { label: 'ฝั่งรับ', color: '--r-finance', tables: ['receipts', 'packages', 'collectibles'] },
@@ -319,8 +320,9 @@ var GROUPS = [
   { label: 'ผู้ดูแลระบบและผู้ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps'] },
 ];
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
-var SHORT = { daily_close: 'วันที่ปิด', executive: 'รายงานผู้บริหาร', year_end: 'สิ้นปีงบ', bank_register: 'ทะเบียนเงินฝาก', deposit_slips: 'ใบนำฝาก', bank_statement_lines: 'รายการ statement', adjustments: 'รายการปรับปรุง', receipts: 'ใบเสร็จ', packages: 'แพ็กเกจ', collectibles: 'ยอดที่ต้องเก็บ', cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
+var SHORT = { migrate: 'ย้ายข้อมูล', daily_close: 'วันที่ปิด', executive: 'รายงานผู้บริหาร', year_end: 'สิ้นปีงบ', bank_register: 'ทะเบียนเงินฝาก', deposit_slips: 'ใบนำฝาก', bank_statement_lines: 'รายการ statement', adjustments: 'รายการปรับปรุง', receipts: 'ใบเสร็จ', packages: 'แพ็กเกจ', collectibles: 'ยอดที่ต้องเก็บ', cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
 var DESC = {
+  migrate: 'นำเข้าข้อมูลจากไฟล์เดิมแบบตรวจก่อนแล้วจึงยืนยัน ค่าที่ว่างระบบไม่เดา ให้ผู้ใช้ระบุเอง ใช้ไฟล์ที่ส่งออกจาก Google Sheets เป็น CSV',
   daily_close: 'เปิดวัน ส่งรายงานเงินคงเหลือให้กรรมการนับเงินสดและลงนาม แล้ว ผอ. ตรวจการจ่ายบนกระดาษ การเงินกดรับคืนพร้อมภาพจึงปิดวัน (ล็อก) วันที่มีการจ่ายต้องมีเอกสาร ผอ. ที่รับคืนแล้ว',
   executive: 'ธงแดง งานค้างรับเกินกำหนด เช็คค้างขึ้นเงิน เงินยืมเลยกำหนด ค้างชำระ และโครงการที่ใช้เงินเกิน 90% ของวงเงิน ทั้งหมดคำนวณจากข้อมูลจริง',
   year_end: 'สรุปผลการใช้เงินตามแผนสำหรับรายงานคณะกรรมการสถานศึกษา ยอดยกไปเท่ากับยอดยกมาของปีถัดไป และเช็คค้างจ่ายที่ยกข้ามปี',
@@ -485,6 +487,7 @@ var ICON = {
   khj: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="m13 10 3 3-3 3"/>',
   loans: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
   procurements: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  migrate: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
   daily_close: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
   executive: '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
   year_end: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>',
@@ -620,6 +623,7 @@ async function show(key, flash) {
   if (key === 'inbox') return renderInbox(flash);
   if (key === 'bank_register') return renderBankRegister(flash);
   if (key === 'executive') return renderExecutive();
+  if (key === 'migrate') return renderMigrate();
   if (key === 'year_end') return renderYearEnd();
   var main = $('main');
   main.innerHTML = '<p class="note">กำลังโหลด</p>';
@@ -1157,6 +1161,57 @@ async function renderYearEnd() {
     '<h2 style="font-size:19px;margin:24px 0 8px">ยอดยกไป (= ยอดยกมาของปีถัดไป)</h2>' + (d.closing.length ? '<div class="register"><table><thead><tr><th>ประเภทเงิน</th><th>ยอดยกไป</th></tr></thead><tbody>' + d.closing.map(function (x) { return '<tr><td>' + esc(x.group) + '</td><td class="num">' + money(x.balance) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ยังไม่มียอดคงเหลือ</p>') +
     '<h2 style="font-size:19px;margin:24px 0 8px">เช็คค้างจ่ายยกข้ามปี</h2>' + (d.outstanding_cheques.length ? '<div class="register"><table><thead><tr><th>เลขเช็ค</th><th>วันที่</th><th>ผู้รับ</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>' + d.outstanding_cheques.map(function (x) { return '<tr><td>' + esc(x.cheque_no) + '</td><td>' + thDate(x.date) + '</td><td>' + esc(x.print_name) + '</td><td class="num">' + money(x.amount) + '</td><td>' + esc(x.status) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ไม่มีเช็คค้างจ่าย</p>');
   $('yeFy').onchange = function () { yeFY = +this.value; renderYearEnd(); };
+}
+
+
+/* ================= ย้ายข้อมูล ================= */
+var MG_HELP = {
+  payees: 'ชีต "รายชื่อ": คอลัมน์ D = ชื่อ · E = วิธีจ่าย · F = ภาษี · วิธีจ่ายหรือภาษีที่ว่างต้องระบุเองในตารางด้านล่าง ไม่ default เป็นเช็ค',
+  packages: 'คอลัมน์แรก = ยอดรวม (บาท) · คอลัมน์สอง = ชื่อ · หัวคอลัมน์ที่เหลือ = รหัสชนิดเงินย่อย ยอดเป็นบาท · ต้องมีชนิดเงินย่อยในระบบก่อน',
+  opening: 'คอลัมน์: เลขที่บัญชี · ยอดยกมา · ยอดตาม statement วันนั้น · วันที่ (YYYY-MM-DD) · ต้องตรงกับ statement ทุกแถว มิฉะนั้นไม่นำเข้าเลย',
+  loans: 'คอลัมน์: ผู้ยืม (อีเมล) · ยอด · วันที่ยืม · ครบกำหนด · ส่งใช้ · วันส่งใช้ · สถานะเดิม (ทิ้ง ระบบคำนวณสถานะใหม่จากวันที่)',
+  audit: 'วางหน้ารายการเดิมและทะเบียน ขบ. เพื่อดูรายงานตรวจ (แถวเหมือนกันทุกช่อง · รูปแบบเลข ขบ. · ยอดไม่ตรงทะเบียน) รายงานนี้ไม่เขียนข้อมูล',
+};
+function renderMigrate() {
+  var main = $('main');
+  main.innerHTML = '<h1 class="page-title">ย้ายข้อมูลจากไฟล์เดิม</h1><p class="page-desc">' + esc(DESC.migrate) + '</p><div class="msg" style="background:var(--decide-bg);color:var(--warn)">เครื่องมือนี้ทดสอบด้วยข้อมูลสมมติเท่านั้น ยังไม่เคยรันกับไฟล์จริงของโรงเรียน ให้ตรวจผลก่อนนำเข้าจริงทุกครั้ง</div>' +
+    '<div class="field"><label for="mgType">ข้อมูลที่จะย้าย</label><select id="mgType">' + [['payees', 'ผู้รับเงิน'], ['packages', 'แพ็กเกจแยกชนิดเงิน'], ['opening', 'ยอดยกมาต่อบัญชี'], ['loans', 'เงินยืม'], ['audit', 'รายงานตรวจหน้ารายการและทะเบียน ขบ.']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select><div class="hint" id="mgHelp"></div></div>' +
+    '<div class="field"><label for="mgFile">ไฟล์ CSV</label><input type="file" id="mgFile" accept=".csv,.tsv,.txt"></div><div class="field"><label for="mgText">หรือวางข้อความ</label><textarea id="mgText" rows="6" style="width:100%;font-family:monospace"></textarea></div>' +
+    '<div class="field hidden" id="mgBox2"><label for="mgText2">ทะเบียน ขบ. (CSV)</label><textarea id="mgText2" rows="4" style="width:100%;font-family:monospace"></textarea></div>' +
+    '<div class="toolbar"><button class="btn" id="mgDry">ตรวจก่อน</button><button class="btn primary" id="mgGo">นำเข้าจริง</button></div><div id="mgOut"></div>';
+  var help = function () { var t = $('mgType').value; $('mgHelp').textContent = MG_HELP[t]; $('mgBox2').classList.toggle('hidden', t !== 'audit'); $('mgGo').classList.toggle('hidden', t === 'audit'); };
+  $('mgType').onchange = help; help();
+  $('mgFile').onchange = function () { var f = this.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { $('mgText').value = String(r.result); }; r.readAsText(f); };
+  var go = async function (commit) {
+    var t = $('mgType').value, text = $('mgText').value, ov = {};
+    [].forEach.call(document.querySelectorAll('.mgov'), function (el) { var row = el.dataset.row; if (el.value) { ov[row] = ov[row] || {}; ov[row][el.dataset.k] = el.value; } });
+    var arg = t === 'audit' ? { lines_text: text, khb_text: $('mgText2').value } : { text: text, commit: commit, overrides: ov };
+    var r = await svc('migrate', t, [arg]);
+    if (!r.ok) { $('mgOut').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+    renderMigrateResult(t, r.data, commit);
+  };
+  $('mgDry').onclick = function () { go(false); };
+  $('mgGo').onclick = function () { if (confirm('นำเข้าข้อมูลจริง? รายการที่นำเข้าแล้วลบไม่ได้')) go(true); };
+}
+function tblRows(arr, cols) { return arr.length ? '<div class="register"><table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' + arr.map(function (x) { return '<tr>' + cols.map(function (c) { return '<td class="wrap">' + (c[2] ? c[2](x) : esc(x[c[0]])) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : ''; }
+function renderMigrateResult(t, d, commit) {
+  var h = '';
+  if (t === 'audit') {
+    h += '<h2 style="font-size:18px;margin:14px 0 6px">แถวที่เหมือนกันทุกช่อง</h2>' + (d.duplicates.length ? tblRows(d.duplicates, [['rows', 'เลขแถว', function (x) { return x.rows.join(', '); }]]) : '<p class="note">ไม่พบ</p>');
+    h += '<h2 style="font-size:18px;margin:14px 0 6px">รูปแบบช่อง ขบ.</h2><p>ตัวเลข ' + d.khb_formats.number + ' · xx/yy ' + d.khb_formats.slash + ' · ว่าง ' + d.khb_formats.blank + ' · "ภาษี" ' + d.khb_formats.tax + ' · "-" ' + d.khb_formats.dash + '</p>';
+    h += '<h2 style="font-size:18px;margin:14px 0 6px">ยอดตามเลข ขบ. ไม่ตรงทะเบียน (' + d.khb_mismatch.length + ')</h2>' + (d.khb_mismatch.length ? tblRows(d.khb_mismatch, [['khb', 'ขบ.'], ['lines_total', 'ยอดจากหน้ารายการ', function (x) { return money(x.lines_total); }], ['register_total', 'ยอดทะเบียน', function (x) { return money(x.register_total); }]]) : '<p class="note">ไม่พบ</p>');
+    h += '<h2 style="font-size:18px;margin:14px 0 6px">ทะเบียน ขบ. ที่ไม่มีเลข ขจ. (' + d.register_missing_khj.length + ')</h2>' + (d.register_missing_khj.length ? tblRows(d.register_missing_khj, [['khb', 'ขบ.']]) : '<p class="note">ไม่พบ</p>');
+  } else {
+    h += '<div class="msg ' + (commit && d.committed ? 'ok' : '') + '" style="background:var(--lane)">' + (commit ? (d.committed ? 'นำเข้าแล้ว ' + d.imported + ' รายการ' : 'ไม่ได้นำเข้า มีแถวผิดที่ต้องแก้ก่อน') : 'ตรวจแล้ว พร้อมนำเข้า ' + d.ready.length + ' รายการ') + '</div>';
+    if (d.errors && d.errors.length) h += '<h2 style="font-size:18px;margin:14px 0 6px">แถวที่ผิด (' + d.errors.length + ')</h2>' + tblRows(d.errors, [['row', 'แถว'], ['name', 'ชื่อ'], ['message', 'ปัญหา']]);
+    if (d.duplicates && d.duplicates.length) h += '<h2 style="font-size:18px;margin:14px 0 6px">ซ้ำ ข้ามไป (' + d.duplicates.length + ')</h2>' + tblRows(d.duplicates, [['row', 'แถว'], ['name', 'ชื่อ']]);
+    if (d.needs_confirmation && d.needs_confirmation.length) {
+      var pm = ME.settings.pay_methods || [], tf = ME.settings.tax_forms || [];
+      h += '<h2 style="font-size:18px;margin:14px 0 6px">ต้องให้ผู้ใช้ระบุ (' + d.needs_confirmation.length + ')</h2>' + tblRows(d.needs_confirmation, [['row', 'แถว'], ['name', 'ชื่อ', function (x) { return esc(x.name || x.borrower || ''); }], ['missing', 'ที่ต้องระบุ', function (x) { return x.message ? esc(x.message) : (x.missing || []).map(function (m) { return m === 'pay_method' ? '<select class="mgov" data-row="' + x.row + '" data-k="pay_method"><option value="">วิธีจ่าย</option>' + pm.map(function (o) { return '<option>' + esc(o) + '</option>'; }).join('') + '</select>' : '<select class="mgov" data-row="' + x.row + '" data-k="tax_form"><option value="">ประเภทภาษี</option>' + tf.map(function (o) { return '<option>' + esc(o) + '</option>'; }).join('') + '</select>'; }).join(' '); }]]) + '<p class="note">เลือกค่าแล้วกด "นำเข้าจริง" อีกครั้งเพื่อนำเข้าแถวเหล่านี้</p>';
+    }
+    if (d.ready && d.ready.length) h += '<h2 style="font-size:18px;margin:14px 0 6px">พร้อมนำเข้า (' + d.ready.length + ')</h2>' + tblRows(d.ready.slice(0, 50), [['row', 'แถว'], ['x', 'รายละเอียด', function (x) { return esc(JSON.stringify(x).slice(0, 160)); }]]) + (d.ready.length > 50 ? '<p class="note">แสดง 50 รายการแรก</p>' : '');
+  }
+  $('mgOut').innerHTML = h;
 }
 
 /* ================= ฟอร์ม ================= */

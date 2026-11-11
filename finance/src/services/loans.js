@@ -20,7 +20,7 @@ export function settledCash(ctx, loanId) {
 
 /** สถานะคำนวณเอง: ส่งใช้แล้ว / เกินกำหนด / ยืมอยู่ */
 export function loanView(ctx, l) {
-  const docs = settledDocs(ctx, l.id), cash = settledCash(ctx, l.id);
+  const docs = settledDocs(ctx, l.id) + (l.legacy_settled || 0), cash = settledCash(ctx, l.id);
   const today = ctx.today();
   let status = 'ยืมอยู่', overdue_days = 0;
   if (docs + cash >= l.amount) status = 'ส่งใช้แล้ว';

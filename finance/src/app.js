@@ -17,6 +17,7 @@ import * as receipts from './services/receipts.js';
 import * as bank from './services/bank.js';
 import * as daily from './services/daily.js';
 import * as reports from './services/reports.js';
+import * as migrate from './services/migrate.js';
 import * as users from './services/users.js';
 import * as settingsSvc from './services/settings.js';
 import * as payees from './services/payees.js';
@@ -77,6 +78,7 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
         issue: b(receipts.issue), preview: b(receipts.preview), cancel: b(receipts.cancel), nextNo: b((c, book) => { requirePermission(c, 'masters.read'); return receipts.nextNo(c, book); }),
         list: b(receipts.listReceipts), splits: b(receipts.splitsOf), monthlySummary: b(receipts.monthlySummary),
       },
+      migrate: { payees: b(migrate.migratePayees), packages: b(migrate.migratePackages), opening: b(migrate.migrateOpening), loans: b(migrate.migrateLoans), audit: b(migrate.migrateAudit) },
       daily: {
         open: b(daily.open), receiveCount: b(daily.receiveCount), recordCount: b(daily.recordCount), explainDiff: b(daily.explainDiff), sign: b(daily.sign),
         sendToDirector: b(daily.sendToDirector), receiveBack: b(daily.receiveBack), close: b(daily.close), report: b(daily.report), list: b(daily.listDays), get: b(daily.getDay),
