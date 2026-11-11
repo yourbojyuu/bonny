@@ -47,21 +47,52 @@
   /* ---------- หัวกระดาษ ---------- */
   .runhead { display:flex; justify-content:space-between; gap:12px; font-size:13.5px; color:var(--muted); padding:7px 24px; border-bottom:1px solid var(--rule-soft); }
   .topbar { display:flex; align-items:center; gap:10px 24px; flex-wrap:wrap; padding:14px 24px; border-bottom:1.5px solid var(--node-edge); }
-  .brand { flex:1; min-width:200px; }
+  .brand { min-width:200px; }
   .brand b { font-size:22px; font-weight:700; letter-spacing:-.005em; display:block; line-height:1.25; }
   .brand span { font-size:14px; color:var(--muted); }
   .who { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .who .name { font-weight:600; }
 
   /* ---------- โครงหน้า: เมนูเป็นช่องทางสีครีม ---------- */
-  .shell { display:grid; grid-template-columns:248px minmax(0, 1fr); min-height:calc(100vh - 112px); }
-  .side { background:var(--lane); border-right:1px solid var(--lane-edge); padding:10px 12px 40px; }
-  .side h4 { margin:18px 10px 4px; font-size:13.5px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:8px; }
-  .side h4 i { width:10px; height:10px; border-radius:2px; display:inline-block; }
-  .side button { display:flex; justify-content:space-between; gap:8px; width:100%; text-align:left; border:0; background:none; padding:6px 10px; border-radius:7px; cursor:pointer; }
-  .side button:hover { background:#e9e6dc; }
-  .side button[aria-current="true"] { background:var(--paper); box-shadow:inset 0 0 0 1.5px var(--node-edge); font-weight:600; }
-  .side .count { font-size:13px; color:var(--muted); }
+  .shell { display:grid; grid-template-columns:260px minmax(0, 1fr); min-height:calc(100vh - 112px); transition:grid-template-columns .25s ease; }
+  .shell.collapsed { grid-template-columns:0 minmax(0, 1fr); }
+  .shell.collapsed .side { visibility:hidden; border-right-width:0; padding-left:0; padding-right:0; transition:visibility 0s .25s; }
+  .side { background:var(--lane); border-right:1px solid var(--lane-edge); padding:10px 12px 40px; overflow:hidden; min-width:0; }
+  .side .item { display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:0; background:none; padding:6px 10px; border-radius:7px; cursor:pointer; }
+  .side .item:hover { background:#e9e6dc; }
+  .side .item[aria-current="true"] { background:var(--paper); box-shadow:inset 0 0 0 1.5px var(--node-edge); font-weight:600; }
+  .side .item .lbl { flex:1; min-width:0; line-height:1.35; }
+  .ico { width:17px; height:17px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; color:#6f7480; }
+  .item[aria-current="true"] .ico { color:var(--node-edge); }
+  .side .count { font-size:13px; color:var(--muted); min-width:20px; text-align:right; }
+  .side .count.alert { background:var(--decide-bg); color:var(--warn); border:1px solid var(--decide-edge); border-radius:20px; padding:0 7px; font-weight:600; font-size:12.5px; min-width:22px; text-align:center; }
+  .grp { margin-top:14px; }
+  .grp-head { display:flex; align-items:center; gap:8px; width:100%; border:0; background:none; padding:4px 10px; border-radius:7px; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--muted); text-align:left; }
+  .grp-head:hover { background:#e9e6dc; color:var(--ink); }
+  .grp-head i { width:10px; height:10px; border-radius:2px; display:inline-block; flex:none; }
+  .grp-head .chev { margin-left:auto; width:15px; height:15px; transition:transform .2s ease; }
+  .grp:not(.closed) .grp-head .chev { transform:rotate(90deg); }
+  .grp-items { display:grid; grid-template-rows:1fr; transition:grid-template-rows .22s ease; }
+  .grp.closed .grp-items { grid-template-rows:0fr; }
+  .grp-inner { overflow:hidden; min-height:0; margin-left:14px; padding-left:6px; border-left:1.5px solid var(--lane-edge); display:flex; flex-direction:column; gap:1px; margin-top:2px; }
+  .grp.closed .grp-inner { visibility:hidden; transition:visibility 0s .22s; }
+  .home-item { margin-top:6px; }
+  .tool { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--rule); background:var(--paper); border-radius:8px; padding:5px 10px; cursor:pointer; }
+  .tool:hover { border-color:#a9a492; }
+  .tool .ico { color:var(--ink); }
+  .tool kbd { font:inherit; font-size:12.5px; color:var(--muted); border:1px solid var(--rule-soft); border-radius:5px; padding:0 6px; background:var(--lane); }
+  .toolbar-top { display:flex; align-items:center; gap:8px; }
+  #sideToggle { padding:5px 7px; }
+  #cmd { margin:12vh auto 0; width:min(560px, calc(100vw - 24px)); }
+  #cmd .node { padding:10px 12px 10px 18px; }
+  #cmdQ { width:100%; border:0; border-bottom:1.5px solid var(--rule-soft); padding:8px 4px 10px; outline:none; background:transparent; font-size:17px; }
+  #cmdList { list-style:none; margin:6px 0 2px; padding:0; max-height:46vh; overflow:auto; }
+  #cmdList li { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:7px; cursor:pointer; }
+  #cmdList li[aria-selected="true"] { background:var(--sys-bg); box-shadow:inset 0 0 0 1.5px var(--sys-edge); }
+  #cmdList .c-main { flex:1; min-width:0; } #cmdList .c-t { font-weight:600; } #cmdList .c-d { font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #cmdList .c-g { font-size:13px; color:var(--muted); white-space:nowrap; }
+  #cmdEmpty { padding:18px 8px; color:var(--muted); }
+  #cmdHint { font-size:13px; color:var(--muted); padding:6px 4px 0; border-top:1px solid var(--rule-soft); }
   main { padding:26px 32px 64px; min-width:0; }
   .page-title { font-size:28px; font-weight:700; line-height:1.3; margin:0; letter-spacing:-.01em; }
   .page-desc { color:var(--muted); margin:4px 0 18px; max-width:68ch; }
@@ -167,9 +198,16 @@
   @media (max-width: 980px) { .chart { grid-template-columns:1fr; } .login { grid-template-columns:1fr; } .login .art { display:none; } }
   @media (max-width: 860px) {
     .shell { grid-template-columns:minmax(0, 1fr); }
+    .shell, .shell.collapsed { grid-template-columns:minmax(0, 1fr); }
+    .shell.collapsed .side { visibility:visible; padding:6px 10px; }
     .side { border-right:0; border-bottom:1px solid var(--lane-edge); padding:6px 10px; display:flex; gap:4px; overflow-x:auto; }
-    .side h4 { display:none; }
-    .side button { width:auto; white-space:nowrap; }
+    .grp, .grp-items, .grp-inner { display:contents; }
+    .grp-head { display:none; }
+    .grp.closed .grp-inner { visibility:visible; }
+    .side .item { width:auto; white-space:nowrap; flex:none; }
+    .side .item .lbl { white-space:nowrap; }
+    .home-item { margin-top:0; }
+    #sideToggle, .tool kbd, .tool .tl { display:none; }
     main { padding:18px 16px 56px; }
     .runhead, .topbar { padding-left:16px; padding-right:16px; }
     .runhead span:last-child { display:none; }
@@ -212,7 +250,12 @@
 <section id="appView" class="hidden">
   <div class="runhead"><span>ระบบการเงิน โรงเรียนกาวิละวิทยาลัย</span><span id="runheadDate"></span></div>
   <header class="topbar">
-    <div class="brand"><b>ระบบการเงิน</b><span>กลุ่มบริหารงานแผนและงบประมาณ</span></div>
+    <div class="toolbar-top">
+      <button class="tool" id="sideToggle" aria-controls="side" aria-expanded="true" aria-label="ซ่อนเมนู" title="ซ่อนหรือแสดงเมนู"></button>
+      <div class="brand"><b>ระบบการเงิน</b><span>กลุ่มบริหารงานแผนและงบประมาณ</span></div>
+    </div>
+    <span style="flex:1"></span>
+    <button class="tool" id="cmdBtn" aria-label="ค้นหาเมนู" aria-keyshortcuts="Control+K Meta+K"></button>
     <div class="who"><span class="name" id="whoName"></span><span id="whoRoles"></span><button class="btn small" id="logoutBtn">ออกจากระบบ</button></div>
   </header>
   <div class="shell">
@@ -220,6 +263,13 @@
     <main id="main"></main>
   </div>
 </section>
+
+<dialog id="cmd" aria-label="ค้นหาเมนู"><div class="node" style="--bar:var(--r-finance)">
+  <input id="cmdQ" type="text" role="combobox" aria-expanded="true" aria-controls="cmdList" aria-autocomplete="list" placeholder="พิมพ์ชื่อเมนู เช่น ผู้รับเงิน สมุดเช็ค" autocomplete="off" spellcheck="false">
+  <ul id="cmdList" role="listbox" aria-label="ผลการค้นหา"></ul>
+  <div id="cmdEmpty" class="hidden"></div>
+  <div id="cmdHint">ลูกศรขึ้นลงเพื่อเลือก Enter เพื่อเปิด Esc เพื่อปิด</div>
+</div></dialog>
 
 <dialog id="dlg"><div class="node" id="dlgNode"><form method="dialog" id="dlgForm"></form></div></dialog>
 
@@ -375,23 +425,134 @@ async function boot() {
 
 /* ================= เมนู ================= */
 function tableMeta(key) { return ME && ME.tables.filter(function (t) { return t.key === key; })[0]; }
+var ICON = {
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  chevron: '<path d="m9 18 6-6-6-6"/>',
+  panelClose: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 9-3 3 3 3"/>',
+  panelOpen: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m14 9 3 3-3 3"/>',
+  home: '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  plan_projects: '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/>',
+  payees: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  payee_account_changes: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+  bank_accounts: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+  cheque_books: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  funds: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  subfunds: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  fund_allowed_expense: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  settings: '<line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/>',
+  audit_log: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  login_log: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>',
+};
+function ico(name, cls) { return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICON[name] || '') + '</svg>'; }
+var IS_MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
+var KEYCAP = IS_MAC ? '⌘K' : 'Ctrl K';
+
+// สถานะเมนู: กลุ่มที่พับไว้ และเมนูซ่อน · จำไว้ในเครื่องนี้ (ถ้าเบราว์เซอร์ไม่ให้เก็บ ก็ใช้ได้ตามปกติ)
+function memGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+function memSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+var closedGroups = memGet('kwc_fin_closed', []);
+function groupOf(t) { return GROUPS.filter(function (g) { return g.tables.indexOf(t) >= 0; })[0]; }
+
 function renderSide() {
-  var html = '<button data-t="home" style="margin-top:6px">ภาพรวม</button>';
-  GROUPS.forEach(function (g) {
+  var html = '<button class="item home-item" data-t="home">' + ico('home') + '<span class="lbl">ภาพรวม</span></button>';
+  GROUPS.forEach(function (g, gi) {
     var items = g.tables.filter(tableMeta);
     if (!items.length) return;
-    html += '<h4><i style="background:var(' + g.color + ')"></i>' + esc(g.label) + '</h4>' + items.map(function (t) {
-      return '<button data-t="' + t + '"><span>' + esc(tableMeta(t).label) + '</span><span class="count" data-count="' + t + '"></span></button>';
-    }).join('');
+    var closed = closedGroups.indexOf(g.label) >= 0;
+    html += '<div class="grp' + (closed ? ' closed' : '') + '" data-g="' + esc(g.label) + '">' +
+      '<button class="grp-head" aria-expanded="' + (!closed) + '" aria-controls="gi' + gi + '"><i style="background:var(' + g.color + ')"></i><span>' + esc(g.label) + '</span>' + ico('chevron', 'chev') + '</button>' +
+      '<div class="grp-items" id="gi' + gi + '"><div class="grp-inner">' + items.map(function (t) {
+        return '<button class="item" data-t="' + t + '">' + ico(t) + '<span class="lbl">' + esc(tableMeta(t).label) + '</span><span class="count" data-count="' + t + '"></span></button>';
+      }).join('') + '</div></div></div>';
   });
   $('side').innerHTML = html;
-  $('side').onclick = function (e) { var b = e.target.closest('button[data-t]'); if (b) { filterText = ''; onlyMine = false; show(b.dataset.t); } };
+  $('side').onclick = function (e) {
+    var h = e.target.closest('.grp-head');
+    if (h) { toggleGroup(h.parentNode.dataset.g); return; }
+    var b = e.target.closest('button[data-t]'); if (b) { filterText = ''; onlyMine = false; show(b.dataset.t); }
+  };
+  $('cmdBtn').innerHTML = ico('search') + '<span class="tl">ค้นหาเมนู</span><kbd>' + KEYCAP + '</kbd>';
+  setCollapsed(memGet('kwc_fin_side_hidden', false));
 }
-function markNav() { [].forEach.call(document.querySelectorAll('.side button'), function (b) { b.setAttribute('aria-current', b.dataset.t === current ? 'true' : 'false'); }); }
+function toggleGroup(label, forceOpen) {
+  var el = document.querySelector('.grp[data-g="' + label + '"]'); if (!el) return;
+  var close = forceOpen ? false : !el.classList.contains('closed');
+  el.classList.toggle('closed', close);
+  el.querySelector('.grp-head').setAttribute('aria-expanded', String(!close));
+  closedGroups = closedGroups.filter(function (x) { return x !== label; });
+  if (close) closedGroups.push(label);
+  memSet('kwc_fin_closed', closedGroups);
+}
+function setCollapsed(on) {
+  document.querySelector('.shell').classList.toggle('collapsed', on);
+  var b = $('sideToggle');
+  b.innerHTML = ico(on ? 'panelOpen' : 'panelClose');
+  b.setAttribute('aria-expanded', String(!on));
+  b.setAttribute('aria-label', on ? 'แสดงเมนู' : 'ซ่อนเมนู');
+  memSet('kwc_fin_side_hidden', on);
+}
+$('sideToggle').onclick = function () { setCollapsed(!document.querySelector('.shell').classList.contains('collapsed')); };
+
+function markNav() {
+  [].forEach.call(document.querySelectorAll('.side .item'), function (b) { b.setAttribute('aria-current', b.dataset.t === current ? 'true' : 'false'); });
+  var g = groupOf(current); if (g && closedGroups.indexOf(g.label) >= 0) toggleGroup(g.label, true);
+}
+
+/* ================= ค้นหาเมนู (Ctrl/⌘ + K) ================= */
+var cmdSel = 0, cmdRows = [];
+function cmdEntries() {
+  var out = [{ key: 'home', label: 'ภาพรวม', group: '', desc: 'ผังเส้นทางเงินและงานที่รอคุณ', color: '--r-finance' }];
+  GROUPS.forEach(function (g) { g.tables.filter(tableMeta).forEach(function (t) { out.push({ key: t, label: tableMeta(t).label, group: g.label, desc: DESC[t] || '', color: g.color }); }); });
+  return out;
+}
+function cmdDraw() {
+  var q = $('cmdQ').value.trim().toLowerCase();
+  // ชื่อเมนูตรงคำค้นขึ้นก่อน แล้วจึงเป็นเมนูที่คำอธิบายหรือชื่อกลุ่มตรง
+  var rank = function (e) { return !q || e.label.toLowerCase().indexOf(q) >= 0 ? 0 : 1; };
+  cmdRows = cmdEntries().filter(function (e) { return !q || (e.label + ' ' + e.group + ' ' + e.desc + ' ' + e.key + ' ' + (SHORT[e.key] || '')).toLowerCase().indexOf(q) >= 0; })
+    .map(function (e, i) { return { e: e, r: rank(e), i: i }; }).sort(function (x, y) { return x.r - y.r || x.i - y.i; }).map(function (x) { return x.e; });
+  cmdSel = Math.min(cmdSel, Math.max(cmdRows.length - 1, 0));
+  $('cmdList').innerHTML = cmdRows.map(function (e, i) {
+    return '<li role="option" id="co' + i + '" data-i="' + i + '" aria-selected="' + (i === cmdSel) + '">' + ico(e.key === 'home' ? 'home' : e.key) +
+      '<div class="c-main"><div class="c-t">' + esc(e.label) + '</div><div class="c-d">' + esc(e.desc) + '</div></div>' +
+      (e.group ? '<span class="c-g"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:var(' + e.color + ')"></i>' + esc(e.group) + '</span>' : '') + '</li>';
+  }).join('');
+  var empty = $('cmdEmpty');
+  empty.classList.toggle('hidden', cmdRows.length > 0);
+  empty.textContent = cmdRows.length ? '' : 'ไม่พบเมนูที่ตรงกับ "' + $('cmdQ').value.trim() + '" ลองคำอื่น เช่น ผู้รับเงิน หรือ บัญชี';
+  $('cmdQ').setAttribute('aria-activedescendant', cmdRows.length ? 'co' + cmdSel : '');
+  var el = $('co' + cmdSel); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+}
+function cmdOpen() {
+  if (!ME || $('dlg').open) return;
+  $('cmdQ').value = ''; cmdSel = 0; cmdDraw();
+  if (!$('cmd').open) $('cmd').showModal();
+  $('cmdQ').focus();
+}
+function cmdGo(i) { var e = cmdRows[i]; if (!e) return; $('cmd').close(); filterText = ''; onlyMine = false; show(e.key); }
+$('cmdBtn').onclick = cmdOpen;
+$('cmdQ').oninput = function () { cmdSel = 0; cmdDraw(); };
+$('cmdQ').onkeydown = function (e) {
+  if (e.key === 'ArrowDown') { e.preventDefault(); cmdSel = Math.min(cmdSel + 1, cmdRows.length - 1); cmdDraw(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); cmdSel = Math.max(cmdSel - 1, 0); cmdDraw(); }
+  else if (e.key === 'Enter') { e.preventDefault(); cmdGo(cmdSel); }
+};
+$('cmdList').onclick = function (e) { var li = e.target.closest('li'); if (li) cmdGo(+li.dataset.i); };
+$('cmd').addEventListener('click', function (e) { if (e.target === $('cmd')) $('cmd').close(); });
+document.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if ($('cmd').open) $('cmd').close(); else cmdOpen(); }
+});
 
 async function load(t, force) {
   if (!cache[t] || force) { var r = await call('list', { table: t }); cache[t] = r.ok ? r.data : []; }
-  var c = document.querySelector('[data-count="' + t + '"]'); if (c) c.textContent = cache[t].length;
+  var c = document.querySelector('[data-count="' + t + '"]');
+  if (c) {
+    var pend = t === 'payee_account_changes' ? cache[t].filter(function (x) { return x.status === 'รออนุมัติ'; }).length : 0;
+    c.textContent = pend || cache[t].length;
+    c.classList.toggle('alert', pend > 0);
+    c.title = pend ? 'รออนุมัติ ' + pend + ' รายการ' : '';
+  }
   return cache[t];
 }
 function go(t, mine) { filterText = ''; onlyMine = !!mine; show(t); }
