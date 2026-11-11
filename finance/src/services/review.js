@@ -157,7 +157,8 @@ export function inbox(ctx) {
     const st = ctx.store.get('doc_flow', flowId(h.doc_type, h.doc_id));
     if (st && sameUser(st.maker, ctx.user.email)) continue;
     if (h.doc_type === 'approval') { const ar = ctx.store.get('approval_requests', h.doc_id); if (ar && sameUser(ar.requester, ctx.user.email)) continue; }
-    out.push({ kind: h.step_key === 'sign' ? 'รอรับคืนหลัง ผอ. เซ็น' : h.step_key.startsWith('r') ? 'รอรับ' : 'รอรับ', handoff_id: h.id, doc_type: h.doc_type, doc_id: h.doc_id, step_key: h.step_key, days: waitDays(ctx, h) });
+    const days = waitDays(ctx, h), limit = (ctx.settings.sla_days || {})[h.step_key];
+    out.push({ kind: h.step_key === 'sign' ? 'รอรับคืนหลัง ผอ. เซ็น' : 'รอรับ', handoff_id: h.id, doc_type: h.doc_type, doc_id: h.doc_id, step_key: h.step_key, days, limit, overdue: limit !== undefined && days > limit });
   }
   for (const st of ctx.store.list('doc_flow')) {
     if (st.phase === 'review' && sameUser(st.reviewer, ctx.user.email)) out.push({ kind: 'กำลังตรวจ', doc_type: st.doc_type, doc_id: st.doc_id, step_key: st.stage });

@@ -153,10 +153,13 @@ test('ถาดงานแยกตามบทบาท · งานค้า�
   e.as('admin').settings.update('sla_days', { r1: 2 }, 'ทดสอบ');
   e.clock.set('2026-11-12T03:00:00Z');
   assert.equal(e.wf('reviewer1').overdue().length, 0); // 2 วัน ยังไม่เกิน
+  assert.equal(e.wf('reviewer1').inbox()[0].overdue, false);
   e.clock.set('2026-11-13T03:00:00Z');
   const flags = e.wf('reviewer1').overdue();
   assert.equal(flags.length, 1);
   assert.deepEqual([flags[0].step_key, flags[0].days, flags[0].limit], ['r1', 3, 2]);
+  const row = e.wf('reviewer1').inbox()[0]; // ถาดงานบอกเองว่าเกินกำหนด (หน้าแรกใช้แสดงธง)
+  assert.deepEqual([row.days, row.limit, row.overdue], [3, 2, true]);
   e.wf('reviewer1').receive('test_doc', e.doc.id);
   assert.equal(e.wf('reviewer1').overdue().length, 0); // รับแล้ว หยุดนับ
 });
