@@ -366,6 +366,25 @@ export const TABLES = {
       { key: 'snapshot', label: 'รายงาน ณ วันปิด (JSON)', type: 'string' },
     ],
   },
+  receipt_days: {
+    label: 'สรุปใบเสร็จประจำวัน', idPrefix: 'RD',
+    columns: [
+      id,
+      { key: 'date', label: 'วันที่', type: 'date', required: true },
+      { key: 'status', label: 'สถานะ', type: 'enum', options: ['สรุปแล้ว', 'เปิดใหม่'], readonly: true },
+      { key: 'count', label: 'จำนวนใบ (ไม่นับยกเลิก)', type: 'int', readonly: true },
+      { key: 'cancelled', label: 'ใบที่ยกเลิก', type: 'int', readonly: true },
+      { key: 'range', label: 'ช่วงเล่ม/เลขที่', type: 'string', readonly: true },
+      { key: 'bks_cash', label: 'บกศ.สด', type: 'money', readonly: true },
+      { key: 'inc_cash', label: 'รด.สด', type: 'money', readonly: true },
+      { key: 'bks_transfer', label: 'บกศ.โอน', type: 'money', readonly: true },
+      { key: 'inc_transfer', label: 'รด.โอน', type: 'money', readonly: true },
+      { key: 'other', label: 'อื่น ๆ', type: 'money', readonly: true },
+      { key: 'total', label: 'รวมทั้งวัน', type: 'money', readonly: true },
+      { key: 'cash_total', label: 'เงินสดที่ต้องนำฝาก', type: 'money', readonly: true },
+      { key: 'reopen_reason', label: 'เหตุผลเปิดใหม่', type: 'string', readonly: true },
+    ],
+  },
   deposit_slips: {
     label: 'ใบนำฝาก', idPrefix: 'DS',
     columns: [

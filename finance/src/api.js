@@ -26,6 +26,7 @@ export const TABLE_ACCESS = {
   bank_statement_lines: { read: 'masters.read', write: null },
   adjustments: { read: 'masters.read', write: null },
   receipts: { read: 'masters.read', write: null },
+  receipt_days: { read: 'masters.read', write: null },
   packages: { read: 'masters.read', write: null },
   collectibles: { read: 'masters.read', write: null },
   payees: { read: 'masters.read', write: 'payees.manage' },
@@ -59,7 +60,7 @@ const CALLS = {
   reports: ['timeline', 'executive', 'planSummary', 'yearEnd'],
   print: ['render'],
   migrate: ['payees', 'packages', 'opening', 'loans', 'audit'],
-  receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
+  receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary', 'workState', 'closeDay', 'reopenDay', 'daySummaries', 'byFund'],
   packages: ['create'],
   collectibles: ['set'],
   subfunds: ['seedDefaults'],
@@ -164,6 +165,7 @@ export function handle(app, email, action, payload = {}, deps = {}) {
         if (table === 'cheques') return ok(u.cheques.list().slice().reverse());
         if (table === 'ktb_batches') return ok(u.ktb.list());
         if (table === 'ledger') return ok(u.ledger.list().slice().reverse());
+        if (table === 'receipt_days') return ok(u.receipts.daySummaries());
         if (table === 'receipts') return ok(u.receipts.list().slice().reverse());
         if (table === 'bank_register') return ok(u.bank_accounts.list());
         if (table === 'daily_close') return ok(u.daily.list());

@@ -43,6 +43,7 @@ export const SETTING_SPECS = {
   review_restart: { label: 'ส่งคืนแล้วแก้ ให้เริ่มตรวจที่ (first = ชั้น 1 ใหม่ · returned = ชั้นที่ส่งคืน)', default: 'first', pending: 'HANDOFF 12.5 [รอยืนยัน]', check: (v) => v === 'first' || v === 'returned' },
   require_scan: { label: 'ต้องแนบภาพหน้าที่ ผอ. ลงนามทุกครั้ง', default: true, pending: 'HANDOFF 12.8 [รอยืนยัน]', check: (v) => typeof v === 'boolean' },
   timeline_roles: { label: 'บทบาทที่เห็นไทม์ไลน์ภาพรวมของทุกเอกสาร', default: ['finance', 'income', 'khj_maker', 'procurement', 'reviewer1', 'reviewer2', 'reviewer3', 'plan', 'director', 'auditor'], check: isStrList },
+  receipt_book_size: { label: 'จำนวนใบเสร็จต่อเล่ม', default: 500, check: (v) => isInt(v) && v >= 1 && v <= 100000 },
   fund_allowed_expense_mode: { label: 'กฎค่าใช้จ่ายตามประเภทเงิน', default: 'flag', check: (v) => v === 'flag' || v === 'block' },
 };
 

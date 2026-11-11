@@ -4,6 +4,8 @@ import { requirePermission } from '../core/roles.js';
 import { formatSatang } from '../core/money.js';
 import { hasRole } from './handoffs.js';
 import { assertOpenDay } from './daily.js';
+import { cashByGroup } from './bank.js';
+import { isValidDate as isValid } from '../core/thaidate.js';
 import { validateWith, requireReason, getOrFail, norm } from './common.js';
 
 const CH = ['bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'];
@@ -73,6 +75,27 @@ export function nextNo(ctx, book) {
   const nums = ctx.store.list('receipts').filter((r) => r.book_no === String(book)).map((r) => Number(r.receipt_no));
   return String(nums.length ? Math.max(...nums) + 1 : 1);
 }
+const bookSize = (ctx) => ctx.settings.receipt_book_size || 500;
+const summarized = (ctx, date) => ctx.store.list('receipt_days').find((d) => d.date === date && d.status === 'สรุปแล้ว');
+const liveOn = (ctx, date) => ctx.store.list('receipts').filter((r) => r.date === date && r.status !== 'ยกเลิก');
+
+/** สถานะโต๊ะรับเงิน (เก็บในฐานข้อมูล ไม่ใช่ในเบราว์เซอร์ จึงจำได้ข้ามเครื่อง/รีเฟรช):
+ *  เล่ม = เล่มของใบล่าสุด · เลขถัดไป · เล่มเต็ม (ครบ receipt_book_size) · วันที่ทำงาน = วันที่ล่าสุดที่ยังไม่สรุป ไม่มี = วันนี้ */
+export function workState(ctx) {
+  requirePermission(ctx, 'masters.read');
+  const all = ctx.store.list('receipts'), last = all[all.length - 1];
+  const size = bookSize(ctx), book = last ? last.book_no : '';
+  const used = book ? all.filter((r) => r.book_no === book).length : 0, next = book ? Number(nextNo(ctx, book)) : 1;
+  const open = all.filter((r) => !summarized(ctx, r.date)).map((r) => r.date).sort();
+  const today = ctx.today();
+  const date = open.length ? open[open.length - 1] : today;
+  const live = liveOn(ctx, date);
+  const pick = (k) => live.reduce((n, r) => n + r[k], 0);
+  return {
+    book, next: String(next), size, used, full: !!book && used >= size, date, todaySummarized: !!summarized(ctx, today),
+    day: { count: live.length, cancelled: all.filter((r) => r.date === date && r.status === 'ยกเลิก').length, cash: pick('bks_cash') + pick('inc_cash') + pick('other'), transfer: pick('bks_transfer') + pick('inc_transfer'), total: live.reduce((n, r) => n + r.total, 0) },
+  };
+}
 
 /** แบ่งเงินสด/โอนให้แต่ละชนิดเงินย่อย: ช่อง บกศ. → ชนิดกลุ่ม บกศ. · ช่อง รด. → กลุ่มรายได้ · ส่วนที่เหลือเอาจากช่องไหนก็ได้ (เงินสดก่อน) */
 function allocate(ctx, splits, ch) {
@@ -102,6 +125,8 @@ export function issue(ctx, input) {
         const has = ctx.store.find('receipts', (r) => r.book_no === out.book_no).length;
         if (!/^\d+$/.test(out.receipt_no)) cc.add('receipt_no', 'เลขที่ต้องเป็นตัวเลข');
         else if (has && out.receipt_no !== exp) cc.add('receipt_no', `เลขที่ต้องต่อเนื่องในเล่ม (เลขถัดไปคือ ${exp})`);
+        else if (has >= bookSize(ctx)) cc.add('book_no', `เล่มหนึ่งมี ${bookSize(ctx)} ใบ เล่ม ${out.book_no} เต็มแล้ว ให้ขึ้นเล่มใหม่`);
+        if (out.date && summarized(ctx, out.date)) cc.add('date', `วันที่ ${out.date} สรุปประจำวันแล้ว ออกใบเพิ่มไม่ได้ ถ้าต้องแก้ให้เปิดวันนั้นใหม่ก่อน`);
       }
       if (out.bks_transfer + out.inc_transfer > 0 && !out.kcorp_ref) cc.add('kcorp_ref', 'เงินโอนต้องจดเลขที่อ้างอิง Kcorp หลังตรวจยอดเข้าบัญชี');
       if (out.loan_id && !ctx.store.get('loans', out.loan_id)) cc.add('loan_id', 'ไม่พบสัญญาเงินยืม');
@@ -178,6 +203,7 @@ export function cancel(ctx, id, reason) {
     const why = requireReason(reason);
     const r = getOrFail(ctx, 'receipts', id, 'ใบเสร็จ');
     if (r.status === 'ยกเลิก') fail('id', 'ใบเสร็จนี้ยกเลิกแล้ว');
+    if (summarized(ctx, r.date)) fail('id', `วันที่ ${r.date} สรุปประจำวันแล้ว ให้เปิดวันนั้นใหม่ก่อนจึงยกเลิกได้`);
     const saved = ctx.store.update(ctx.user, 'receipts', id, { status: 'ยกเลิก', cancel_reason: why }, { reason: why });
     const srcIds = new Set([id, ...ctx.store.list('receipt_splits').filter((s) => s.receipt_id === id).map((s) => s.id)]);
     for (const e of ctx.store.list('ledger').filter((x) => srcIds.has(x.source_id) && x.debit > 0)) {
@@ -225,4 +251,68 @@ export function seedDefaultSubfunds(ctx) {
     created++;
   }
   return { created };
+}
+
+/* ---------------- สรุปประจำวัน → นำฝาก ---------------- */
+const dayTotals = (ctx, date) => {
+  const live = liveOn(ctx, date), pick = (k) => sum(live.map((r) => r[k]));
+  const byGroup = {};
+  for (const r of live) for (const [g, n] of Object.entries(cashByGroup(ctx, r))) { byGroup[g] = byGroup[g] || { cash: 0, receipt_ids: [] }; byGroup[g].cash += n; byGroup[g].receipt_ids.push(r.id); }
+  const nos = live.map((r) => `${r.book_no}/${r.receipt_no}`);
+  return { live, byGroup, row: { count: live.length, bks_cash: pick('bks_cash'), inc_cash: pick('inc_cash'), bks_transfer: pick('bks_transfer'), inc_transfer: pick('inc_transfer'), other: pick('other'), total: sum(live.map((r) => r.total)), cash_total: sum(Object.values(byGroup).map((g) => g.cash)), range: nos.length ? (nos.length > 1 ? `${nos[0]} – ${nos[nos.length - 1]}` : nos[0]) : '' } };
+};
+
+/** กดสรุปประจำวัน: ล็อกวันนั้นไม่ให้ออก/ยกเลิกใบเพิ่ม · ได้ยอดเงินสดที่ต้องนำฝากแยกตามกลุ่มเงิน */
+export function closeDay(ctx, date) {
+  needFinance(ctx);
+  return ctx.store.withLock(() => {
+    if (!isValid(date)) fail('date', 'วันที่ไม่ถูกต้อง');
+    if (summarized(ctx, date)) fail('date', `วันที่ ${date} สรุปแล้ว`);
+    const { live, row } = dayTotals(ctx, date);
+    if (!live.length) fail('date', `วันที่ ${date} ไม่มีใบเสร็จให้สรุป`);
+    const cancelled = ctx.store.list('receipts').filter((r) => r.date === date && r.status === 'ยกเลิก').length;
+    return ctx.store.insert(ctx.user, 'receipt_days', { date, status: 'สรุปแล้ว', cancelled, reopen_reason: '', ...row });
+  });
+}
+
+/** เปิดวันที่สรุปแล้วกลับมาแก้ ทำได้เมื่อยังไม่มีใบนำฝากอ้างใบเสร็จของวันนั้น · ไม่ลบแถวสรุปเดิม (เปลี่ยนสถานะเป็น เปิดใหม่) */
+export function reopenDay(ctx, date, reason) {
+  needFinance(ctx);
+  return ctx.store.withLock(() => {
+    const why = requireReason(reason);
+    const d = summarized(ctx, date);
+    if (!d) fail('date', `วันที่ ${date} ยังไม่ได้สรุป`);
+    const ids = new Set(liveOn(ctx, date).map((r) => r.id));
+    const used = ctx.store.list('deposit_slips').find((x) => x.receipt_ids.some((id) => ids.has(id)));
+    if (used) fail('date', `วันที่ ${date} มีใบนำฝาก ${used.slip_no} แล้ว เปิดใหม่ไม่ได้`);
+    return ctx.store.update(ctx.user, 'receipt_days', d.id, { status: 'เปิดใหม่', reopen_reason: why }, { reason: why });
+  });
+}
+
+/** รายการสรุปรายวัน (ใหม่ก่อน) พร้อมเงินสดแยกกลุ่มเงินและเลขที่ใบนำฝากที่จับคู่แล้ว (จับจากใบเสร็จในใบนำฝาก) */
+export function daySummaries(ctx) {
+  requirePermission(ctx, 'masters.read');
+  const slips = ctx.store.list('deposit_slips');
+  return ctx.store.list('receipt_days').filter((d) => d.status === 'สรุปแล้ว').slice().reverse().map((d) => {
+    const { byGroup } = dayTotals(ctx, d.date);
+    const groups = Object.entries(byGroup).map(([group, g]) => {
+      const slip = slips.find((x) => x.fund_group === group && g.receipt_ids.every((id) => x.receipt_ids.includes(id)));
+      return { group, cash: g.cash, receipt_ids: g.receipt_ids, slip_no: slip ? slip.slip_no : '', slip_amount: slip ? slip.amount : null, difference: slip ? slip.difference : null };
+    });
+    return { ...d, groups };
+  });
+}
+
+/** เงินแยกประเภท: รายละเอียดย่อยของใบเสร็จตามชนิดเงินย่อย (ไม่นับใบยกเลิก) เรียงตามวันที่ พร้อมยอดสะสม · ym ว่าง = ทั้งหมด */
+export function byFund(ctx, ym = '') {
+  requirePermission(ctx, 'masters.read');
+  const rows = activeSplits(ctx).filter((s) => !ym || String(s.receipt.date).startsWith(ym)).sort((a, b) => String(a.receipt.date).localeCompare(String(b.receipt.date)) || Number(a.receipt.receipt_no) - Number(b.receipt.receipt_no));
+  const out = [];
+  for (const code of [...new Set(rows.map((s) => s.subfund_code))]) {
+    const sf = ctx.store.find('subfunds', (x) => x.code === code)[0] || {};
+    let run = 0;
+    const lines = rows.filter((s) => s.subfund_code === code).map((s) => { run += s.amount; return { date: s.receipt.date, ref: `${s.receipt.book_no}/${s.receipt.receipt_no}`, payer: s.receipt.payer, cash: s.cash_amount, transfer: s.transfer_amount, amount: s.amount, balance: run }; });
+    out.push({ subfund_code: code, name: sf.name || '', group: sf.group || '', cash: sum(lines.map((l) => l.cash)), transfer: sum(lines.map((l) => l.transfer)), total: run, lines });
+  }
+  return { month: ym, funds: out };
 }

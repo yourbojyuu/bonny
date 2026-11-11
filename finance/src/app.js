@@ -78,6 +78,7 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
       receipts: {
         issue: b(receipts.issue), preview: b(receipts.preview), cancel: b(receipts.cancel), nextNo: b((c, book) => { requirePermission(c, 'masters.read'); return receipts.nextNo(c, book); }),
         list: b(receipts.listReceipts), splits: b(receipts.splitsOf), monthlySummary: b(receipts.monthlySummary),
+        workState: b(receipts.workState), closeDay: b(receipts.closeDay), reopenDay: b(receipts.reopenDay), daySummaries: b(receipts.daySummaries), byFund: b(receipts.byFund),
       },
       print: { render: b(printSvc.render) },
       migrate: { payees: b(migrate.migratePayees), packages: b(migrate.migratePackages), opening: b(migrate.migrateOpening), loans: b(migrate.migrateLoans), audit: b(migrate.migrateAudit) },

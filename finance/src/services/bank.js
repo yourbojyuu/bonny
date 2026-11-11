@@ -14,7 +14,7 @@ const addLedger = (ctx, e) => ctx.store.insert(ctx.user, 'ledger', { fund_code: 
 const groupOfAccount = (ctx, id) => (ctx.store.get('bank_accounts', id) || {}).fund_group;
 
 /* ---------------- ใบนำฝาก ---------------- */
-function cashByGroup(ctx, r) {
+export function cashByGroup(ctx, r) {
   const out = {};
   if (r.loan_id) {
     const loan = ctx.store.get('loans', r.loan_id);

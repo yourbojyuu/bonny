@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ระบบการเงิน โรงเรียนกาวิละวิทยาลัย</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@200;300;400;500;600;700&family=Geist:wght@200;300;500;600&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@200;300;400;500;600;700&family=Geist:wght@200;300;500;600&family=Geist+Mono:wght@500;600&family=Kanit:wght@500;600&display=swap" rel="stylesheet">
 <style>
   /*
     ภาษาภาพ: Bento grid + Liquid Glass
@@ -728,6 +728,59 @@
   .pt-tabs button { border-radius:6px; }
   .pt-tabs button[aria-selected="true"] { background:var(--d-ink); color:#fff; box-shadow:none; }
   .pt-tabs button[aria-selected="true"] .count { color:#fff; }
+
+  /* ---- โต๊ะรับเงิน: สมุดเงินฝากสไตล์เกม (ใช้เฉพาะหน้าใบเสร็จ/สรุปวัน/เงินแยกประเภท) ---- */
+  .nbtn { --nb:#ff6a13; --nb-lip:#b84407; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px; padding:0 20px; border:0; border-radius:14px; background:var(--nb); color:#fff; font:600 16px 'Kanit','Sarabun',sans-serif; cursor:pointer; box-shadow:0 4px 0 var(--nb-lip), 0 10px 18px -10px rgba(15,31,61,.5); transform:translateY(0); transition:transform .08s ease, box-shadow .08s ease, filter .15s; white-space:nowrap; }
+  .nbtn:hover { filter:brightness(1.06); }
+  .nbtn:active { transform:translateY(3px); box-shadow:0 1px 0 var(--nb-lip), 0 4px 8px -6px rgba(15,31,61,.5); }
+  .nbtn[disabled] { filter:grayscale(.7) opacity(.6); cursor:not-allowed; transform:none; box-shadow:0 4px 0 #8b93a5; }
+  .nbtn.orange { --nb:#ff6a13; --nb-lip:#b84407; } .nbtn.blue { --nb:#2f6bff; --nb-lip:#1747b8; } .nbtn.small { min-height:36px; padding:0 14px; font-size:14px; border-radius:11px; }
+  .nbtn .plus { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#fff; color:var(--nb); font:700 20px/1 'Kanit',sans-serif; box-shadow:inset 0 -2px 0 rgba(0,0,0,.12); }
+  .nbtn svg { width:18px; height:18px; }
+  .rcdesk { position:relative; margin:0 0 20px; padding:16px 18px 16px 34px; border:2px solid var(--d-ink); border-radius:22px; background:#fffdf9; box-shadow:0 5px 0 var(--d-ink), 0 18px 30px -20px rgba(15,31,61,.5); overflow:hidden; }
+  .rcdesk::before { content:""; position:absolute; left:0; top:0; bottom:0; width:16px; background:linear-gradient(180deg,#ff6a13 0 50%,#2f6bff 50% 100%); border-right:2px solid var(--d-ink); }
+  .rcdesk::after { content:""; position:absolute; left:3px; top:10px; bottom:10px; width:10px; background:radial-gradient(circle, #fffdf9 0 3px, transparent 3.5px) 0 0/10px 22px repeat-y; opacity:.95; }
+  .rd-top { display:flex; align-items:stretch; gap:14px 22px; flex-wrap:wrap; margin-bottom:14px; }
+  .rd-cap { display:block; font:600 13px 'Kanit','Sarabun',sans-serif; color:var(--d-orange-ink); }
+  .rd-sub { display:block; font-size:12.5px; color:var(--d-mute); margin-top:3px; }
+  .rd-book { min-width:190px; } .rd-day { min-width:170px; }
+  .rd-bk { display:flex; align-items:center; gap:8px; font:600 18px 'Kanit','Sarabun',sans-serif; color:var(--d-ink); }
+  .rd-bk input, .rd-day input, .rd-no input { font:600 22px 'Kanit','Geist Mono',monospace; letter-spacing:.01em; color:var(--d-ink); text-align:center; border:2px solid var(--d-ink); border-radius:12px; background:#fff; box-shadow:0 3px 0 var(--d-ink); min-height:46px; }
+  .rd-bk input { width:120px; } .rd-day input { width:160px; font-size:19px; display:block; margin-top:4px; }
+  .rd-no { display:grid; gap:3px; width:96px; } .rd-no > span { font-size:var(--f-sm); color:var(--d-mute); } .rd-no input { width:100%; color:var(--d-blue); }
+  .rd-bk input:focus, .rd-day input:focus, .rd-no input:focus, .qf input:focus { outline:0; border-color:var(--d-blue); box-shadow:0 3px 0 var(--d-blue), 0 0 0 4px rgba(47,107,255,.16); }
+  .rd-meter { height:14px; margin-top:8px; border:2px solid var(--d-ink); border-radius:999px; background:#fff; overflow:hidden; }
+  .rd-meter i { display:block; height:100%; min-width:4px; background:repeating-linear-gradient(135deg,#ffc933 0 8px,#ffb000 8px 16px); border-right:2px solid var(--d-ink); transition:width .6s cubic-bezier(.34,1.56,.64,1); }
+  .rd-stats { display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; align-self:flex-start; }
+  .rd-stats > div { min-width:92px; padding:8px 12px; border:2px solid var(--d-ink); border-radius:14px; background:#fff; text-align:center; box-shadow:0 3px 0 var(--d-ink); }
+  .rd-stats b { display:block; font:600 20px/1.15 'Kanit','Geist Mono',monospace; color:var(--d-ink); } .rd-stats span { font-size:12.5px; color:var(--d-mute); }
+  .rd-top .nbtn { align-self:center; }
+  .rd-note { margin:0 0 12px; }
+  .rd-form { display:flex; flex-wrap:wrap; gap:10px 12px; align-items:flex-end; padding-top:14px; border-top:2px dashed #c8cede; }
+  .rcdesk .qf input { border:2px solid var(--d-ink); border-radius:12px; box-shadow:0 3px 0 rgba(15,31,61,.9); font-family:'Geist Mono','Geist',monospace; font-weight:500; background:#fff; }
+  .rcdesk .qf > span, .rcdesk .qtot span { color:var(--d-ink2); font-weight:500; }
+  .rcdesk .qg { border:2px solid var(--d-ink); border-radius:16px; } .rcdesk .qg legend { font:600 14px 'Kanit','Sarabun',sans-serif; padding:0 6px; }
+  .rcdesk .qtot b { font:600 24px 'Kanit','Geist Mono',monospace; color:var(--d-ink); }
+  .rcdesk .btn.no { border-radius:10px; }
+  .passpage { border:2px solid var(--d-ink); border-radius:16px; background:#fffdf9; box-shadow:0 4px 0 var(--d-ink); padding:6px 16px; margin-bottom:12px; }
+  .pp-row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px dashed #c8cede; font-size:15.5px; } .pp-row b { font-family:'Geist Mono',monospace; font-weight:500; }
+  .pp-row.total { border-bottom:0; font:600 18px 'Kanit','Sarabun',sans-serif; color:var(--d-blue); } .pp-row.total b { font:600 20px 'Kanit',monospace; }
+  .daycards { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); }
+  .daycard { border:2px solid var(--d-ink); border-radius:20px; background:#fffdf9; box-shadow:0 5px 0 var(--d-ink); overflow:hidden; animation:rise .3s ease both; }
+  .daycard header { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 16px; background:linear-gradient(90deg,#ffe6d2,#dfe9ff); border-bottom:2px solid var(--d-ink); }
+  .daycard header b { display:block; font:600 18px 'Kanit','Sarabun',sans-serif; } .daycard header span { font-size:13px; color:var(--d-ink2); } .daycard header strong { font:600 22px 'Kanit',monospace; color:var(--d-ink); }
+  .dc-rows { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:#c8cede; border-bottom:2px solid var(--d-ink); }
+  .dc-rows > div { background:#fffdf9; padding:10px 12px; display:grid; gap:1px; } .dc-rows span { font:600 13px 'Kanit',sans-serif; color:var(--d-orange-ink); } .dc-rows b { font:500 14px 'Geist Mono',monospace; } .dc-rows em { font:normal 400 12.5px 'Geist Mono',monospace; color:var(--d-mute); }
+  .daycard footer { padding:12px 14px; display:grid; gap:8px; }
+  .dc-dep { display:flex; align-items:center; gap:10px; padding:8px 10px; border:2px solid #c8cede; border-radius:14px; background:#fff; } .dc-dep.done { border-color:#17733a; background:#effaf2; }
+  .dc-dep > div { flex:1; min-width:0; } .dc-dep b { display:block; font-size:15px; } .dc-dep small { color:var(--d-mute); font-size:12.5px; }
+  .dc-ic { display:grid; place-items:center; width:36px; height:36px; border-radius:11px; background:var(--d-orange-wash); color:var(--d-orange); } .dc-dep.done .dc-ic { background:#d6f2de; color:#17733a; } .dc-ic svg { width:18px; height:18px; }
+  .fundbook { margin:0 0 18px; border:2px solid var(--d-ink); border-radius:18px; background:#fffdf9; box-shadow:0 4px 0 var(--d-ink); overflow:hidden; }
+  .fundbook header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:11px 16px; border-bottom:2px solid var(--d-ink); }
+  .fundbook.o header { background:#ffe6d2; } .fundbook.b header { background:#dfe9ff; } .fundbook.n header { background:#e9ecf3; }
+  .fundbook header b { display:block; font:600 17px 'Kanit','Sarabun',sans-serif; } .fundbook header span { color:var(--d-ink2); font-size:13px; margin-right:12px; }
+  .fb-tot strong { font:600 20px 'Kanit',monospace; } .fundbook table { width:100%; border-collapse:collapse; } .fundbook th { text-align:left; font-weight:600; font-size:13px; padding:7px 14px; color:var(--d-ink2); background:var(--d-wash); } .fundbook td { padding:7px 14px; border-top:1px solid var(--d-rule2); } .fundbook .num { text-align:right; }
+  @media (max-width: 640px) { .rd-stats { margin-left:0; } .daycards { grid-template-columns:1fr; } .rcdesk { padding-left:30px; } .fundbook { overflow-x:auto; } }
   /* หน้าล็อกอิน */
   .login-card, #loginView .card, #loginView form { border-radius:var(--d-r3); }
 </style>
@@ -1094,7 +1147,7 @@ var GROUPS = [
   { label: 'ย้ายข้อมูล', color: '--r-proc', tables: ['migrate'] },
   { label: 'ปิดวันและรายงาน', color: '--r-committee', tables: ['daily_close', 'executive', 'year_end'] },
   { label: 'ธนาคาร', color: '--r-finance', tables: ['bank_register', 'deposit_slips', 'bank_statement_lines', 'adjustments'] },
-  { label: 'ฝั่งรับ', color: '--r-finance', tables: ['receipts', 'packages', 'collectibles'] },
+  { label: 'ฝั่งรับ', color: '--r-finance', tables: ['receipts', 'receipt_days', 'packages', 'collectibles'] },
   { label: 'จ่ายเงิน', color: '--r-finance', tables: ['cheques', 'ktb_batches', 'ledger'] },
   { label: 'การเงิน', color: '--r-finance', tables: ['payees', 'payee_account_changes', 'bank_accounts', 'cheque_books'] },
   { label: 'ข้อมูลหลัก', color: '--r-system', tables: ['funds', 'subfunds', 'fund_allowed_expense'] },
@@ -1103,6 +1156,8 @@ var GROUPS = [
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
 var SHORT = { migrate: 'ย้ายข้อมูล', daily_close: 'วันที่ปิด', executive: 'รายงานผู้บริหาร', year_end: 'สิ้นปีงบ', bank_register: 'ทะเบียนเงินฝาก', deposit_slips: 'ใบนำฝาก', bank_statement_lines: 'รายการ statement', adjustments: 'รายการปรับปรุง', receipts: 'ใบเสร็จ', packages: 'แพ็กเกจ', collectibles: 'ยอดที่ต้องเก็บ', cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
 var DESC = {
+  receipt_days: 'กดสรุปประจำวันที่หน้าออกใบเสร็จ ระบบรวมยอดทั้งวันและเงินสดที่ต้องนำฝากแยกตามกลุ่มเงิน แล้วเอาเลขที่ใบนำฝากมากรอกเพื่อจับคู่กับวันนั้น',
+  fund_split: 'รายละเอียดย่อยของใบเสร็จแยกตามชนิดเงิน เรียงตามวันที่ มียอดสะสมแบบสมุดบัญชี ไม่นับใบที่ยกเลิก',
   migrate: 'นำเข้าข้อมูลจากไฟล์เดิมแบบตรวจก่อนแล้วจึงยืนยัน ค่าที่ว่างระบบไม่เดา ให้ผู้ใช้ระบุเอง ใช้ไฟล์ที่ส่งออกจาก Google Sheets เป็น CSV',
   daily_close: 'เปิดวัน ส่งรายงานเงินคงเหลือให้กรรมการนับเงินสดและลงนาม แล้ว ผอ. ตรวจการจ่ายบนกระดาษ การเงินกดรับคืนพร้อมภาพจึงปิดวัน (ล็อก) วันที่มีการจ่ายต้องมีเอกสาร ผอ. ที่รับคืนแล้ว',
   executive: 'ธงแดง งานค้างรับเกินกำหนด เช็คค้างขึ้นเงิน เงินยืมเลยกำหนด ค้างชำระ และโครงการที่ใช้เงินเกิน 90% ของวงเงิน ทั้งหมดคำนวณจากข้อมูลจริง',
@@ -1250,10 +1305,10 @@ function landingFor(roles) {
 }
 
 /* ================= เมนู ================= */
-var TAB_LABEL = { approval_requests: 'ใบขออนุมัติจากงานแผน', procurements: 'ส่งต่อพัสดุ', payment_lines: 'หน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', cheques: 'เช็ค · ทะเบียนคุมเช็ค', cheque_books: 'สมุดเช็ค', ktb_batches: 'รายการโอน (เลขที่อ้างอิง)', tax_due: 'ภาษี' };
+var TAB_LABEL = { receipt_days: 'สรุปประจำวัน', approval_requests: 'ใบขออนุมัติจากงานแผน', procurements: 'ส่งต่อพัสดุ', payment_lines: 'หน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', cheques: 'เช็ค · ทะเบียนคุมเช็ค', cheque_books: 'สมุดเช็ค', ktb_batches: 'รายการโอน (เลขที่อ้างอิง)', tax_due: 'ภาษี' };
 function tabLabel(t) { return TAB_LABEL[t] || tableMeta(t).label; }
 // แท็บที่ไม่ใช่ทะเบียนในฐานข้อมูล (ดึงจาก service) · เห็นเมื่อมีสิทธิ์อ่านต้นทาง
-var PSEUDO = { tax_due: { label: 'ภาษีหัก ณ ที่จ่าย', needs: 'ledger' } };
+var PSEUDO = { tax_due: { label: 'ภาษีหัก ณ ที่จ่าย', needs: 'ledger' }, fund_split: { label: 'เงินแยกประเภท', needs: 'receipts' } };
 function tableMeta(key) {
   if (PSEUDO[key]) return ME && ME.tables.some(function (t) { return t.key === PSEUDO[key].needs; }) ? { key: key, label: PSEUDO[key].label, canWrite: false } : undefined; return ME && ME.tables.filter(function (t) { return t.key === key; })[0]; }
 var ICON = {
@@ -1290,6 +1345,8 @@ var ICON = {
   deposit_slips: '<path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M5 21h14"/>',
   bank_statement_lines: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
   adjustments: '<line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/>',
+  receipt_days: '<rect width="18" height="18" x="3" y="4" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  fund_split: '<path d="M21 12a9 9 0 1 1-9-9v9Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/>',
   receipts: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
   packages: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>',
   collectibles: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/>',
@@ -1323,7 +1380,7 @@ var PAGES = [
   { id: 'loan', no: 3, zone: 'out', label: 'เงินยืม', tables: ['loans'] },
   { id: 'khb', no: 4, zone: 'out', label: 'ขบ.', tables: ['payment_lines', 'khb'] },
   { id: 'khj', no: 5, zone: 'out', label: 'ขจ.', tables: ['khj', 'cheques', 'cheque_books', 'ktb_batches', 'tax_due'] },
-  { id: 'receipt', no: 6, zone: 'in', label: 'ออกใบเสร็จ', tables: ['receipts', 'collectibles'] },
+  { id: 'receipt', no: 6, zone: 'in', label: 'ออกใบเสร็จ', tables: ['receipts', 'receipt_days', 'fund_split', 'collectibles'] },
   { id: 'bank', no: 7, zone: 'in', label: 'ทะเบียนเงินฝาก', tables: ['bank_register', 'deposit_slips', 'bank_statement_lines', 'adjustments', 'ledger'] },
   { id: 'close', no: 8, zone: 'end', label: 'ปิดวัน', tables: ['daily_close', 'year_end'] },
   { id: 'exec', no: 9, zone: 'end', label: 'รายงานผู้บริหาร', tables: ['executive'] },
@@ -1435,6 +1492,8 @@ async function show(key, flash) {
   if (key === 'migrate') return renderMigrate();
   if (key === 'year_end') return renderYearEnd();
   if (key === 'tax_due') return renderTaxPage();
+  if (key === 'fund_split') return renderFundSplit();
+  if (key === 'receipt_days') return renderDays();
   var main = $('main');
   main.innerHTML = '<div class="tile" style="max-width:360px"><span class="skel"></span><br><span class="skel" style="width:40%"></span></div>';
   var r = await call('list', { table: key });
@@ -1930,34 +1989,50 @@ async function chequeRegButton() {
   $('prCr').onclick = function () { printDoc('cheque_register', $('crAcct').value); };
 }
 // กรอกใบเสร็จแถวเดียว: เล่มที่ · เลขที่ · บกศ. · รายได้ · อื่น ๆ (สด/โอน) · Enter ไปช่องถัดไป · บันทึกแล้วเลขที่ขยับเอง
-var QR_KEEP = { book: '', date: '' }, QR_FOCUS = false;
+/* ================= โต๊ะรับเงิน (สมุดเงินฝากสไตล์เกม) =================
+   เล่มที่/เลขถัดไป/วันที่ทำงาน เก็บในฐานข้อมูล (receipts.workState) จึงจำได้ข้ามเครื่องและเมื่อรีเฟรช
+   ปุ่ม ＋ บันทึกใบนี้แล้วขึ้นใบถัดไปในเล่มเดิม วันที่เดิมต่อไปจนกว่าจะกดสรุปประจำวัน */
+var QR_FOCUS = false;
 async function rcQuick() {
   if (!(PAY_ADD.receipts && PAY_ADD.receipts.can())) return;
-  var book = QR_KEEP.book || ((cache.receipts || [])[0] || {}).book_no || '', day = QR_KEEP.date || ME.today;
+  var ws = await svc('receipts', 'workState', []); if (!ws.ok || current !== 'receipts') return; ws = ws.data;
   var f = function (id, label, w, extra) { return '<label class="qf" style="--w:' + w + '"><span>' + label + '</span><input type="text" id="qr_' + id + '" ' + (extra || '') + ' autocomplete="off"></label>'; };
-  $('tbl').insertAdjacentHTML('beforebegin', '<form class="qrow" id="qrow" novalidate aria-label="กรอกใบเสร็จต่อเนื่อง"><div class="qhead"><b>กรอกใบเสร็จ</b><span class="note">กรอกตามเล่มที่/เลขที่ แล้วกด Enter ไปช่องถัดไป ช่องสุดท้ายกด Enter เพื่อบันทึก</span></div><div class="qgrid">' +
-    f('book', 'เล่มที่', '84px', 'value="' + esc(book) + '"') + f('no', 'เลขที่', '84px', 'inputmode="numeric"') + f('date', 'วันที่', '120px', 'value="' + esc(day) + '"') + f('payer', 'ผู้ชำระเงิน', '170px') +
-    '<span class="qsep" aria-hidden="true"></span>' +
-    '<fieldset class="qg bks"><legend>บกศ.</legend>' + f('bks_cash', 'สด', '84px', 'inputmode="decimal"') + f('bks_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
-    '<fieldset class="qg inc"><legend>รายได้</legend>' + f('inc_cash', 'สด', '84px', 'inputmode="decimal"') + f('inc_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
-    '<fieldset class="qg oth"><legend>อื่น ๆ</legend>' + f('other', 'จำนวนเงิน', '92px', 'inputmode="decimal"') + '</fieldset>' +
-    f('kcorp', 'เลขที่อ้างอิงโอน (Kcorp)', '170px', 'class="hidden-f"') +
-    '<div class="qtot"><span>รวม (บาท)</span><b id="qr_total">0.00</b></div><button type="submit" class="btn primary" id="qr_go">บันทึก</button></div><div id="qr_msg" role="status" aria-live="polite"></div></form>');
-  var ids = ['book', 'no', 'date', 'payer', 'bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'other', 'kcorp'];
+  var pct = Math.min(100, Math.round(ws.used * 100 / ws.size));
+  var lock = ws.todaySummarized && ws.date === ME.today && !ws.day.count;
+  $('tbl').insertAdjacentHTML('beforebegin',
+    '<section class="rcdesk" id="rcdesk" aria-label="โต๊ะรับเงิน">' +
+    '<div class="rd-top">' +
+      '<div class="rd-book"><span class="rd-cap">สมุดรับเงิน</span><label class="rd-bk">เล่มที่<input type="text" id="qr_book" value="' + esc(ws.book) + '" inputmode="numeric" autocomplete="off" aria-label="เล่มที่"></label>' +
+        '<div class="rd-meter" role="img" aria-label="ใช้ไปแล้ว ' + ws.used + ' จาก ' + ws.size + ' ใบ"><i style="width:' + pct + '%"></i></div><span class="rd-sub">ใช้แล้ว ' + ws.used + ' / ' + ws.size + ' ใบ</span></div>' +
+      '<div class="rd-day"><span class="rd-cap">วันที่ทำงาน</span><input type="text" id="qr_date" value="' + esc(ws.date) + '" aria-label="วันที่" inputmode="numeric" autocomplete="off"><span class="rd-sub">ใช้วันนี้ต่อไปจนกว่าจะกดสรุป</span></div>' +
+      '<div class="rd-stats"><div><b>' + ws.day.count + '</b><span>ใบวันนี้</span></div><div><b>' + money(ws.day.cash) + '</b><span>เงินสด</span></div><div><b>' + money(ws.day.transfer) + '</b><span>เงินโอน</span></div></div>' +
+      '<button type="button" class="nbtn blue" id="qr_close"' + (ws.day.count ? '' : ' disabled') + '>' + ico('receipt_days') + 'สรุปประจำวัน</button>' +
+    '</div>' +
+    (ws.full ? '<div class="msg bad rd-note">เล่ม ' + esc(ws.book) + ' ครบ ' + ws.size + ' ใบแล้ว ใส่เลขเล่มใหม่ในช่องเล่มที่ แล้วเริ่มใบที่ 1</div>' : '') +
+    (lock ? '<div class="msg ok rd-note">วันนี้สรุปแล้ว ถ้าจะออกใบเพิ่ม ให้เปลี่ยนวันที่ หรือไปแท็บสรุปประจำวันเพื่อเปิดวันนี้ใหม่</div>' : '') +
+    '<form class="rd-form" id="qrow" novalidate aria-label="กรอกใบเสร็จ">' +
+      '<div class="rd-no"><span>เลขที่</span><input type="text" id="qr_no" inputmode="numeric" autocomplete="off" aria-label="เลขที่" value="' + esc(ws.book ? ws.next : '') + '"></div>' +
+      f('payer', 'ผู้ชำระเงิน', '210px') +
+      '<fieldset class="qg bks"><legend>บกศ.</legend>' + f('bks_cash', 'สด', '84px', 'inputmode="decimal"') + f('bks_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
+      '<fieldset class="qg inc"><legend>รายได้</legend>' + f('inc_cash', 'สด', '84px', 'inputmode="decimal"') + f('inc_transfer', 'โอน', '84px', 'inputmode="decimal"') + '</fieldset>' +
+      '<fieldset class="qg oth"><legend>อื่น ๆ</legend>' + f('other', 'จำนวนเงิน', '92px', 'inputmode="decimal"') + '</fieldset>' +
+      f('kcorp', 'เลขที่อ้างอิงโอน (Kcorp)', '170px') +
+      '<div class="qtot"><span>รวม (บาท)</span><b id="qr_total">0.00</b></div>' +
+      '<button type="submit" class="nbtn orange" id="qr_go"><span class="plus" aria-hidden="true">+</span>บันทึก แล้วขึ้นใบถัดไป</button>' +
+    '</form><div id="qr_msg" role="status" aria-live="polite"></div></section>');
   var q = function (id) { return $('qr_' + id); };
+  var ids = ['payer', 'bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'other', 'kcorp'];
   var num = function (v) { var n = parseFloat(String(v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
   var recalc = function () {
     var t = num(q('bks_cash').value) + num(q('bks_transfer').value) + num(q('inc_cash').value) + num(q('inc_transfer').value) + num(q('other').value);
     $('qr_total').textContent = t.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    var tr = num(q('bks_transfer').value) + num(q('inc_transfer').value) > 0; q('kcorp').parentNode.style.display = tr ? '' : 'none';
+    q('kcorp').parentNode.style.display = num(q('bks_transfer').value) + num(q('inc_transfer').value) > 0 ? '' : 'none';
   };
   q('kcorp').parentNode.style.display = 'none';
   ids.forEach(function (id) { q(id).addEventListener('input', recalc); });
-  var nextNo = async function () { var b = q('book').value.trim(); if (!b) return; var r = await svc('receipts', 'nextNo', [b]); if (r.ok && !q('no').value) q('no').value = r.data; };
-  q('book').addEventListener('change', function () { q('no').value = ''; nextNo(); });
-  await nextNo();
+  q('book').addEventListener('change', async function () { var b = q('book').value.trim(); if (!b) return; var r = await svc('receipts', 'nextNo', [b]); if (r.ok) q('no').value = r.data; });
   $('qrow').addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT' || e.target.id === 'qr_book' || e.target.id === 'qr_date') return;
     var vis = ids.filter(function (id) { return q(id).parentNode.style.display !== 'none'; }), i = vis.indexOf(e.target.id.slice(3));
     if (i >= 0 && i < vis.length - 1) { e.preventDefault(); q(vis[i + 1]).focus(); q(vis[i + 1]).select(); }
   });
@@ -1970,13 +2045,59 @@ async function rcQuick() {
     if (!r.ok) {
       var splitErr = r.errors && r.errors.some(function (x) { return x.field === 'split'; });
       msg.innerHTML = '<div class="msg bad">' + esc(String(r.error || 'บันทึกไม่สำเร็จ').replace(/^split: /, '')) + (splitErr ? ' <button type="button" class="btn small" id="qr_manual">กำหนดแยกเอง</button>' : '') + '</div>';
-      if (splitErr) $('qr_manual').onclick = async function () { await rcAdd(); ids.forEach(function (id) { var map = { book: 'book_no', no: 'receipt_no', date: 'date', payer: 'payer', kcorp: 'kcorp_ref' }, el = $('f_' + (map[id] || id)); if (el && q(id).value) el.value = q(id).value; }); };
+      if (splitErr) $('qr_manual').onclick = async function () { await rcAdd(); var map = { book: 'book_no', no: 'receipt_no', date: 'date', payer: 'payer', kcorp: 'kcorp_ref' }; ['book', 'no', 'date', 'payer', 'kcorp'].concat(['bks_cash', 'bks_transfer', 'inc_cash', 'inc_transfer', 'other']).forEach(function (id) { var el = $('f_' + (map[id] || id)); if (el && q(id).value) el.value = q(id).value; }); };
       return;
     }
-    QR_KEEP = { book: input.book_no, date: input.date }; QR_FOCUS = true; cache = {};
-    show('receipts', 'ออกใบเสร็จ ' + input.book_no + '/' + input.receipt_no + ' แล้ว');
+    QR_FOCUS = true; cache = {};
+    show('receipts', 'ออกใบเสร็จ ' + input.book_no + '/' + input.receipt_no + ' แล้ว ใบถัดไปคือเลขที่ ' + (Number(input.receipt_no) + 1));
   };
+  $('qr_close').onclick = function () { rcClose(ws.date); };
   if (QR_FOCUS) { QR_FOCUS = false; q('payer').focus(); }
+}
+async function rcClose(date) {
+  var ws = (await svc('receipts', 'workState', [])).data, d = ws.day;
+  var rcs = (await load('receipts')).filter(function (r) { return r.date === date && r.status !== 'ยกเลิก'; });
+  var sum = function (k) { return rcs.reduce(function (n, r) { return n + r[k]; }, 0); };
+  var rows = [['บกศ. เงินสด', sum('bks_cash')], ['รายได้ เงินสด', sum('inc_cash')], ['อื่น ๆ', sum('other')], ['บกศ. เงินโอน', sum('bks_transfer')], ['รายได้ เงินโอน', sum('inc_transfer')]];
+  var html = '<div class="passpage">' + rows.map(function (x) { return '<div class="pp-row"><span>' + x[0] + '</span><b>' + money(x[1]) + '</b></div>'; }).join('') +
+    '<div class="pp-row total"><span>รวมทั้งวัน ' + d.count + ' ใบ</span><b>' + money(d.total) + '</b></div></div>' +
+    '<p class="note">หลังสรุป วันที่ ' + thDate(date) + ' จะออกหรือยกเลิกใบเพิ่มไม่ได้ ไปกรอกเลขที่ใบนำฝากเงินสดได้ที่แท็บสรุปประจำวัน ถ้าพบว่าผิด เปิดวันนั้นใหม่ได้จนกว่าจะมีใบนำฝาก</p>';
+  openDialog('สรุปประจำวัน ' + thDate(date), 'การเงิน', '--r-finance', html, 'สรุปประจำวัน', function () { return svc('receipts', 'closeDay', [date]); }).then(function () { cache = {}; });
+}
+async function renderDays() {
+  var main = $('main');
+  main.innerHTML = '<h1 class="page-title">สรุปประจำวัน</h1><p class="page-desc">' + esc(DESC.receipt_days) + '</p><div id="tbl"></div>';
+  var r = await svc('receipts', 'daySummaries', []); if (current !== 'receipt_days') return;
+  if (!r.ok) { $('tbl').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+  var can = hasRole(['finance', 'income']);
+  $('tbl').innerHTML = r.data.length ? '<div class="daycards">' + r.data.map(function (d) {
+    return '<article class="daycard"><header><div><b>' + thDate(d.date, true) + '</b><span>ใบเสร็จ ' + esc(d.range) + ' · ' + d.count + ' ใบ' + (d.cancelled ? ' · ยกเลิก ' + d.cancelled : '') + '</span></div><strong>' + money(d.total) + '</strong></header>' +
+      '<div class="dc-rows"><div><span>บกศ.</span><b>' + money(d.bks_cash) + ' สด</b><em>' + money(d.bks_transfer) + ' โอน</em></div><div><span>รายได้</span><b>' + money(d.inc_cash) + ' สด</b><em>' + money(d.inc_transfer) + ' โอน</em></div><div><span>อื่น ๆ</span><b>' + money(d.other) + '</b><em></em></div></div>' +
+      '<footer>' + d.groups.map(function (g) {
+        var done = !!g.slip_no;
+        return '<div class="dc-dep ' + (done ? 'done' : '') + '"><span class="dc-ic">' + ico('deposit_slips') + '</span><div><b>นำฝาก ' + esc(g.group) + ' ' + money(g.cash) + '</b><small>' + (done ? 'ใบนำฝากเลขที่ ' + esc(g.slip_no) + (g.difference ? ' · ส่วนต่าง ' + money(g.difference) : ' · ยอดตรง') : 'ยังไม่มีเลขที่ใบนำฝาก') + '</small></div>' +
+          (done ? '<span class="pill ok">จับคู่แล้ว</span>' : (can ? '<button type="button" class="nbtn blue small" data-dep="' + d.date + '|' + esc(g.group) + '">กรอกเลขที่ใบฝาก</button>' : '')) + '</div>';
+      }).join('') + (can && d.groups.every(function (g) { return !g.slip_no; }) ? '<button type="button" class="btn small" data-reopen="' + d.date + '">เปิดวันนี้ใหม่</button>' : '') + '</footer></article>';
+  }).join('') + '</div>' : '<p class="note">ยังไม่มีวันที่สรุป เมื่อกดสรุปประจำวันที่หน้าออกใบเสร็จ จะมาอยู่ที่นี่</p>';
+  $('tbl').onclick = function (e) {
+    var b = e.target.closest('[data-dep]'); if (b) { var p = b.dataset.dep.split('|'); go('deposit_slips'); setTimeout(function () { dsAdd({ date: p[0], group: p[1] }); }, 350); return; }
+    var o = e.target.closest('[data-reopen]'); if (o) openDialog('เปิดวันที่สรุปแล้วใหม่', 'การเงิน', '--r-finance', fTxt('reason', 'เหตุผล', { req: true }), 'เปิดใหม่', function () { return svc('receipts', 'reopenDay', [o.dataset.reopen, val('reason')]); }).then(function () { cache = {}; renderDays(); });
+  };
+}
+async function renderFundSplit() {
+  var ym = ME.today.slice(0, 7);
+  $('main').innerHTML = '<h1 class="page-title">เงินแยกประเภท</h1><p class="page-desc">' + esc(DESC.fund_split) + '</p><div class="toolbar"><input class="search" id="fsMonth" style="width:140px" value="' + ym + '" aria-label="เดือน (ปี-เดือน)"><span class="note">เว้นว่างเพื่อดูทั้งหมด</span></div><div id="fsOut"></div>';
+  var draw = async function () {
+    var r = await svc('receipts', 'byFund', [$('fsMonth').value.trim()]); if (current !== 'fund_split') return;
+    if (!r.ok) { $('fsOut').innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+    var tone = { 'บกศ.': 'o', 'รายได้': 'b' };
+    $('fsOut').innerHTML = r.data.funds.length ? r.data.funds.map(function (f) {
+      return '<section class="fundbook ' + (tone[f.group] || 'n') + '"><header><div><b>' + esc(f.subfund_code) + ' ' + esc(f.name) + '</b><span>' + esc(f.group) + ' · ' + f.lines.length + ' รายการ</span></div><div class="fb-tot"><span>สด ' + money(f.cash) + '</span><span>โอน ' + money(f.transfer) + '</span><strong>' + money(f.total) + '</strong></div></header>' +
+        '<table><thead><tr><th>วันที่</th><th>ใบเสร็จ</th><th>ผู้ชำระเงิน</th><th class="num">สด</th><th class="num">โอน</th><th class="num">รวม</th><th class="num">สะสม</th></tr></thead><tbody>' + f.lines.map(function (l) {
+          return '<tr><td>' + thDate(l.date) + '</td><td>' + esc(l.ref) + '</td><td>' + esc(l.payer) + '</td><td class="num">' + money(l.cash) + '</td><td class="num">' + money(l.transfer) + '</td><td class="num">' + money(l.amount) + '</td><td class="num"><b>' + money(l.balance) + '</b></td></tr>'; }).join('') + '</tbody></table></section>';
+    }).join('') : '<p class="note">เดือนนี้ยังไม่มีใบเสร็จ</p>';
+  };
+  $('fsMonth').onchange = draw; draw();
 }
 async function rcSummaryBox() {
   var ym = ME.today.slice(0, 7);
@@ -2125,9 +2246,11 @@ var PAY_ACT = {
 
 /* ================= ธนาคาร ================= */
 async function savingsOptions() { return (await load('bank_accounts')).filter(function (a) { return a.type === 'ออมทรัพย์' && a.active; }).map(function (a) { return { v: a.id, t: a.fund_group + ' ' + a.account_no }; }); }
-async function dsAdd() {
+async function dsAdd(pre) {
   var accts = await savingsOptions();
-  var html = fSel('account_id', 'บัญชีออมทรัพย์', accts, { req: true }) + fTxt('slip_no', 'เลขที่ใบนำฝาก', { req: true }) + fTxt('date', 'วันที่ฝาก', { req: true, val: ME.today }) + fTxt('amount', 'ยอดฝาก (บาท)', { req: true, money: true }) + '<div id="undep"><p class="note">เลือกบัญชีเพื่อดูใบเสร็จเงินสดที่ยังไม่ฝาก</p></div>';
+  var dsr = await svc('receipts', 'daySummaries', []), dayOpts = [];
+  (dsr.ok ? dsr.data : []).forEach(function (d) { d.groups.forEach(function (g) { if (!g.slip_no) dayOpts.push({ v: d.date + '|' + g.group, t: thDate(d.date) + ' · ' + g.group + ' เงินสด ' + money(g.cash) }); }); });
+  var html = (dayOpts.length ? fSel('day', 'จับคู่กับสรุปประจำวัน (ไม่บังคับ)', dayOpts, { hint: 'เลือกแล้วระบบเติมบัญชี ยอดฝาก และใบเสร็จของวันนั้นให้ เหลือกรอกเลขที่ใบนำฝาก' }) : '') + fSel('account_id', 'บัญชีออมทรัพย์', accts, { req: true }) + fTxt('slip_no', 'เลขที่ใบนำฝาก', { req: true }) + fTxt('date', 'วันที่ฝาก', { req: true, val: ME.today }) + fTxt('amount', 'ยอดฝาก (บาท)', { req: true, money: true }) + '<div id="undep"><p class="note">เลือกบัญชีเพื่อดูใบเสร็จเงินสดที่ยังไม่ฝาก</p></div>';
   await openDialog('บันทึกใบนำฝาก', 'การเงิน', '--r-finance', html, 'บันทึกใบนำฝาก', function () {
     return svc('deposits', 'create', [{ account_id: val('account_id'), slip_no: val('slip_no'), date: val('date'), amount: val('amount'), receipt_ids: [].map.call(document.querySelectorAll('.rcck:checked'), function (x) { return x.value; }) }]);
   });
@@ -2139,6 +2262,16 @@ async function dsAdd() {
     $('undep').innerHTML = rows.length ? '<div class="field" data-key="receipt_ids"><label>ใบเสร็จเงินสดที่ยังไม่ฝาก (กลุ่ม ' + esc(a.fund_group) + ')</label><div class="checks" style="flex-direction:column;gap:4px">' + rows.map(function (x) { var rr = rc.filter(function (y) { return y.id === x.id; })[0] || {}; return '<label><input type="checkbox" class="rcck" value="' + esc(x.id) + '" data-cash="' + x.cash + '" checked> ' + esc(rr.book_no) + '/' + esc(rr.receipt_no) + ' ' + esc(rr.date) + ' <b>' + money(x.cash) + '</b></label>'; }).join('') + '</div><div class="hint">รวม ' + money(r.data.total) + ' บาท</div><div class="err"></div></div>' : '<p class="note">กลุ่มนี้ไม่มีเงินสดที่ยังไม่ฝาก</p>';
     if (rows.length && !$('f_amount').value) $('f_amount').value = money(r.data.total);
   };
+  var applyDay = async function (key) {
+    var p = String(key || '').split('|'); if (p.length < 2) return;
+    var acct = (cache.bank_accounts || []).filter(function (x) { return x.type === 'ออมทรัพย์' && x.active && x.fund_group === p[1]; })[0]; if (!acct) return;
+    var day = ((await svc('receipts', 'daySummaries', [])).data || []).filter(function (d) { return d.date === p[0]; })[0], g = day && day.groups.filter(function (x) { return x.group === p[1]; })[0]; if (!g) return;
+    sel.value = acct.id; await sel.onchange();
+    [].forEach.call(document.querySelectorAll('.rcck'), function (c) { c.checked = g.receipt_ids.indexOf(c.value) >= 0; });
+    $('f_amount').value = money(g.cash); $('f_slip_no').focus();
+  };
+  if ($('f_day')) $('f_day').onchange = function () { applyDay(this.value); };
+  if (pre && pre.group) { var want = pre.date + '|' + pre.group; if ($('f_day')) $('f_day').value = want; await applyDay(want); }
 }
 function stmtImport() {
   savingsOptions().then(async function (sv) {
