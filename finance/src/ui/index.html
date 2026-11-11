@@ -527,6 +527,25 @@
   .wb-empty { color:var(--muted); font-size:var(--f-md); padding:10px 0; }
   .wb-side .btn { align-self:flex-start; }
   .wb-status { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 18px; border-top:1px solid var(--line); font-size:var(--f-sm); color:var(--muted); }
+  /* ---- ขัดเกลา: มินิมอลแต่ไม่โล่ง · เส้นบาง พื้นขาวนวล เงาเบา ---- */
+  .wb { border-radius:22px; background:rgba(255,255,255,.82); box-shadow:0 1px 0 #fff inset, 0 18px 44px -34px rgba(11,42,107,.45); }
+  .wb-head { padding:14px 18px; }
+  .wb-head h2 { font-size:17px; letter-spacing:-.01em; }
+  .wb-canvas { background-image:radial-gradient(rgba(11,42,107,.10) 1px, transparent 1px); background-size:20px 20px; }
+  .wb-band { border-radius:18px; border:1px dashed rgba(11,42,107,.10); }
+  .wb-band.out { background:linear-gradient(90deg, rgba(242,106,0,.06), rgba(242,106,0,0)); }
+  .wb-band.in { background:linear-gradient(90deg, rgba(21,86,214,.06), rgba(21,86,214,0)); }
+  .wb-band span { letter-spacing:.02em; }
+  .wb-edge { stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .wb-pulse { stroke:#fff; stroke-opacity:.95; stroke-width:2; stroke-dasharray:2 30; }
+  .wb-arrow { stroke:none; }
+  .wb-port { fill:#fff; stroke-width:1.8; }
+  .wb-node { border-radius:16px; border-color:#e8ecf4; box-shadow:0 1px 2px rgba(11,42,107,.05), 0 10px 22px -18px rgba(11,42,107,.45); }
+  .wb-node:hover { transform:translateY(-2px); box-shadow:0 1px 2px rgba(11,42,107,.06), 0 16px 28px -18px rgba(11,42,107,.5); }
+  .wb-node::before { content:""; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:0 3px 3px 0; background:var(--acc); opacity:.85; }
+  .wb-node.zero::before { opacity:.25; }
+  .wb-node .g { border-radius:10px; width:32px; height:32px; }
+  .wb-node .c { border-top:1px dashed #edf0f6; }
   @media (max-width: 980px) { .wb-body { grid-template-columns:1fr; } .wb-side { border-left:0; border-top:1px solid var(--line); max-height:none; } }
   @media (prefers-reduced-motion: reduce) { .wb-pulse { animation:none; } .wb-node, .wb-item { animation:none; } .wb-plane { transition:none; } }
   /* แถบไทม์ไลน์ย่อบนทุกหน้า */
@@ -1419,7 +1438,7 @@ function drawTimeline() {
     var pick = d.stages.filter(function (s) { return d.mine.indexOf(s.key) >= 0 && s.count; })[0] || d.stages.filter(function (s) { return s.count; })[0] || d.stages[0];
     TL_SEL = pick.key;
   }
-  var W = 24 + 8 * COLW, H = 500;
+  var W = 24 + 8 * COLW, H = 472;
   var nodes = d.stages.map(function (s, i) {
     var p = TL_POS[s.key] || [i, 60], mine = d.mine.indexOf(s.key) >= 0;
     return '<button type="button" class="wb-node ' + s.lane + (s.count ? '' : ' zero') + '" data-k="' + s.key + '" aria-pressed="' + (s.key === TL_SEL) + '" style="left:' + (24 + p[0] * COLW) + 'px;top:' + p[1] + 'px;animation-delay:' + (i * 40) + 'ms" aria-label="' + esc(s.label + ' ค้าง ' + s.count + ' รายการ') + '">' +
@@ -1431,7 +1450,7 @@ function drawTimeline() {
     '<span class="wb-legend"><span><i style="background:#f26a00"></i>ฝั่งรายจ่าย</span><span><i style="background:#1556d6"></i>ฝั่งรายรับ</span><span><i style="background:#0b2a6b"></i>ปิดท้าย</span></span>' +
     '<button type="button" class="btn small" id="wbRefresh">อัปเดต</button></div>' +
     '<div class="wb-body"><div class="wb-canvas" id="wbCanvas"><div id="wbSizer" style="position:relative"><div class="wb-plane" id="wbPlane" style="width:' + W + 'px;height:' + H + 'px">' +
-    '<div class="wb-band out" style="top:16px;height:300px"><span>ฝั่งรายจ่าย</span></div><div class="wb-band in" style="top:330px;height:160px"><span>ฝั่งรายรับ</span></div>' +
+    '<div class="wb-band out" style="top:16px;height:300px"><span>ฝั่งรายจ่าย</span></div><div class="wb-band in" style="top:330px;height:128px"><span>ฝั่งรายรับ</span></div>' +
     '<svg class="wb-svg" id="wbSvg" width="' + W + '" height="' + H + '" aria-hidden="true"></svg>' + nodes + '</div></div>' +
     '<div class="wb-tools" role="group" aria-label="ปรับมุมมอง"><button type="button" data-z="-1" aria-label="ย่อ">−</button><button type="button" data-z="0">พอดีจอ</button><button type="button" data-z="1" aria-label="ขยาย">+</button><button type="button" id="wbStill" aria-pressed="' + TL_STILL + '">' + (TL_STILL ? 'เล่นการเคลื่อนไหว' : 'หยุดการเคลื่อนไหว') + '</button></div></div>' +
     '<aside class="wb-side" id="wbSide" aria-live="polite"></aside></div>' +
@@ -1449,19 +1468,37 @@ function drawTimeline() {
   };
   wbPan($('wbCanvas'));
 }
-// เส้นเชื่อม: ขวากลางของต้นทาง → ซ้ายกลางของปลายทาง · ถ้าปลายทางอยู่คอลัมน์เดียวกันใช้ล่าง → บน
+// เส้นเชื่อมแบบเส้นตรง: ออกขวากลางของต้นทาง → เลี้ยวมุมฉาก → เข้าซ้ายกลางของปลายทาง
+// ถ้าอยู่คอลัมน์เดียวกันลากเส้นตรงดิ่งลงล่าง · ปลายเส้นเป็นหัวลูกศรสีตามฝั่งของปลายทาง
+function wbRound(pts, r) {
+  var d = 'M' + pts[0][0] + ' ' + pts[0][1];
+  for (var i = 1; i < pts.length - 1; i++) {
+    var p = pts[i - 1], c = pts[i], n = pts[i + 1];
+    var l1 = Math.hypot(c[0] - p[0], c[1] - p[1]), l2 = Math.hypot(n[0] - c[0], n[1] - c[1]), k = Math.min(r, l1 / 2, l2 / 2);
+    var ax = c[0] + (p[0] - c[0]) / l1 * k, ay = c[1] + (p[1] - c[1]) / l1 * k, bx = c[0] + (n[0] - c[0]) / l2 * k, by = c[1] + (n[1] - c[1]) / l2 * k;
+    d += ' L' + ax + ' ' + ay + ' Q' + c[0] + ' ' + c[1] + ' ' + bx + ' ' + by;
+  }
+  var e = pts[pts.length - 1]; return d + ' L' + e[0] + ' ' + e[1];
+}
 function wbEdges() {
   var svg = $('wbSvg'); if (!svg) return;
   var el = {}; [].forEach.call(document.querySelectorAll('#wbPlane .wb-node'), function (n) { el[n.dataset.k] = n; });
   var col = { out: '#f26a00', in: '#1556d6', end: '#0b2a6b' }, out = '<defs>';
   var paths = TL_EDGES.filter(function (e) { return el[e[0]] && el[e[1]]; }).map(function (e, i) {
-    var a = el[e[0]], b = el[e[1]], ax = a.offsetLeft, ay = a.offsetTop, bx = b.offsetLeft, by = b.offsetTop, x1, y1, x2, y2, dpath;
-    if (Math.abs(ax - bx) < 4) { x1 = ax + NODEW / 2; y1 = ay + a.offsetHeight; x2 = bx + NODEW / 2; y2 = by; dpath = 'M' + x1 + ' ' + y1 + ' C' + x1 + ' ' + (y1 + 40) + ',' + x2 + ' ' + (y2 - 40) + ',' + x2 + ' ' + y2; }
-    else { x1 = ax + NODEW; y1 = ay + a.offsetHeight / 2; x2 = bx; y2 = by + b.offsetHeight / 2; var dx = Math.max(40, (x2 - x1) / 2); dpath = 'M' + x1 + ' ' + y1 + ' C' + (x1 + dx) + ' ' + y1 + ',' + (x2 - dx) + ' ' + y2 + ',' + x2 + ' ' + y2; }
-    var sa = tlStage(e[0]), sb = tlStage(e[1]), id = 'wbg' + i;
-    out += '<linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"><stop stop-color="' + col[sa.lane] + '"/><stop offset="1" stop-color="' + col[sb.lane] + '"/></linearGradient>';
-    return '<path class="wb-halo" d="' + dpath + '"/><path class="wb-edge" d="' + dpath + '" stroke="url(#' + id + ')"/>' + (sa.count ? '<path class="wb-pulse" d="' + dpath + '"/>' : '') +
-      '<circle class="wb-port" cx="' + x1 + '" cy="' + y1 + '" r="4" stroke="' + col[sa.lane] + '"/><circle class="wb-port" cx="' + x2 + '" cy="' + y2 + '" r="4" stroke="' + col[sb.lane] + '"/>';
+    var a = el[e[0]], b = el[e[1]], ax = a.offsetLeft, ay = a.offsetTop, bx = b.offsetLeft, by = b.offsetTop, x1, y1, x2, y2, pts, down = false;
+    if (Math.abs(ax - bx) < 4) { x1 = x2 = ax + NODEW / 2; y1 = ay + a.offsetHeight; y2 = by; pts = [[x1, y1], [x2, y2]]; down = true; }
+    else {
+      x1 = ax + NODEW; y1 = ay + a.offsetHeight / 2; x2 = bx; y2 = by + b.offsetHeight / 2;
+      var mx = x1 + Math.min(20, (x2 - x1) / 2);
+      pts = Math.abs(y1 - y2) < 2 ? [[x1, y1], [x2, y2]] : [[x1, y1], [mx, y1], [mx, y2], [x2, y2]];
+    }
+    var d = wbRound(pts, 12), sa = tlStage(e[0]), sb = tlStage(e[1]), id = 'wbg' + i, cb = col[sb.lane];
+    out += '<linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + (x1 === x2 ? '" gradientTransform="translate(0 0)' : '') + '"><stop stop-color="' + col[sa.lane] + '"/><stop offset="1" stop-color="' + cb + '"/></linearGradient>';
+    var arrow = down ? '<path class="wb-arrow" d="M' + (x2 - 5) + ' ' + (y2 - 8) + ' L' + x2 + ' ' + y2 + ' L' + (x2 + 5) + ' ' + (y2 - 8) + ' Z" fill="' + cb + '"/>'
+      : '<path class="wb-arrow" d="M' + (x2 - 8) + ' ' + (y2 - 5) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 8) + ' ' + (y2 + 5) + ' Z" fill="' + cb + '"/>';
+    var stroke = x1 === x2 ? col[sa.lane] : 'url(#' + id + ')';
+    return '<path class="wb-edge" d="' + d + '" stroke="' + stroke + '"/>' + (sa.count ? '<path class="wb-pulse" d="' + d + '"/>' : '') + arrow +
+      '<circle class="wb-port" cx="' + x1 + '" cy="' + y1 + '" r="3.5" stroke="' + col[sa.lane] + '"/>';
   });
   svg.innerHTML = out + '</defs>' + paths.join('');
 }
@@ -2348,7 +2385,7 @@ boot().catch(function (e) { showLogin(e.message || String(e)); });
   function frame(now) {
     var d = Math.min(window.devicePixelRatio || 1, 2), w = Math.max(1, Math.floor(cv.clientWidth * d)), h = Math.max(1, Math.floor(cv.clientHeight * d));
     if (w !== W || h !== H) { W = w; H = h; cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
-    var sec = (still ? 6000 : (now || performance.now()) - t0) / 1000; mixPal(sec);
+    var sec = Math.max(0, (still ? 6000 : (now || performance.now()) - t0) / 1000); mixPal(sec);
     gl.uniform4f(uScene, w, h, sec * 0.73, 4.0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (!document.documentElement.classList.contains('gl')) document.documentElement.classList.add('gl');
