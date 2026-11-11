@@ -46,7 +46,7 @@ export function undeposited(ctx, group) {
 }
 
 export function createDeposit(ctx, input) {
-  needFinance(ctx);
+  if (!hasRole(ctx.user, 'finance') && !hasRole(ctx.user, 'income')) throw new PermissionError('เฉพาะการเงินหรืองานรายรับนำฝาก');
   return ctx.store.withLock(() => {
     const rec = validateWith(ctx, 'deposit_slips', { slip_no: norm(input.slip_no), account_id: input.account_id, date: input.date, amount: input.amount, receipt_ids: input.receipt_ids || [] }, (out, c) => {
       const acct = ctx.store.get('bank_accounts', out.account_id);

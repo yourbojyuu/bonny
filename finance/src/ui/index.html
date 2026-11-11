@@ -281,7 +281,7 @@
   #printArea { display:none; }
   body.printing #printArea { display:block; position:fixed; inset:0; background:#fff; color:#000; z-index:200; overflow:auto; padding:16px; }
   .printbar { position:sticky; top:0; background:#fff; border-bottom:1px solid #ccc; padding:8px 0; margin-bottom:12px; display:flex; gap:10px; align-items:center; z-index:1; }
-  @media print { body, body::before { background:#fff !important; } body.printing #appView, body.printing #loginView, body.printing #welcomeView, body.printing dialog, body.printing #toasts { display:none !important; } body.printing #printArea { position:static; padding:0; overflow:visible; } .printbar { display:none !important; } }
+  @media print { body, body::before { background:#fff !important; } body.printing #appView, body.printing #loginView, body.printing dialog, body.printing #toasts { display:none !important; } body.printing #printArea { position:static; padding:0; overflow:visible; } .printbar { display:none !important; } }
   @media (max-width: 1100px) { .t-hero { grid-column:span 12; grid-row:auto; } .t-3 { grid-column:span 6; } .t-4 { grid-column:span 6; } .t-8 { grid-column:span 12; } .t-6 { grid-column:span 12; } }
   @media (max-width: 980px) { .chart { grid-template-columns:1fr; } .login { grid-template-columns:1fr; } .login .art { display:none; } }
   @media (max-width: 860px) {
@@ -458,100 +458,88 @@
   .tray-row .doc small { font-weight:400; color:var(--muted); margin-left:6px; }
   .tray-row .age { font-variant-numeric:tabular-nums; color:var(--muted); font-size:var(--f-md); }
 
-  /* ================= หน้าต้อนรับ: โทนส้ม ขาว น้ำเงิน · การ์ดซ้อนชั้นแบบกระเป๋าเงิน ================= */
-  @keyframes drift { to { transform:translate(var(--x), var(--y)) scale(1.1); } }
-  @keyframes cardin { from { opacity:0; translate:0 28px; } to { opacity:1; translate:0 0; } }
-  @keyframes bob { 0%,100% { translate:0 0; } 50% { translate:0 -7px; } }
-  .welcome { position:relative; min-height:100vh; display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:clamp(16px,4vw,64px); align-items:center; padding:clamp(16px,4vw,56px); max-width:1320px; margin:0 auto; isolation:isolate; }
-  .wl-deco { position:absolute; inset:0; z-index:-1; pointer-events:none; overflow:hidden; }
-  .wl-deco i { position:absolute; border-radius:50%; background:var(--c); opacity:var(--o,.2); filter:blur(var(--b)); animation:drift var(--d) ease-in-out infinite alternate; }
-  .wl-copy { background:rgba(255,255,255,.66); -webkit-backdrop-filter:blur(16px) saturate(1.3); backdrop-filter:blur(16px) saturate(1.3); border:1px solid rgba(255,255,255,.92); border-radius:32px; padding:clamp(22px,3.6vw,44px); box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 24px 60px -32px rgba(11,42,107,.5); animation:cardin .6s cubic-bezier(.22,1,.36,1) both; }
-  .wl-brand { display:flex; align-items:center; gap:14px; }
-  .wl-brand .logo { width:64px; height:64px; }
-  .wl-brand b { display:block; font-size:18px; color:#0b2a6b; line-height:1.3; }
-  .wl-brand span { display:block; font-size:var(--f-sm); color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
-  .wl-kicker { display:inline-flex; align-items:center; gap:8px; margin:22px 0 0; font-size:var(--f-sm); font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#c94f00; }
-  .wl-kicker::before { content:''; width:22px; height:3px; border-radius:3px; background:linear-gradient(90deg,#f26a00,#1556d6); }
-  .welcome h1 { margin:10px 0 14px; font-size:clamp(28px,3.7vw,48px); line-height:1.22; letter-spacing:-.01em; color:#0b2a6b; }
-  .welcome h1 span { background:linear-gradient(100deg,#1556d6 0%,#3f8cff 48%,#f26a00 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .welcome .lead { margin:0 0 24px; color:var(--muted); font-size:var(--f-lg); line-height:1.75; max-width:54ch; }
-  .welcome .go { display:inline-flex; align-items:center; gap:10px; min-height:54px; padding:0 26px; font-size:17px; border-radius:18px; background:linear-gradient(135deg,#c94f00,#f26a00 55%,#ffa63d); box-shadow:0 14px 28px -14px rgba(242,106,0,.95), 0 1px 0 rgba(255,255,255,.35) inset; }
-  .welcome .go:hover { background:linear-gradient(135deg,#c94f00,#f26a00 55%,#ffa63d); filter:brightness(1.06); }
-  .welcome .go small { font-size:var(--f-sm); font-weight:500; opacity:.92; }
-  .welcome .go svg { width:20px; height:20px; transition:transform .2s; } .welcome .go:hover svg { transform:translateX(4px); }
-  .wl-facts { list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:0; margin:26px 0 0; }
-  .wl-facts li { border-radius:18px; padding:12px 14px; background:rgba(255,255,255,.72); border:1px solid rgba(11,42,107,.08); min-width:0; }
-  .wl-facts b { display:block; font-size:28px; line-height:1.1; color:#0b2a6b; }
-  .wl-facts li:nth-child(2) b { color:#1556d6; } .wl-facts li:nth-child(3) b { color:#e25f00; }
-  .wl-facts span { display:block; font-size:var(--f-sm); color:var(--muted); line-height:1.4; }
-  .welcome .small { margin:16px 0 0; font-size:var(--f-sm); color:var(--faint); }
-  .wl-stack { position:relative; min-height:600px; padding-top:40px; display:grid; place-items:center; perspective:1200px; }
-  .wl-tilt { position:relative; width:min(100%,410px); transform-style:preserve-3d; transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)); transition:transform .6s cubic-bezier(.22,1,.36,1); }
-  .wc-peek { position:absolute; left:16px; right:16px; top:-84px; height:150px; border-radius:28px; padding:14px 20px; color:#fff; display:flex; justify-content:space-between; align-items:flex-start; font-weight:600; box-shadow:0 18px 36px -20px rgba(11,42,107,.55); animation:cardin .7s cubic-bezier(.22,1,.36,1) both; }
-  .wc-peek small { display:block; font-weight:500; opacity:.9; font-size:var(--f-sm); }
-  .wc-peek.o { background:linear-gradient(120deg,#c94f00,#f26a00 55%,#ffb35c); transform:rotate(var(--r1,-4deg)) translateZ(-40px); animation-delay:.12s; }
-  .wc-peek.b { top:-46px; left:4px; right:28px; background:linear-gradient(120deg,#0b2a6b,#1556d6 55%,#3fa0ff); transform:rotate(var(--r2,3deg)) translateZ(-20px); animation-delay:.2s; }
-  .wc-front { position:relative; display:grid; gap:14px; padding:20px; border-radius:30px; background:#fff; border:1px solid #e6e9f0; box-shadow:0 30px 60px -30px rgba(11,42,107,.55), 0 1px 0 #fff inset; transform:translateZ(30px); animation:cardin .7s cubic-bezier(.22,1,.36,1) .28s both; }
-  .strip { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-radius:18px; font-weight:600; color:#1b2433; }
-  .strip .ic { width:32px; height:32px; border-radius:10px; display:grid; place-items:center; background:rgba(0,0,0,.07); flex:none; }
-  .strip .ic svg, .lrow .ic svg, .wbtn svg { width:17px; height:17px; }
-  .strip > span { display:flex; align-items:center; gap:10px; min-width:0; }
-  .strip small { display:block; font-weight:500; font-size:var(--f-sm); color:#4a5466; }
-  .strip.o { background:linear-gradient(90deg,#ffe6cf,#ffd2a8); border:1px solid #ffc690; }
-  .strip.b { background:linear-gradient(90deg,#deebff,#c9dcff); border:1px solid #b4cdfb; }
-  .wpanel { border:1px solid #eef0f5; border-radius:22px; padding:16px; background:#fff; }
-  .wpanel .cap { display:flex; align-items:center; gap:8px; color:#4a5466; font-weight:600; font-size:var(--f-md); }
-  .wpanel .cap i { width:8px; height:8px; border-radius:50%; background:#f26a00; box-shadow:0 0 0 4px rgba(242,106,0,.15); }
-  .wpanel .bigt { margin:8px 0 4px; font-size:24px; font-weight:700; color:#0b2a6b; line-height:1.25; }
-  .wpanel .hint { color:#c94f00; font-weight:600; font-size:var(--f-md); }
-  .wbtns { display:flex; gap:8px; }
-  .wbtn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:46px; border-radius:16px; padding:0 14px; font-weight:600; font-size:var(--f-md); border:1px solid #d9dde6; background:#eef0f4; color:#2b3445; flex:1; }
-  .wbtn.o { background:linear-gradient(135deg,#e25f00,#f58a14); border-color:#d45a00; color:#fff; }
-  .wbtn.sq { flex:none; width:46px; padding:0; }
-  .lrow { display:flex; align-items:center; gap:12px; padding:10px; border:1px solid #f0f2f6; border-radius:18px; }
-  .lrow .ic { width:42px; height:42px; border-radius:14px; display:grid; place-items:center; flex:none; }
-  .lrow .ic.o { background:#fff1e4; border:1px solid #ffd7b3; color:#d45a00; } .lrow .ic.b { background:#e8f0ff; border:1px solid #c8daff; color:#1556d6; }
-  .lrow b { display:block; color:#1b2433; font-size:var(--f-base); } .lrow span { display:block; color:#5a6476; font-size:var(--f-sm); }
-  .chipf { position:absolute; z-index:3; padding:7px 13px; border-radius:999px; font-weight:700; font-size:var(--f-sm); color:#0b2a6b; background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.95); box-shadow:0 10px 24px -14px rgba(11,42,107,.6); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); animation:bob var(--d,6s) ease-in-out infinite; }
-  .chipf.o { color:#c94f00; }
-  @media (prefers-reduced-motion: reduce) { .wl-deco i, .chipf, .wl-copy, .wc-peek, .wc-front { animation:none !important; } .wl-tilt { transition:none; } }
-  @media (max-width: 900px) { .welcome { grid-template-columns:1fr; align-content:start; } .wl-stack { min-height:0; padding:96px 4px 8px; } .chipf { display:none; } .wl-facts b { font-size:22px; } }
-
-  /* ================= หน้าเข้าสู่ระบบ ================= */
-  .login { align-items:center; max-width:1240px; margin:0 auto; }
-  .lg-art { position:relative; background:rgba(255,255,255,.62); -webkit-backdrop-filter:blur(16px) saturate(1.3); backdrop-filter:blur(16px) saturate(1.3); border:1px solid rgba(255,255,255,.92); border-radius:30px; padding:clamp(22px,3vw,40px); box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 24px 60px -34px rgba(11,42,107,.5); animation:cardin .55s cubic-bezier(.22,1,.36,1) both; }
-  .lg-art .wl-brand .logo { width:52px; height:52px; }
-  .lg-art h1 { margin:22px 0 8px; font-size:clamp(24px,2.6vw,32px); line-height:1.25; color:#0b2a6b; }
-  .lg-art h1 small { display:block; font-size:var(--f-sm); letter-spacing:.16em; text-transform:uppercase; color:#c94f00; margin-bottom:4px; }
-  .lg-art > p { margin:0 0 18px; color:var(--muted); max-width:56ch; }
-  .flow { display:grid; gap:10px; }
-  .fl { display:grid; grid-template-columns:96px minmax(0,1fr); gap:10px; align-items:center; padding:10px 12px; border-radius:20px; border:1px solid rgba(11,42,107,.08); background:rgba(255,255,255,.75); }
-  .fl-t { font-weight:700; font-size:var(--f-md); }
-  .fl-t small { display:block; font-weight:500; color:var(--faint); font-size:var(--f-sm); letter-spacing:.06em; }
-  .fl ol { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px 4px; align-items:center; }
-  .fl li { display:inline-flex; align-items:center; gap:4px; font-size:var(--f-md); font-weight:600; }
-  .fl li span { padding:5px 11px; border-radius:999px; color:#fff; }
-  .fl li:not(:last-child)::after { content:'→'; color:var(--faint); margin-left:2px; }
-  .fl.o .fl-t { color:#c94f00; } .fl.o li span { background:linear-gradient(135deg,#d45a00,#f58a14); }
-  .fl.b .fl-t { color:#1556d6; } .fl.b li span { background:linear-gradient(135deg,#0b2a6b,#1556d6); }
-  .fl.n .fl-t { color:#0b2a6b; } .fl.n li span { background:linear-gradient(135deg,#1556d6,#3f8cff 60%,#f26a00); }
-  .lg-art .note { margin-top:14px; }
-  .lg-stack { position:relative; width:100%; padding-top:26px; }
-  .lg-stack .peek { position:absolute; height:80px; border-radius:26px; top:4px; left:22px; right:22px; z-index:0; }
-  .lg-stack .peek.o { background:linear-gradient(120deg,#c94f00,#f26a00 55%,#ffb35c); transform:rotate(-3deg); }
-  .lg-stack .peek.b { top:14px; left:10px; right:34px; background:linear-gradient(120deg,#0b2a6b,#1556d6 55%,#3fa0ff); transform:rotate(2.2deg); }
-  .login form { position:relative; z-index:1; overflow:hidden; background:rgba(255,255,255,.92); animation:cardin .55s cubic-bezier(.22,1,.36,1) .08s both; }
-  .login form::before { content:''; position:absolute; left:28px; right:28px; top:0; height:3px; border-radius:0 0 3px 3px; background:linear-gradient(90deg,#f26a00,#ffa63d,#1556d6); }
-  .lg-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-  .lg-head .logo { width:40px; height:40px; }
-  .lg-head small { display:block; font-size:var(--f-sm); letter-spacing:.14em; text-transform:uppercase; color:#c94f00; font-weight:700; }
-  .lg-head h2 { margin:0; }
-  .login .back { display:inline-flex; align-items:center; gap:6px; margin:0 0 14px; padding:0; border:0; background:none; color:var(--muted); cursor:pointer; min-height:32px; font-size:var(--f-md); }
-  .login .back:hover { color:var(--ink); }
+  /* ================= หน้าเข้าสู่ระบบ: การ์ดเดียวกลางจอ ตราโรงเรียนซ้อนขอบบน ================= */
+  @keyframes cardin { from { opacity:0; translate:0 22px; } to { opacity:1; translate:0 0; } }
+  @keyframes emblem { from { opacity:0; transform:translateY(10px) scale(.92); } to { opacity:1; transform:none; } }
+  .login { min-height:100vh; display:grid; place-items:center; grid-template-columns:1fr; padding:72px 16px 32px; }
+  .lg-stack { position:relative; width:min(100%,420px); }
+  .lg-stack .peek { position:absolute; left:26px; right:26px; top:-16px; height:90px; border-radius:30px; z-index:0; transition:transform .5s cubic-bezier(.22,1,.36,1); }
+  .lg-stack .peek.o { background:linear-gradient(120deg,#c94f00,#f26a00 55%,#ffb35c); transform:rotate(-4deg); }
+  .lg-stack .peek.b { top:-6px; left:12px; right:40px; background:linear-gradient(120deg,#0b2a6b,#1556d6 55%,#3fa0ff); transform:rotate(3deg); }
+  .lg-stack:focus-within .peek.o { transform:rotate(-6deg) translateY(-4px); } .lg-stack:focus-within .peek.b { transform:rotate(5deg) translateY(-2px); }
+  .login form { position:relative; z-index:1; width:100%; padding:70px 30px 26px; border-radius:30px; background:rgba(255,255,255,.94); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:1px solid #fff; box-shadow:0 30px 70px -36px rgba(11,42,107,.6), 0 1px 0 #fff inset; animation:cardin .55s cubic-bezier(.22,1,.36,1) both; text-align:center; }
+  .login .emblem { position:absolute; left:50%; top:-56px; width:112px; height:112px; margin-left:-56px; box-shadow:0 0 0 6px rgba(255,255,255,.95), 0 18px 34px -16px rgba(11,42,107,.65); animation:emblem .6s cubic-bezier(.22,1,.36,1) .1s both; }
+  .login h2 { margin:0; font-size:22px; color:#0b2a6b; letter-spacing:-.005em; }
+  .login .org { margin:4px 0 22px; color:var(--muted); font-size:var(--f-md); line-height:1.5; }
+  .login .field { text-align:left; }
   .login .field input:focus { outline:0; border-color:#1556d6; box-shadow:0 0 0 4px rgba(21,86,214,.16); }
-  .login #loginBtn { background:linear-gradient(135deg,#0b2a6b,#1556d6 55%,#3f8cff); min-height:48px; border-radius:16px; font-size:16px; }
-  @media (max-width: 980px) { .login { padding:14px; align-content:center; } .lg-art { display:none; } }
-  @media (prefers-reduced-motion: reduce) { .lg-art, .login form { animation:none !important; } }
+  .login #loginBtn { width:100%; margin-top:6px; min-height:50px; border-radius:16px; font-size:16px; background:linear-gradient(135deg,#c94f00,#f26a00 55%,#ff9b3d); box-shadow:0 14px 26px -14px rgba(242,106,0,.95), 0 1px 0 rgba(255,255,255,.35) inset; }
+  .login .foot { margin:16px 0 0; font-size:var(--f-sm); color:var(--faint); }
+  @media (prefers-reduced-motion: reduce) { .login form, .login .emblem { animation:none !important; } .lg-stack .peek { transition:none; } }
+
+  /* ================= ไทม์ไลน์งาน (workflow blueprint) ================= */
+  @keyframes wb-travel { to { stroke-dashoffset:-192; } }
+  @keyframes wb-in { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:none; } }
+  .wb { --o1:#c94f00; --o2:#f26a00; --b1:#0b2a6b; --b2:#1556d6; --n1:#0b2a6b; border-radius:26px; background:rgba(255,255,255,.72); -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur); border:1px solid rgba(255,255,255,.95); box-shadow:0 1px 0 #fff inset, 0 24px 60px -40px rgba(11,42,107,.55); overflow:hidden; margin-bottom:18px; }
+  .wb-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:16px 18px; border-bottom:1px solid var(--line); }
+  .wb-head h2 { margin:0; font-size:18px; color:#0b2a6b; }
+  .wb-head .when { color:var(--muted); font-size:var(--f-sm); }
+  .wb-head .grow { flex:1; }
+  .wb-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:var(--f-sm); color:var(--muted); }
+  .wb-legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+  .wb-body { display:grid; grid-template-columns:minmax(0,1fr) 300px; }
+  .wb-canvas { position:relative; overflow:auto; cursor:grab; background-image:radial-gradient(rgba(11,42,107,.16) 1px, transparent 1px); background-size:18px 18px; min-height:420px; scrollbar-width:thin; }
+  .wb-canvas.drag { cursor:grabbing; user-select:none; }
+  .wb-plane { position:relative; transform-origin:0 0; transition:transform .35s cubic-bezier(.22,1,.36,1); }
+  .wb-band { position:absolute; left:0; right:0; border-radius:22px; pointer-events:none; }
+  .wb-band span { position:absolute; left:14px; top:10px; font-size:var(--f-sm); font-weight:700; }
+  .wb-band.out { background:linear-gradient(90deg, rgba(242,106,0,.09), rgba(242,106,0,.02)); } .wb-band.out span { color:var(--o1); }
+  .wb-band.in { background:linear-gradient(90deg, rgba(21,86,214,.09), rgba(21,86,214,.02)); } .wb-band.in span { color:var(--b2); }
+  .wb-svg { position:absolute; inset:0; overflow:visible; pointer-events:none; }
+  .wb-halo { fill:none; stroke:rgba(21,86,214,.10); stroke-width:9; }
+  .wb-edge { fill:none; stroke-width:2.4; }
+  .wb-pulse { fill:none; stroke:#0b2a6b; stroke-opacity:.5; stroke-width:2.2; stroke-dasharray:3 45; animation:wb-travel 5s linear infinite; }
+  .wb.still .wb-pulse { animation:none; opacity:0; }
+  .wb-port { fill:#fff; stroke-width:2; }
+  .wb-node { position:absolute; width:176px; padding:0; border-radius:18px; background:#fff; border:1px solid #e4e8f0; text-align:left; cursor:pointer; color:var(--ink); box-shadow:0 14px 30px -22px rgba(11,42,107,.55); transition:transform .2s ease, box-shadow .2s ease, border-color .2s; animation:wb-in .45s cubic-bezier(.22,1,.36,1) both; font:inherit; }
+  .wb-node:hover { transform:translateY(-2px); box-shadow:0 20px 34px -22px rgba(11,42,107,.6); }
+  .wb-node[aria-pressed="true"] { border-color:var(--acc); box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent), 0 20px 34px -22px rgba(11,42,107,.6); }
+  .wb-node.out { --acc:#f26a00; --acc-bg:#fff1e4; } .wb-node.in { --acc:#1556d6; --acc-bg:#e8f0ff; } .wb-node.end { --acc:#0b2a6b; --acc-bg:#e6ebf7; }
+  .wb-node .h { display:flex; align-items:center; gap:10px; padding:12px 12px 10px; }
+  .wb-node .g { width:34px; height:34px; border-radius:11px; display:grid; place-items:center; flex:none; background:var(--acc-bg); color:var(--acc); border:1px solid color-mix(in srgb, var(--acc) 25%, transparent); font-weight:700; font-size:14px; }
+  .wb-node .h b { display:block; font-size:14.5px; line-height:1.25; }
+  .wb-node .h small { display:block; font-size:12.5px; color:var(--muted); line-height:1.3; }
+  .wb-node .c { display:flex; align-items:baseline; gap:6px; padding:8px 12px 12px; border-top:1px solid #f0f2f6; }
+  .wb-node .c strong { font-size:26px; line-height:1; color:var(--acc); font-variant-numeric:tabular-nums; }
+  .wb-node .c span { font-size:12.5px; color:var(--muted); }
+  .wb-node.zero .c strong { color:#9aa3b2; }
+  .wb-node .mine { position:absolute; top:-10px; right:10px; padding:2px 9px; border-radius:999px; font-size:12.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#c94f00,#f26a00); box-shadow:0 6px 14px -6px rgba(242,106,0,.9); }
+  .wb-tools { position:sticky; left:12px; bottom:12px; display:inline-flex; gap:4px; padding:4px; margin:0 0 12px 12px; border-radius:14px; background:rgba(255,255,255,.92); border:1px solid #e4e8f0; box-shadow:0 8px 20px -14px rgba(11,42,107,.6); z-index:2; }
+  .wb-tools button { min-height:36px; min-width:36px; padding:0 10px; border:0; border-radius:10px; background:none; cursor:pointer; color:var(--ink); font-weight:600; font-size:var(--f-md); }
+  .wb-tools button:hover { background:rgba(11,42,107,.06); }
+  .wb-side { border-left:1px solid var(--line); padding:16px; background:rgba(255,255,255,.6); min-width:0; display:flex; flex-direction:column; gap:10px; max-height:520px; }
+  .wb-side h3 { margin:0; font-size:16px; color:#0b2a6b; }
+  .wb-side .who { font-size:var(--f-sm); color:var(--muted); }
+  .wb-list { overflow:auto; display:grid; gap:6px; align-content:start; }
+  .wb-item { padding:9px 11px; border-radius:14px; background:#fff; border:1px solid #eef0f5; animation:wb-in .3s ease both; }
+  .wb-item b { display:block; font-size:var(--f-md); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .wb-item span { display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:var(--muted); }
+  .wb-empty { color:var(--muted); font-size:var(--f-md); padding:10px 0; }
+  .wb-side .btn { align-self:flex-start; }
+  .wb-status { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 18px; border-top:1px solid var(--line); font-size:var(--f-sm); color:var(--muted); }
+  @media (max-width: 980px) { .wb-body { grid-template-columns:1fr; } .wb-side { border-left:0; border-top:1px solid var(--line); max-height:none; } }
+  @media (prefers-reduced-motion: reduce) { .wb-pulse { animation:none; } .wb-node, .wb-item { animation:none; } .wb-plane { transition:none; } }
+  /* แถบไทม์ไลน์ย่อบนทุกหน้า */
+  .ribbon { display:flex; align-items:center; gap:4px; margin:10px 10px 0 20px; padding:5px; border-radius:16px; background:rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.92); box-shadow:var(--shadow); -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur); overflow-x:auto; scrollbar-width:none; }
+  .ribbon::-webkit-scrollbar { display:none; }
+  .ribbon.hidden { display:none; }
+  .ribbon button { flex:none; display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:0 10px; border:0; border-radius:11px; background:none; cursor:pointer; color:var(--muted); font-size:12.5px; font-weight:600; white-space:nowrap; transition:background .2s; }
+  .ribbon button:hover { background:rgba(11,42,107,.06); }
+  .ribbon button i { min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-grid; place-items:center; font-style:normal; font-size:12px; background:rgba(20,27,45,.08); color:var(--ink); }
+  .ribbon button.has i { background:#0b2a6b; color:#fff; } .ribbon button.out.has i { background:#e25f00; } .ribbon button.in.has i { background:#1556d6; }
+  .ribbon button.mine { color:var(--ink); box-shadow:inset 0 0 0 1.5px rgba(242,106,0,.55); background:rgba(255,241,228,.7); }
+  .ribbon .sep { color:#b7bfcc; flex:none; }
+  .ribbon .lbl { flex:none; padding:0 8px 0 6px; font-size:12.5px; font-weight:700; color:#0b2a6b; }
 </style>
 </head>
 <body>
@@ -809,81 +797,28 @@ void main() {
 }
 </script>
 
-<!-- ===== หน้าต้อนรับ ===== -->
-<section class="welcome hidden" id="welcomeView">
-  <div class="wl-deco" id="wlDeco" aria-hidden="true"></div>
-  <div class="wl-copy">
-    <div class="wl-brand"><i class="logo" role="img" aria-label="ตราโรงเรียนกาวิละวิทยาลัย"></i><div><b>โรงเรียนกาวิละวิทยาลัย</b><span>Kawila Wittayalai School</span></div></div>
-    <p class="wl-kicker">Planning &amp; Budget Administration</p>
-    <h1>ยินดีต้อนรับสู่<br><span>กลุ่มบริหารงานแผนงานและงบประมาณ</span></h1>
-    <p class="lead">ระบบบริหารการเงินของโรงเรียน ครอบคลุมการขออนุมัติใช้เงิน การเบิกจ่าย การรับเงิน และการปิดบัญชีประจำวัน ข้อมูลต้นทางบันทึกเพียงครั้งเดียว ทุกหน้าอ้างอิงข้อมูลชุดเดียวกัน ยอดเงินจึงตรงกันทั้งระบบ</p>
-    <button type="button" class="btn primary go" id="startBtn">เข้าสู่ระบบ <small>Sign in</small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-    <ul class="wl-facts">
-      <li><b>11</b><span>หน้าใช้งาน แต่ละคนเห็นเฉพาะหน้าตามบทบาท</span></li>
-      <li><b>4</b><span>กลุ่มงานเรียงตามเส้นทางเงิน</span></li>
-      <li><b>2</b><span>จุดบันทึกข้อมูลต้นทาง</span></li>
-    </ul>
-    <p class="small">ระบบบันทึกการเข้าใช้ทุกครั้งเพื่อตรวจสอบย้อนหลัง</p>
-  </div>
-  <div class="wl-stack" aria-hidden="true">
-    <span class="chipf o" style="top:6%;left:4%;--d:6.5s">ขบ.</span>
-    <span class="chipf" style="top:14%;right:2%;--d:7.5s">KTB</span>
-    <span class="chipf" style="bottom:12%;left:0;--d:5.8s">ใบเสร็จ</span>
-    <span class="chipf o" style="bottom:4%;right:6%;--d:8s">ปิดวัน</span>
-    <div class="wl-tilt" id="wlTilt">
-      <div class="wc-peek o"><span>Expenses<small>ฝั่งรายจ่าย</small></span><span>4 หน้า</span></div>
-      <div class="wc-peek b"><span>Income<small>ฝั่งรายรับ</small></span><span>2 หน้า</span></div>
-      <div class="wc-front">
-        <div class="strip o"><span><i class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></i><span>ใบขออนุมัติ → หน้ารายการ<small>ครูขอ งานแผนตรวจงบ ผอ. อนุมัติ</small></span></span></div>
-        <div class="strip b"><span><i class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></i><span>ออกใบเสร็จ → นำฝาก<small>กรอก 4 ช่อง ระบบแยกชนิดเงินให้</small></span></span></div>
-        <div class="wpanel">
-          <div class="cap"><i></i>ถาดงาน · Work tray</div>
-          <div class="bigt">รวมงานที่ถึงมือคุณ</div>
-          <div class="hint">บอกจำนวนวันที่รอ และขึ้นธงเมื่อเกินกำหนด</div>
-        </div>
-        <div class="wbtns"><span class="wbtn o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>ขออนุมัติ</span><span class="wbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>ใบเสร็จ</span><span class="wbtn sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13l-4-4M17 17H4l4 4"/></svg></span><span class="wbtn sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
-        <div class="lrow"><i class="ic o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></i><div><b>ปิดวัน · Daily close</b><span>รวมยอดรับและยอดจ่าย ตรวจนับเงินสด แล้วล็อกวัน</span></div></div>
-        <div class="lrow"><i class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></i><div><b>รายงานผู้บริหาร · Executive</b><span>อ่านอย่างเดียว ดึงข้อมูลจากทุกหน้า</span></div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ===== เข้าสู่ระบบ ===== -->
 <section class="login hidden" id="loginView">
-  <div class="lg-art">
-    <div class="wl-brand"><i class="logo" role="img" aria-label="ตราโรงเรียนกาวิละวิทยาลัย"></i><div><b>กลุ่มบริหารงานแผนงานและงบประมาณ</b><span>Kawila Wittayalai School</span></div></div>
-    <h1><small>Money flow</small>เส้นทางเงินในระบบ</h1>
-    <p>ข้อมูลต้นทางมีสองจุด คือรายการจ่ายในหน้ารายการ และใบเสร็จรับเงิน หน้าอื่นอ้างอิงหรือคำนวณต่อจากสองจุดนี้</p>
-    <div class="flow">
-      <div class="fl o"><span class="fl-t">รายจ่าย<small>Expenses</small></span><ol><li><span>ขออนุมัติ</span></li><li><span>หน้ารายการ</span></li><li><span>ตรวจ ขบ./ขจ.</span></li><li><span>จ่ายเงิน</span></li></ol></div>
-      <div class="fl b"><span class="fl-t">รายรับ<small>Income</small></span><ol><li><span>ออกใบเสร็จ</span></li><li><span>นำฝาก</span></li></ol></div>
-      <div class="fl n"><span class="fl-t">ปิดท้าย<small>Closing</small></span><ol><li><span>ทะเบียนเงินฝาก</span></li><li><span>ปิดวัน</span></li></ol></div>
-    </div>
-    <p class="note">ถาดงาน รายงานผู้บริหาร และโครงการของฉัน ดึงสถานะจากทุกจุดมาแสดง</p>
-  </div>
-  <div class="formside">
-    <div class="lg-stack">
-      <i class="peek o" aria-hidden="true"></i><i class="peek b" aria-hidden="true"></i>
-      <form id="loginForm" autocomplete="on" novalidate>
-        <button type="button" class="back" id="backBtn">← กลับหน้าต้อนรับ</button>
-        <div class="lg-head"><i class="logo" aria-hidden="true"></i><div><small>Sign in</small><h2>เข้าสู่ระบบ</h2></div></div>
-        <p class="note" style="margin:0 0 18px">กรอกชื่อผู้ใช้และรหัสผ่านที่โรงเรียนกำหนดให้</p>
-        <div class="formmsg"></div>
-        <div class="field" data-key="email">
-          <label for="l_email">ชื่อผู้ใช้</label>
-          <div class="suffix"><input type="text" id="l_email" autocomplete="username" placeholder="ชื่อผู้ใช้" autocapitalize="off" spellcheck="false"><span>@kwc.ac.th</span></div>
-          <div class="err"></div>
-        </div>
-        <div class="field" data-key="password">
-          <label for="l_pw">รหัสผ่าน</label>
-          <input type="password" id="l_pw" autocomplete="current-password">
-          <div class="err"></div>
-        </div>
-        <button type="submit" class="btn primary" style="width:100%;margin-top:4px" id="loginBtn">เข้าสู่ระบบ</button>
-        <p class="foot">ระบบบันทึกการเข้าใช้ทุกครั้งเพื่อตรวจสอบย้อนหลัง</p>
-      </form>
-    </div>
+  <div class="lg-stack">
+    <i class="peek o" aria-hidden="true"></i><i class="peek b" aria-hidden="true"></i>
+    <form id="loginForm" autocomplete="on" novalidate>
+      <i class="logo emblem" role="img" aria-label="ตราโรงเรียนกาวิละวิทยาลัย"></i>
+      <h2>ระบบการเงิน</h2>
+      <p class="org">กลุ่มบริหารงานแผนงานและงบประมาณ<br>โรงเรียนกาวิละวิทยาลัย</p>
+      <div class="formmsg"></div>
+      <div class="field" data-key="email">
+        <label for="l_email">ชื่อผู้ใช้</label>
+        <div class="suffix"><input type="text" id="l_email" autocomplete="username" placeholder="ชื่อผู้ใช้" autocapitalize="off" spellcheck="false"><span>@kwc.ac.th</span></div>
+        <div class="err"></div>
+      </div>
+      <div class="field" data-key="password">
+        <label for="l_pw">รหัสผ่าน</label>
+        <input type="password" id="l_pw" autocomplete="current-password">
+        <div class="err"></div>
+      </div>
+      <button type="submit" class="btn primary" id="loginBtn">เข้าสู่ระบบ</button>
+      <p class="foot">ระบบบันทึกการเข้าใช้ทุกครั้งเพื่อตรวจสอบย้อนหลัง</p>
+    </form>
   </div>
 </section>
 
@@ -904,6 +839,7 @@ void main() {
       </div>
     </div>
   </header>
+  <div class="ribbon hidden" id="ribbon" aria-label="ไทม์ไลน์งานโดยย่อ"></div>
   <div class="pagetabs hidden" id="pagetabs"></div>
   <div class="shell"><main id="main"></main></div>
 </section>
@@ -1091,43 +1027,8 @@ function usesHtml(n) {
 }
 
 /* ================= เข้า/ออกระบบ ================= */
-function showWelcome() {
-  $('appView').classList.add('hidden'); $('loginView').classList.add('hidden'); $('welcomeView').classList.remove('hidden');
-  document.body.dataset.page = 'blue';
-  shuffleWelcome();
-}
-// สุ่มองค์ประกอบตกแต่งทุกครั้งที่เปิด: วงแสงพื้นหลัง (ส้ม ขาว น้ำเงิน) มุมเอียงของการ์ดซ้อน และตำแหน่งป้ายลอย
-function shuffleWelcome() {
-  var R = function (a, b) { return a + Math.random() * (b - a); };
-  var cols = ['#f26a00', '#ffa63d', '#1556d6', '#3f8cff', '#ffffff', '#0b2a6b'], h = '';
-  for (var i = 0; i < 7; i++) {
-    var sz = Math.round(R(160, 420));
-    h += '<i style="width:' + sz + 'px;height:' + sz + 'px;left:' + R(-10, 90).toFixed(1) + '%;top:' + R(-10, 85).toFixed(1) + '%;--c:' + cols[i % cols.length] +
-      ';--o:' + R(.12, .26).toFixed(2) + ';--b:' + Math.round(R(40, 90)) + 'px;--d:' + R(14, 26).toFixed(1) + 's;--x:' + Math.round(R(-60, 60)) + 'px;--y:' + Math.round(R(-50, 50)) + 'px"></i>';
-  }
-  $('wlDeco').innerHTML = h;
-  var tilt = $('wlTilt');
-  tilt.style.setProperty('--r1', R(-7, -2).toFixed(1) + 'deg'); tilt.style.setProperty('--r2', R(2, 6).toFixed(1) + 'deg');
-  var slots = [['6%', '4%', null, null], ['14%', null, '2%', null], [null, '0', null, '12%'], [null, null, '6%', '4%'], ['46%', '-2%', null, null], ['40%', null, '-2%', null]];
-  slots.sort(function () { return Math.random() - .5; });
-  [].forEach.call(document.querySelectorAll('#welcomeView .chipf'), function (c, i) {
-    var s = slots[i]; c.style.top = s[0] || ''; c.style.left = s[1] || ''; c.style.right = s[2] || ''; c.style.bottom = s[3] || ''; c.style.setProperty('--d', R(5.5, 8.5).toFixed(1) + 's');
-  });
-}
-// การ์ดซ้อนเอียงตามเมาส์เล็กน้อย (เฉพาะเมาส์ ไม่ทำบนจอสัมผัส และปิดเมื่อผู้ใช้ขอลดการเคลื่อนไหว)
-(function () {
-  if (!window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var raf = 0, px = 0, py = 0, wv = $('welcomeView');
-  wv.addEventListener('pointermove', function (e) {
-    px = e.clientX / innerWidth - .5; py = e.clientY / innerHeight - .5;
-    if (!raf) raf = requestAnimationFrame(function () { raf = 0; var t = $('wlTilt'); t.style.setProperty('--ry', (px * 10).toFixed(2) + 'deg'); t.style.setProperty('--rx', (-py * 8).toFixed(2) + 'deg'); });
-  });
-  wv.addEventListener('pointerleave', function () { var t = $('wlTilt'); t.style.setProperty('--ry', '0deg'); t.style.setProperty('--rx', '0deg'); });
-})();
-$('startBtn').onclick = function () { showLogin(''); };
-$('backBtn').onclick = showWelcome;
 function showLogin(msg) {
-  $('appView').classList.add('hidden'); $('welcomeView').classList.add('hidden'); $('loginView').classList.remove('hidden');
+  $('appView').classList.add('hidden'); $('loginView').classList.remove('hidden');
   $('loginForm').querySelector('.formmsg').innerHTML = msg ? '<div class="msg bad">' + esc(msg) + '</div>' : '';
   setTimeout(function () { $('l_email').focus(); }, 30);
 }
@@ -1140,19 +1041,28 @@ $('loginForm').onsubmit = async function (e) {
   saveToken(r.data.token); $('l_pw').value = '';
   boot();
 };
-$('logoutBtn').onclick = async function () { await call('logout'); saveToken(null); ME = null; cache = {}; current = 'home'; showWelcome(); };
+$('logoutBtn').onclick = async function () { await call('logout'); saveToken(null); ME = null; cache = {}; current = 'home'; landed = false; TL = null; showLogin(''); };
 
 async function boot() {
-  if (!TOKEN) return location.hash === '#login' ? showLogin('') : showWelcome();
+  if (!TOKEN) return showLogin('');
   var r = await call('me');
   if (!r || !r.ok) return showLogin(r && r.error);
   ME = r.data;
-  $('loginView').classList.add('hidden'); $('welcomeView').classList.add('hidden'); $('appView').classList.remove('hidden');
+  $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
   $('whoName').textContent = ME.user.name;
   $('whoRoles').innerHTML = ''; $('whoRolesMenu').innerHTML = ME.user.roles.map(roleTag).join(' ');
   $('runheadDate').textContent = thDay(ME.today);
   renderSide();
+  // เข้าระบบแล้วไปหน้างานของตัวเองตามบทบาท (ครั้งแรกหลังเข้าระบบเท่านั้น)
+  if (!landed) { landed = true; current = landingFor(ME.user.roles); }
+  TL = null; refreshTimeline();
   show(current);
+}
+var landed = false;
+var LANDING = [['income', 'receipts'], ['procurement', 'procurements'], ['khj_maker', 'khj'], ['finance', 'payment_lines'], ['plan', 'approval_requests']];
+function landingFor(roles) {
+  for (var i = 0; i < LANDING.length; i++) if (roles.indexOf(LANDING[i][0]) >= 0 && tableMeta(LANDING[i][1])) return LANDING[i][1];
+  return 'home'; // ผู้ตรวจ ผอ. ผู้ตรวจสอบ ครูผู้ขอ เริ่มที่ภาพรวม
 }
 
 /* ================= เมนู ================= */
@@ -1374,7 +1284,7 @@ var NAV = 0, PAGE = 100;
 async function show(key, flash) {
   if (key === 'inbox') key = 'home';
   var nav = ++NAV; PAGE = 100;
-  current = key; markNav();
+  current = key; markNav(); refreshTimeline();
   var mm = $('main'); mm.classList.remove('rise'); void mm.offsetWidth; mm.classList.add('rise');
   if (key === 'home') return renderHome(flash);
   if (key === 'bank_register') return renderBankRegister(flash);
@@ -1406,6 +1316,116 @@ async function renderInbox(flash) {
   }).join('') + '</tbody></table></div>' : '<div class="register"><table><tbody><tr><td class="empty">ไม่มีงานที่รอคุณ เมื่อมีเอกสารส่งมาให้ จะขึ้นที่นี่</td></tr></tbody></table></div>';
   $('main').innerHTML = html;
 }
+
+/* ================= ไทม์ไลน์งาน (workflow blueprint) =================
+   เห็นได้เฉพาะบทบาทใน settings.timeline_roles (ME.canTimeline) · ข้อมูลจาก reports.timeline อ่านอย่างเดียว
+   โหนด = ขั้นของงาน ตัวเลข = เอกสารที่ค้างอยู่ในขั้นนั้น · เส้นที่มีจุดวิ่ง = ขั้นต้นทางยังมีงานค้าง */
+var TL = null, TL_SEL = '', TL_STILL = false;
+var TL_POS = { request: [0, 60], finance_in: [1, 60], procure: [2, 168], lines: [3, 60], khb: [4, 60], khj: [5, 60], pay: [6, 60], receipt: [4, 360], deposit: [6, 360], daily: [7, 214] };
+var TL_EDGES = [['request', 'finance_in'], ['finance_in', 'procure'], ['procure', 'lines'], ['finance_in', 'lines'], ['lines', 'khb'], ['khb', 'khj'], ['khj', 'pay'], ['pay', 'daily'], ['pay', 'deposit'], ['receipt', 'deposit'], ['deposit', 'daily']];
+var TL_WHO = { request: 'ครูผู้ขอ · งานแผน · ผอ.', finance_in: 'การเงิน', procure: 'พัสดุ', lines: 'การเงิน', khb: 'ผู้ตรวจ 3 ชั้น · ผอ.', khj: 'ผู้ทำ ขจ. · ผู้ตรวจ · ผอ.', pay: 'การเงิน', receipt: 'งานรายรับ', deposit: 'งานรายรับ · การเงิน', daily: 'การเงิน · กรรมการ · ผอ.' };
+var TL_NO = { request: 2, finance_in: 2, procure: 3, lines: 3, khb: 4, khj: 4, pay: 5, receipt: 6, deposit: 7, daily: 8 };
+var COLW = 214, NODEW = 176;
+async function refreshTimeline(force) {
+  if (!ME || !ME.canTimeline) { $('ribbon').classList.add('hidden'); return; }
+  if (TL && !force && Date.now() - TL.at < 30000) { renderRibbon(); return; }
+  if (refreshTimeline.busy) return; refreshTimeline.busy = true;
+  var r = await svc('reports', 'timeline', []); refreshTimeline.busy = false;
+  if (!r.ok) { $('ribbon').classList.add('hidden'); return; }
+  TL = { data: r.data, at: Date.now() };
+  renderRibbon();
+  if (current === 'home' && $('wb')) drawTimeline();
+}
+function tlStage(k) { return TL && TL.data.stages.filter(function (s) { return s.key === k; })[0]; }
+function renderRibbon() {
+  var rb = $('ribbon'); if (!rb) return;
+  if (!TL || current === 'home') { rb.classList.add('hidden'); return; }
+  var mine = TL.data.mine;
+  rb.innerHTML = '<span class="lbl">ไทม์ไลน์</span>' + TL.data.stages.map(function (s, i) {
+    return (i ? '<span class="sep" aria-hidden="true">›</span>' : '') + '<button type="button" class="' + s.lane + (s.count ? ' has' : '') + (mine.indexOf(s.key) >= 0 ? ' mine' : '') + '" data-stage="' + s.key + '" title="' + esc(TL_WHO[s.key] || '') + '">' + esc(s.label) + '<i>' + s.count + '</i></button>';
+  }).join('');
+  rb.classList.remove('hidden');
+  rb.onclick = function (e) { var b = e.target.closest('[data-stage]'); if (b) { TL_SEL = b.dataset.stage; go('home'); } };
+}
+function drawTimeline() {
+  var box = $('wb'); if (!box || !TL) return;
+  var d = TL.data, total = d.stages.reduce(function (a, s) { return a + s.count; }, 0);
+  if (!TL_SEL || !tlStage(TL_SEL)) {
+    var pick = d.stages.filter(function (s) { return d.mine.indexOf(s.key) >= 0 && s.count; })[0] || d.stages.filter(function (s) { return s.count; })[0] || d.stages[0];
+    TL_SEL = pick.key;
+  }
+  var W = 24 + 8 * COLW, H = 500;
+  var nodes = d.stages.map(function (s, i) {
+    var p = TL_POS[s.key] || [i, 60], mine = d.mine.indexOf(s.key) >= 0;
+    return '<button type="button" class="wb-node ' + s.lane + (s.count ? '' : ' zero') + '" data-k="' + s.key + '" aria-pressed="' + (s.key === TL_SEL) + '" style="left:' + (24 + p[0] * COLW) + 'px;top:' + p[1] + 'px;animation-delay:' + (i * 40) + 'ms" aria-label="' + esc(s.label + ' ค้าง ' + s.count + ' รายการ') + '">' +
+      (mine ? '<span class="mine">ขั้นของคุณ</span>' : '') +
+      '<span class="h"><span class="g">' + (TL_NO[s.key] || '') + '</span><span><b>' + esc(s.label) + '</b><small>' + esc(TL_WHO[s.key] || '') + '</small></span></span>' +
+      '<span class="c"><strong>' + s.count + '</strong><span>' + (s.count ? 'รายการค้างในขั้นนี้' : 'ไม่มีงานค้าง') + '</span></span></button>';
+  }).join('');
+  box.innerHTML = '<div class="wb-head"><h2>ไทม์ไลน์งานการเงิน</h2><span class="when">ข้อมูล ณ ' + new Date(TL.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.</span><span class="grow"></span>' +
+    '<span class="wb-legend"><span><i style="background:#f26a00"></i>ฝั่งรายจ่าย</span><span><i style="background:#1556d6"></i>ฝั่งรายรับ</span><span><i style="background:#0b2a6b"></i>ปิดท้าย</span></span>' +
+    '<button type="button" class="btn small" id="wbRefresh">อัปเดต</button></div>' +
+    '<div class="wb-body"><div class="wb-canvas" id="wbCanvas"><div id="wbSizer" style="position:relative"><div class="wb-plane" id="wbPlane" style="width:' + W + 'px;height:' + H + 'px">' +
+    '<div class="wb-band out" style="top:16px;height:300px"><span>ฝั่งรายจ่าย</span></div><div class="wb-band in" style="top:330px;height:160px"><span>ฝั่งรายรับ</span></div>' +
+    '<svg class="wb-svg" id="wbSvg" width="' + W + '" height="' + H + '" aria-hidden="true"></svg>' + nodes + '</div></div>' +
+    '<div class="wb-tools" role="group" aria-label="ปรับมุมมอง"><button type="button" data-z="-1" aria-label="ย่อ">−</button><button type="button" data-z="0">พอดีจอ</button><button type="button" data-z="1" aria-label="ขยาย">+</button><button type="button" id="wbStill" aria-pressed="' + TL_STILL + '">' + (TL_STILL ? 'เล่นการเคลื่อนไหว' : 'หยุดการเคลื่อนไหว') + '</button></div></div>' +
+    '<aside class="wb-side" id="wbSide" aria-live="polite"></aside></div>' +
+    '<div class="wb-status"><span>' + d.stages.length + ' ขั้น · ค้างรวม ' + total + ' รายการ</span><span>กดที่ขั้นเพื่อดูว่ามีเอกสารใดค้างอยู่</span></div>';
+  box.classList.toggle('still', TL_STILL);
+  wbEdges(); wbFit(2); wbSide();
+  var sel = box.querySelector('.wb-node[aria-pressed="true"]'), cv = $('wbCanvas');
+  if (sel && cv) cv.scrollLeft = Math.max(0, sel.offsetLeft * WB_Z - cv.clientWidth / 2 + 88);
+  box.onclick = function (e) {
+    var n = e.target.closest('.wb-node'); if (n) { TL_SEL = n.dataset.k; [].forEach.call(box.querySelectorAll('.wb-node'), function (x) { x.setAttribute('aria-pressed', String(x === n)); }); wbSide(); return; }
+    var z = e.target.closest('[data-z]'); if (z) { wbFit(+z.dataset.z); return; }
+    if (e.target.closest('#wbStill')) { TL_STILL = !TL_STILL; box.classList.toggle('still', TL_STILL); e.target.setAttribute('aria-pressed', String(TL_STILL)); e.target.textContent = TL_STILL ? 'เล่นการเคลื่อนไหว' : 'หยุดการเคลื่อนไหว'; return; }
+    if (e.target.closest('#wbRefresh')) { refreshTimeline(true); return; }
+    var g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
+  };
+  wbPan($('wbCanvas'));
+}
+// เส้นเชื่อม: ขวากลางของต้นทาง → ซ้ายกลางของปลายทาง · ถ้าปลายทางอยู่คอลัมน์เดียวกันใช้ล่าง → บน
+function wbEdges() {
+  var svg = $('wbSvg'); if (!svg) return;
+  var el = {}; [].forEach.call(document.querySelectorAll('#wbPlane .wb-node'), function (n) { el[n.dataset.k] = n; });
+  var col = { out: '#f26a00', in: '#1556d6', end: '#0b2a6b' }, out = '<defs>';
+  var paths = TL_EDGES.filter(function (e) { return el[e[0]] && el[e[1]]; }).map(function (e, i) {
+    var a = el[e[0]], b = el[e[1]], ax = a.offsetLeft, ay = a.offsetTop, bx = b.offsetLeft, by = b.offsetTop, x1, y1, x2, y2, dpath;
+    if (Math.abs(ax - bx) < 4) { x1 = ax + NODEW / 2; y1 = ay + a.offsetHeight; x2 = bx + NODEW / 2; y2 = by; dpath = 'M' + x1 + ' ' + y1 + ' C' + x1 + ' ' + (y1 + 40) + ',' + x2 + ' ' + (y2 - 40) + ',' + x2 + ' ' + y2; }
+    else { x1 = ax + NODEW; y1 = ay + a.offsetHeight / 2; x2 = bx; y2 = by + b.offsetHeight / 2; var dx = Math.max(40, (x2 - x1) / 2); dpath = 'M' + x1 + ' ' + y1 + ' C' + (x1 + dx) + ' ' + y1 + ',' + (x2 - dx) + ' ' + y2 + ',' + x2 + ' ' + y2; }
+    var sa = tlStage(e[0]), sb = tlStage(e[1]), id = 'wbg' + i;
+    out += '<linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"><stop stop-color="' + col[sa.lane] + '"/><stop offset="1" stop-color="' + col[sb.lane] + '"/></linearGradient>';
+    return '<path class="wb-halo" d="' + dpath + '"/><path class="wb-edge" d="' + dpath + '" stroke="url(#' + id + ')"/>' + (sa.count ? '<path class="wb-pulse" d="' + dpath + '"/>' : '') +
+      '<circle class="wb-port" cx="' + x1 + '" cy="' + y1 + '" r="4" stroke="' + col[sa.lane] + '"/><circle class="wb-port" cx="' + x2 + '" cy="' + y2 + '" r="4" stroke="' + col[sb.lane] + '"/>';
+  });
+  svg.innerHTML = out + '</defs>' + paths.join('');
+}
+var WB_Z = 1;
+function wbFit(step) {
+  var c = $('wbCanvas'), p = $('wbPlane'), sz = $('wbSizer'); if (!c || !p) return;
+  var W = p.offsetWidth, H = p.offsetHeight, fit = Math.max(.5, Math.min(1, (c.clientWidth - 8) / W));
+  WB_Z = step === 0 ? fit : step === 2 ? Math.max(fit, .86) : Math.max(.5, Math.min(1.3, WB_Z + step * .12));
+  p.style.transform = 'scale(' + WB_Z.toFixed(3) + ')';
+  sz.style.width = Math.ceil(W * WB_Z) + 'px'; sz.style.height = Math.ceil(H * WB_Z) + 'px';
+}
+// ลากเพื่อเลื่อนดู (เมาส์) · บนจอสัมผัสใช้การปัดตามปกติ
+function wbPan(c) {
+  if (!c) return;
+  var sx = 0, sy = 0, sl = 0, st = 0, on = false;
+  c.onpointerdown = function (e) { if (e.pointerType !== 'mouse' || e.target.closest('button')) return; on = true; sx = e.clientX; sy = e.clientY; sl = c.scrollLeft; st = c.scrollTop; c.classList.add('drag'); };
+  c.onpointermove = function (e) { if (!on) return; c.scrollLeft = sl - (e.clientX - sx); c.scrollTop = st - (e.clientY - sy); };
+  c.onpointerup = c.onpointerleave = function () { on = false; c.classList.remove('drag'); };
+}
+function wbSide() {
+  var s = tlStage(TL_SEL), side = $('wbSide'); if (!s || !side) return;
+  var page = pageOf(s.table), can = tableMeta(s.table);
+  side.innerHTML = '<h3>' + esc(s.label) + '</h3><div class="who">ผู้รับผิดชอบ: ' + esc(TL_WHO[s.key] || '') + '</div>' +
+    '<div class="wb-list">' + (s.items.length ? s.items.slice(0, 40).map(function (x) {
+      return '<div class="wb-item"><b>' + esc(x.title || x.id) + '</b><span><span>' + esc(x.sub || '') + '</span><span>' + (x.amount != null ? money(x.amount) + ' ' : '') + (x.days != null ? '· ' + x.days + ' วัน' : '') + '</span></span></div>';
+    }).join('') + (s.items.length > 40 ? '<div class="wb-empty">และอีก ' + (s.items.length - 40) + ' รายการ</div>' : '') : '<div class="wb-empty">ไม่มีเอกสารค้างในขั้นนี้</div>') + '</div>' +
+    (can ? '<button type="button" class="btn small" data-go="' + s.table + '">เปิดหน้า' + esc(page ? page.label : can.label) + '</button>' : '');
+}
+window.addEventListener('resize', function () { if (current === 'home' && $('wbPlane')) wbFit(2); });
 
 /* ================= หน้าแรก = ถาดงาน (Bento) ================= */
 // ถาดงานไม่เก็บข้อมูลเอง ดึงสถานะจากเอกสารทุกหน้า แล้วพาไปหน้านั้นเมื่อกด
@@ -1441,16 +1461,19 @@ async function renderHome(flash) {
     '<div class="actions" id="quick">' + QUICK.filter(function (q) { return tableMeta(q[0]); }).slice(0, 8).map(function (q) { return '<button class="btn small" data-go="' + q[0] + '">' + esc(q[1]) + '</button>'; }).join('') + '<button class="btn small" id="homeCmd">ค้นหาเมนู</button></div></div>';
   var skel = '<span class="skel"></span>';
   var html = (flash ? '<div class="msg ok">' + esc(flash) + '</div>' : '') +
+    (ME.canTimeline ? '<section class="wb" id="wb" aria-label="ไทม์ไลน์งานการเงิน"><div class="wb-head"><h2>ไทม์ไลน์งานการเงิน</h2><span class="skel" style="width:120px"></span></div><div style="height:420px"></div></section>' : '') +
     '<div class="bento">' + greet +
     '<div class="tile t-3 link g-lime" id="tInbox" data-scroll="tTray" tabindex="0"><i class="rim"></i><h3 class="cap">งานของฉัน</h3><div class="big" id="vInbox">' + skel + '</div><div class="sub">รอคุณกดรับ ตรวจ หรือแก้</div><div class="ticks" id="kInbox" aria-hidden="true"></div></div>' +
     '<div class="tile t-3 g-pink" id="tWait"><i class="rim"></i><h3 class="cap">รอคุณอนุมัติ</h3><div class="big" id="vWait">' + skel + '</div><div class="sub inbox" id="sWait"></div><div class="ticks" id="kWait" aria-hidden="true"></div></div>' +
     (tableMeta('plan_projects') ? '<div class="tile t-6 g-copper" id="tUse"><i class="rim"></i><h3 class="cap">ใช้งบตามแผนแล้ว</h3><div id="gUse">' + skel + '</div></div>' : '') +
     (staff ? '' : '<div class="tile t-6 g-silver" id="tMine"><i class="rim"></i><h3 class="cap">โครงการที่คุณรับผิดชอบ</h3><div class="list" id="lMine">' + skel + '</div></div>') +
     '</div>' +
-    '<div class="tile t-12 g-silver" style="margin-bottom:18px"><i class="rim"></i><h3 class="cap">เส้นทางเงินของโรงเรียน</h3><div class="chart" style="margin-top:8px">' + chartHtml(false) + '</div>' +
-    '<div class="legend"><span><i class="sw"></i>คนทำ แถบสีบอกบทบาท</span><span><i class="sw sys"></i>ระบบทำเอง</span><span><i class="sw later"></i>เปิดใช้ในขั้นถัดไป</span><span><i class="sw mine"></i>ขั้นที่บทบาทของคุณรับผิดชอบ</span><span><span class="handoff">ส่ง → รับ</span>ผู้รับต้องกดรับ</span></div></div>';
+    (ME.canTimeline ? '' : '<div class="tile t-12 g-silver" style="margin-bottom:18px"><i class="rim"></i><h3 class="cap">เส้นทางเงินของโรงเรียน</h3><div class="chart" style="margin-top:8px">' + chartHtml(false) + '</div>' +
+    '<div class="legend"><span><i class="sw"></i>คนทำ แถบสีบอกบทบาท</span><span><i class="sw sys"></i>ระบบทำเอง</span><span><i class="sw later"></i>เปิดใช้ในขั้นถัดไป</span><span><i class="sw mine"></i>ขั้นที่บทบาทของคุณรับผิดชอบ</span><span><span class="handoff">ส่ง → รับ</span>ผู้รับต้องกดรับ</span></div></div>');
   main.innerHTML = html;
+  if (ME.canTimeline) { if (TL) drawTimeline(); refreshTimeline(); }
   main.onclick = function (e) {
+    if (e.target.closest('#wb')) return; // ไทม์ไลน์จัดการคลิกเอง
     var sc = e.target.closest('[data-scroll]'); if (sc) { var to = $(sc.dataset.scroll); if (to) to.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     var el = e.target.closest('[data-go]'); if (el) go(el.dataset.go, el.dataset.mine === '1'); else if (e.target.closest('#homeCmd')) $('cmdBtn').click();
   };
@@ -1650,7 +1673,7 @@ function rowButtons(key, r) {
   }
   if (key === 'adjustments' && !r.approved_at && r.maker !== me() && hasRole(ME.settings.adjustment_approver_roles || [])) h += btn('adj_approve', r.id, 'อนุมัติ', 'ok');
   if (key === 'adjustments' && !r.approved_at) h += '<span class="handoff">รออนุมัติ</span>';
-  if (key === 'receipts' && hasRole(['finance']) && r.status !== 'ยกเลิก') h += btn('rc_cancel', r.id, 'ยกเลิกใบนี้', 'no') + (r.status === 'ปกติ' ? '' : '');
+  if (key === 'receipts' && hasRole(['finance', 'income']) && r.status !== 'ยกเลิก') h += btn('rc_cancel', r.id, 'ยกเลิกใบนี้', 'no') + (r.status === 'ปกติ' ? '' : '');
   if (key === 'payment_lines' && hasRole(['finance']) && r.locked && r.status !== 'ทำรายการกลับ' && !r.reverses) h += btn('pl_reverse', r.id, 'ทำรายการกลับ', 'no');
   if (key === 'khb' || key === 'khj') {
     var f = r.flow || {}, t = key, mk = r.maker === me();
@@ -1687,12 +1710,12 @@ function rowButtons(key, r) {
 
 var PAY_ADD = {
   daily_close: { label: 'เปิดวัน', can: function () { return hasRole(['finance']); }, open: dayOpen },
-  deposit_slips: { label: 'บันทึกใบนำฝาก', can: function () { return hasRole(['finance']); }, open: dsAdd },
+  deposit_slips: { label: 'บันทึกใบนำฝาก', can: function () { return hasRole(['finance', 'income']); }, open: dsAdd },
   bank_statement_lines: { label: 'นำเข้า statement', can: function () { return hasRole(['finance']); }, open: stmtImport },
   adjustments: { label: 'เพิ่มรายการปรับปรุง', can: function () { return hasRole(['finance']); }, open: adjAdd },
-  receipts: { label: 'ออกใบเสร็จ', can: function () { return hasRole(['finance']); }, open: rcAdd },
-  packages: { label: 'เพิ่มแพ็กเกจ', can: function () { return hasRole(['finance']); }, open: pkAdd },
-  collectibles: { label: 'ตั้งยอดที่ต้องเก็บ', can: function () { return hasRole(['finance']); }, open: clAdd },
+  receipts: { label: 'ออกใบเสร็จ', can: function () { return hasRole(['finance', 'income']); }, open: rcAdd },
+  packages: { label: 'เพิ่มแพ็กเกจ', can: function () { return hasRole(['finance', 'income']); }, open: pkAdd },
+  collectibles: { label: 'ตั้งยอดที่ต้องเก็บ', can: function () { return hasRole(['finance', 'income']); }, open: clAdd },
   approval_requests: { label: 'ยื่นใบขออนุมัติ', can: function () { return true; }, open: arSubmit },
   payment_lines: { label: 'เพิ่มแถว', can: function () { return hasRole(['finance']); }, open: plAdd },
   khb: { label: 'สร้าง ขบ.', can: function () { return hasRole(['finance']); }, open: khbAdd },

@@ -6,6 +6,7 @@ export const ROLES = {
   requester: 'ครูผู้ขอ',
   plan: 'งานแผน',
   finance: 'การเงิน',
+  income: 'งานรายรับ',
   khj_maker: 'ผู้ทำ ขจ.',
   reviewer1: 'ผู้ตรวจชั้น 1 หัวหน้าการเงิน',
   reviewer2: 'ผู้ตรวจชั้น 2 หัวหน้ากลุ่มบริหารงานแผนและงบประมาณ',
@@ -19,13 +20,13 @@ export const ROLES = {
 };
 
 // บทบาทที่ทำรายการเงิน (สร้าง/ตรวจ/อนุมัติเอกสารเงิน)
-const MONEY_ROLES = ['plan', 'finance', 'khj_maker', 'reviewer1', 'reviewer2', 'reviewer3', 'procurement', 'cash_committee'];
+const MONEY_ROLES = ['plan', 'finance', 'income', 'khj_maker', 'reviewer1', 'reviewer2', 'reviewer3', 'procurement', 'cash_committee'];
 
 // [บทบาท, บทบาทที่ห้ามถือร่วม]
 export const ROLE_CONFLICTS = [
   ['admin', [...MONEY_ROLES, 'director', 'auditor']], // ผู้ดูแลระบบทำรายการเงินไม่ได้
   ['auditor', Object.keys(ROLES).filter((r) => r !== 'auditor')], // ผู้ตรวจสอบอ่านอย่างเดียว
-  ['cash_committee', ['finance', 'khj_maker']], // กรรมการห้ามออกใบเสร็จ/จ่ายเงิน
+  ['cash_committee', ['finance', 'income', 'khj_maker']], // กรรมการห้ามออกใบเสร็จ/จ่ายเงิน
   ['director', MONEY_ROLES], // ผอ. ห้ามทำรายการแทนเจ้าหน้าที่
 ];
 
@@ -54,11 +55,12 @@ export const PERMISSIONS = {
   'fund_allowed_expense.manage': ['admin'],
   'cheque_books.manage': ['finance'],
   'payees.manage': ['finance'],
-  'packages.manage': ['finance'],
+  'packages.manage': ['finance', 'income'],
   'payees.account.request': ['finance'],
   'payees.account.approve': 'payee_account_approver_roles',
   'plan_projects.manage': ['plan'],
   'audit.read': ['admin', 'auditor'],
+  'timeline.read': 'timeline_roles',
   'flags.read': ['admin', 'auditor', 'director', 'plan', 'finance', 'reviewer1', 'reviewer2', 'reviewer3'],
 };
 

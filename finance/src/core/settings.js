@@ -42,6 +42,7 @@ export const SETTING_SPECS = {
   cheque_stale_days: { label: 'เช็คค้างขึ้นเงิน เตือนที่/ธงแดงที่ (วัน)', default: [150, 180], check: (v) => Array.isArray(v) && v.length === 2 && v.every(isInt) && v[0] < v[1] },
   review_restart: { label: 'ส่งคืนแล้วแก้ ให้เริ่มตรวจที่ (first = ชั้น 1 ใหม่ · returned = ชั้นที่ส่งคืน)', default: 'first', pending: 'HANDOFF 12.5 [รอยืนยัน]', check: (v) => v === 'first' || v === 'returned' },
   require_scan: { label: 'ต้องแนบภาพหน้าที่ ผอ. ลงนามทุกครั้ง', default: true, pending: 'HANDOFF 12.8 [รอยืนยัน]', check: (v) => typeof v === 'boolean' },
+  timeline_roles: { label: 'บทบาทที่เห็นไทม์ไลน์ภาพรวมของทุกเอกสาร', default: ['finance', 'income', 'khj_maker', 'procurement', 'reviewer1', 'reviewer2', 'reviewer3', 'plan', 'director', 'auditor'], check: isStrList },
   fund_allowed_expense_mode: { label: 'กฎค่าใช้จ่ายตามประเภทเงิน', default: 'flag', check: (v) => v === 'flag' || v === 'block' },
 };
 

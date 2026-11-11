@@ -56,7 +56,7 @@ const CALLS = {
   adjustments: ['create', 'approve'],
   bank: ['reconcile', 'register', 'signMonth'],
   daily: ['open', 'receiveCount', 'recordCount', 'explainDiff', 'sign', 'sendToDirector', 'receiveBack', 'close', 'report'],
-  reports: ['executive', 'planSummary', 'yearEnd'],
+  reports: ['timeline', 'executive', 'planSummary', 'yearEnd'],
   print: ['render'],
   migrate: ['payees', 'packages', 'opening', 'loans', 'audit'],
   receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
@@ -125,6 +125,7 @@ export function handle(app, email, action, payload = {}, deps = {}) {
           user: { id: ctx.user.id, name: ctx.user.name, email: ctx.user.email, roles: ctx.user.roles },
           roles: ROLES,
           today: ctx.today(),
+          canTimeline: can(ctx.user, 'timeline.read', ctx.settings),
           settings: can(ctx.user, 'masters.read', ctx.settings) ? ctx.settings : {},
           schema: publicSchema(app),
           tables: Object.entries(TABLE_ACCESS)

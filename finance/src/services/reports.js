@@ -78,3 +78,48 @@ export function yearEnd(ctx, fiscalYear) {
   const outstanding = ctx.store.list('cheques').filter((c) => ['ออกแล้ว', 'ลงนามแล้ว', 'ผู้รับรับแล้ว'].includes(c.status) && c.date <= to);
   return { fiscal_year: fiscalYear, from, to, closing: rep.groups.map((g) => ({ group: g.group, balance: g.balance })), outstanding_cheques: outstanding, plan: planSummary(ctx, fiscalYear) };
 }
+
+/**
+ * ไทม์ไลน์ภาพรวม: เอกสารที่ยังเดินไม่จบแต่ละใบ "อยู่ขั้นไหน" เรียงตามเส้นทางเงิน
+ * อ่านอย่างเดียว ไม่เก็บข้อมูลเอง · ใครเห็นได้ตั้งที่ settings.timeline_roles
+ * ขั้นมี roles = บทบาทที่รับผิดชอบขั้นนั้น (หน้าเว็บใช้ไฮไลต์ "ขั้นของคุณ")
+ */
+const FLOW_STAGE = { returned: 'ส่งคืนแก้', r1: 'ชั้น 1 หัวหน้าการเงิน', r2: 'ชั้น 2 หัวหน้ากลุ่มฯ', r3: 'ชั้น 3 รอง ผอ. กลุ่มฯ', sign: 'รอ ผอ. ลงนาม' };
+export function timeline(ctx) {
+  requirePermission(ctx, 'timeline.read');
+  const today = ctx.today();
+  const L = (t) => ctx.store.list(t);
+  const age = (iso) => (iso ? Math.max(0, daysBetween(String(iso).slice(0, 10), today)) : null);
+  const flows = {};
+  for (const f of L('doc_flow')) flows[`${f.doc_type}:${f.doc_id}`] = f;
+  const flowText = (type, id) => { const f = flows[`${type}:${id}`]; return !f ? 'ยังไม่ส่งตรวจ' : f.stage === 'done' ? null : (FLOW_STAGE[f.stage] || f.stage) + (f.phase === 'wait' ? ' (รอรับ)' : ''); };
+  const it = (r, title, sub, amount) => ({ id: r.id, title, sub, amount: amount ?? null, days: age(r.created_at) });
+  const ar = L('approval_requests');
+  const lines = L('payment_lines');
+  const lineSum = (st) => lines.filter((l) => l.status === st);
+  const stages = [
+    { key: 'request', lane: 'out', label: 'ขออนุมัติใช้เงิน', table: 'approval_requests', roles: ['requester', 'plan'],
+      items: ar.filter((r) => ['ส่งแล้ว รอแผนรับ', 'แผนกำลังตรวจ', 'ส่งคืนแก้', 'รอ ผอ. เซ็น'].includes(r.status)).map((r) => it(r, r.items, r.status, r.amount)) },
+    { key: 'finance_in', lane: 'out', label: 'การเงินรับเรื่อง', table: 'approval_requests', roles: ['finance'],
+      items: ar.filter((r) => r.status === 'อนุมัติแล้ว รอการเงินรับ').map((r) => it(r, r.approval_code || r.items, 'อนุมัติแล้ว รอการเงินรับ', r.amount)) },
+    { key: 'procure', lane: 'out', label: 'พัสดุจัดซื้อ', table: 'procurements', roles: ['procurement'],
+      items: L('procurements').filter((p) => !p.sent_at).map((p) => it(p, `${p.approval_code} ${p.vendor}`, p.inspected_at ? 'ตรวจรับแล้ว รอส่งชุดเบิก' : 'รอตรวจรับ', p.amount)) },
+    { key: 'lines', lane: 'out', label: 'หน้ารายการ', table: 'payment_lines', roles: ['finance'],
+      items: lineSum('บันทึกแล้ว').map((l) => it(l, l.description, `${l.approval_code || ''} รอรวมเป็น ขบ.`.trim(), l.pay_amount)) },
+    { key: 'khb', lane: 'out', label: 'ตรวจ ขบ.', table: 'khb', roles: ['finance', 'reviewer1', 'reviewer2', 'reviewer3'],
+      items: L('khb').map((k) => ({ k, s: flowText('khb', k.id) })).filter((x) => x.s).map(({ k, s }) => it(k, k.khb_no, s)) },
+    { key: 'khj', lane: 'out', label: 'ตรวจ ขจ.', table: 'khj', roles: ['khj_maker', 'reviewer1', 'reviewer2', 'reviewer3'],
+      items: L('khj').map((k) => ({ k, s: flowText('khj', k.id) })).filter((x) => x.s).map(({ k, s }) => it(k, k.khj_no, s)) },
+    { key: 'pay', lane: 'out', label: 'จ่ายเงิน', table: 'cheques', roles: ['finance'],
+      items: lineSum('ขจ.เซ็นแล้ว').map((l) => it(l, l.description, `รอจ่าย (${l.pay_method || 'ยังไม่ระบุวิธีจ่าย'})`, l.pay_amount)) },
+    { key: 'receipt', lane: 'in', label: 'ใบเสร็จรอนำฝาก', table: 'receipts', roles: ['income', 'finance'],
+      items: L('receipts').filter((r) => r.status === 'ปกติ' && !r.deposit_slip_id && (r.bks_cash || 0) + (r.inc_cash || 0) > 0).map((r) => it(r, `ใบเสร็จ ${r.receipt_no}`, r.payer, (r.bks_cash || 0) + (r.inc_cash || 0))) },
+    { key: 'deposit', lane: 'in', label: 'ทะเบียนเงินฝาก', table: 'deposit_slips', roles: ['income', 'finance'],
+      items: L('deposit_slips').filter((d) => String(d.date).slice(0, 7) === today.slice(0, 7)).map((d) => it(d, `ใบนำฝาก ${d.slip_no}`, d.difference ? 'ยอดไม่ตรงกับใบเสร็จ' : 'นำฝากแล้วเดือนนี้', d.amount)) },
+    { key: 'daily', lane: 'end', label: 'ปิดวัน', table: 'daily_close', roles: ['finance', 'cash_committee'],
+      items: L('daily_close').filter((d) => !d.closed_at).map((d) => it(d, `วันที่ ${d.date}`, !d.counted_by ? 'รอนับเงินสด' : !d.signed_at ? 'รอกรรมการลงนาม' : !d.received_back_at ? 'รอ ผอ. ตรวจ' : 'รอปิดวัน')) },
+  ];
+  for (const s of stages) s.count = s.items.length;
+  const mine = stages.filter((s) => s.roles.some((r) => ctx.user.roles.includes(r))).map((s) => s.key);
+  return { today, stages, mine };
+}

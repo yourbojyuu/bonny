@@ -23,6 +23,10 @@ test('api: me คืนบทบาทและตารางที่อ่า
   assert.ok(r.data.tables.find((t) => t.key === 'payees').canWrite);
   assert.ok(!r.data.tables.find((t) => t.key === 'funds').canWrite);
   assert.ok(!r.data.tables.find((t) => t.key === 'users')); // การเงินไม่เห็นตารางผู้ใช้
+  assert.equal(r.data.canTimeline, true); // การเงินเห็นไทม์ไลน์ภาพรวม (ค่าตั้ง timeline_roles)
+  const tl = handle(app, EMAILS.finance, 'call', { svc: 'reports', method: 'timeline', args: [] });
+  assert.equal(tl.ok, true);
+  assert.equal(tl.data.stages.length, 10);
 });
 
 test('api: ยอดเงินจากหน้าเว็บเป็นบาท แปลงเป็นสตางค์ก่อนบันทึก และคืนเป็นสตางค์', () => {

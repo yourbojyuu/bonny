@@ -7,7 +7,8 @@ import { assertOpenDay } from './daily.js';
 import { validateWith, requireReason, getOrFail, norm } from './common.js';
 
 const CH = ['bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'];
-const needFinance = (ctx) => { if (!hasRole(ctx.user, 'finance')) throw new PermissionError('เฉพาะการเงินทำรายการรายรับ'); };
+// รายรับ: การเงิน หรือ งานรายรับ (บทบาทแยกสำหรับผู้รับผิดชอบรายรับโดยตรง)
+const needFinance = (ctx) => { if (!hasRole(ctx.user, 'finance') && !hasRole(ctx.user, 'income')) throw new PermissionError('เฉพาะการเงินหรืองานรายรับทำรายการรายรับ'); };
 const parsePairs = (list) => Object.fromEntries((list || []).map((x) => { const i = String(x).lastIndexOf('='); return [String(x).slice(0, i), Number(String(x).slice(i + 1))]; }));
 const sum = (xs) => xs.reduce((s, x) => s + x, 0);
 

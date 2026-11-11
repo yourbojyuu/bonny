@@ -85,7 +85,7 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
         open: b(daily.open), receiveCount: b(daily.receiveCount), recordCount: b(daily.recordCount), explainDiff: b(daily.explainDiff), sign: b(daily.sign),
         sendToDirector: b(daily.sendToDirector), receiveBack: b(daily.receiveBack), close: b(daily.close), report: b(daily.report), list: b(daily.listDays), get: b(daily.getDay),
       },
-      reports: { executive: b(reports.executive), planSummary: b(reports.planSummary), yearEnd: b(reports.yearEnd) },
+      reports: { timeline: b(reports.timeline), executive: b(reports.executive), planSummary: b(reports.planSummary), yearEnd: b(reports.yearEnd) },
       deposits: { create: b(bank.createDeposit), undeposited: b(bank.undeposited) },
       statements: { import: b(bank.importStatement), lines: b(bank.statementLines) },
       adjustments: { create: b(bank.createAdjustment), approve: b(bank.approveAdjustment), list: b(bank.listAdjustments) },
