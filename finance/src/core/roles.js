@@ -54,6 +54,7 @@ export const PERMISSIONS = {
   'fund_allowed_expense.manage': ['admin'],
   'cheque_books.manage': ['finance'],
   'payees.manage': ['finance'],
+  'packages.manage': ['finance'],
   'payees.account.request': ['finance'],
   'payees.account.approve': 'payee_account_approver_roles',
   'plan_projects.manage': ['plan'],

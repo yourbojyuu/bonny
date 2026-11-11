@@ -17,6 +17,9 @@ export const TABLE_ACCESS = {
   cheques: { read: 'masters.read', write: null },
   ktb_batches: { read: 'masters.read', write: null },
   ledger: { read: 'masters.read', write: null },
+  receipts: { read: 'masters.read', write: null },
+  packages: { read: 'masters.read', write: null },
+  collectibles: { read: 'masters.read', write: null },
   payees: { read: 'masters.read', write: 'payees.manage' },
   payee_account_changes: { read: 'masters.read', write: 'payees.account.request' },
   bank_accounts: { read: 'masters.read', write: 'bank_accounts.manage' },
@@ -40,6 +43,10 @@ const CALLS = {
   cheques: ['propose', 'confirm', 'voidCheque', 'register', 'sendForSignature', 'markReceived'],
   ktb: ['createBatch', 'fileContent', 'markUploaded', 'recordApproval', 'recordTxn', 'approvers'],
   ledger: ['balance', 'taxSummary'],
+  receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
+  packages: ['create'],
+  collectibles: ['set'],
+  subfunds: ['seedDefaults'],
   loans: ['create'],
   procurement: ['purchase', 'inspect', 'sendBundle', 'receiveBundle'],
   payments: ['createLine', 'updateLine', 'reverseLine'],
@@ -47,7 +54,9 @@ const CALLS = {
   khj: ['generate'],
   workflow: ['submit', 'receive', 'pass', 'returnDoc', 'receiveSigned', 'directorReturn'],
 };
-const MONEY_KEYS = ['amount', 'base_amount'];
+const MONEY_KEYS = ['amount', 'base_amount', 'bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other', 'amount_due', 'total'];
+// แพ็กเกจ: หน้าเว็บส่งบรรทัด "รหัส=บาท" → "รหัส=สตางค์"
+const pairsToSatang = (list) => (Array.isArray(list) ? list : []).map((x) => { const i = String(x).lastIndexOf('='); return `${String(x).slice(0, i).trim()}=${toSatang(String(x).slice(i + 1).trim())}`; });
 // หน้าเว็บส่งยอดเงินเป็นบาท (ข้อความ) → แปลงเป็นสตางค์ก่อนเข้าบริการ
 function moneyArgs(args) {
   return args.map((a) => {
@@ -55,8 +64,12 @@ function moneyArgs(args) {
     const out = { ...a };
     const c = collector();
     for (const k of MONEY_KEYS) {
-      if (out[k] === undefined || out[k] === '' || out[k] === null) continue;
+      if (out[k] === undefined || out[k] === '' || out[k] === null) { if (out[k] === '') delete out[k]; continue; }
       try { out[k] = toSatang(out[k]); } catch (e) { c.add(k, e.message); }
+    }
+    for (const k of ['lines', 'channels']) if (Array.isArray(out[k])) { try { out[k] = pairsToSatang(out[k]); } catch (e) { c.add(k, 'รูปแบบต้องเป็น รหัส=บาท'); } }
+    if (out.split && Array.isArray(out.split.splits)) {
+      out.split = { ...out.split, splits: out.split.splits.map((x) => { try { return { ...x, amount: toSatang(x.amount) }; } catch (e) { c.add('splits', e.message); return x; } }) };
     }
     c.throwIfAny();
     return out;
@@ -134,6 +147,9 @@ export function handle(app, email, action, payload = {}, deps = {}) {
         if (table === 'cheques') return ok(u.cheques.list().slice().reverse());
         if (table === 'ktb_batches') return ok(u.ktb.list());
         if (table === 'ledger') return ok(u.ledger.list().slice().reverse());
+        if (table === 'receipts') return ok(u.receipts.list().slice().reverse());
+        if (table === 'packages') return ok(u.packages.list());
+        if (table === 'collectibles') return ok(u.collectibles.list());
         return ok(u[table].list());
       case 'create':
         needRead();

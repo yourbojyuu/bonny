@@ -25,8 +25,9 @@ export function balance(ctx) {
   requirePermission(ctx, 'masters.read');
   const m = new Map();
   for (const e of ctx.store.list('ledger')) {
-    const r = m.get(e.fund_code) || { fund_code: e.fund_code, debit: 0, credit: 0 };
-    r.debit += e.debit; r.credit += e.credit; m.set(e.fund_code, r);
+    const key = e.fund_code || e.subfund_code;
+    const r = m.get(key) || { fund_code: key, debit: 0, credit: 0 };
+    r.debit += e.debit; r.credit += e.credit; m.set(key, r);
   }
   return [...m.values()].map((r) => ({ ...r, balance: r.debit - r.credit }));
 }

@@ -13,6 +13,7 @@ import * as documents from './services/documents.js';
 import * as cheques from './services/cheques.js';
 import * as ktb from './services/ktb.js';
 import * as ledger from './services/ledger.js';
+import * as receipts from './services/receipts.js';
 import * as users from './services/users.js';
 import * as settingsSvc from './services/settings.js';
 import * as payees from './services/payees.js';
@@ -67,6 +68,12 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
         sendForSignature: b(cheques.sendForSignature), markReceived: b(cheques.markReceived), list: b((c) => { requirePermission(c, 'masters.read'); return cheques.listCheques(c); }),
       },
       ktb: { createBatch: b(ktb.createBatch), fileContent: b(ktb.fileContent), markUploaded: b(ktb.markUploaded), recordApproval: b(ktb.recordApproval), recordTxn: b(ktb.recordTxn), approvers: b(ktb.approvers), list: b((c) => { requirePermission(c, 'masters.read'); return ktb.listBatches(c); }) },
+      packages: { create: b(receipts.createPackage), list: b(receipts.listPackages) },
+      collectibles: { set: b(receipts.setCollectible), list: b(receipts.listCollectibles) },
+      receipts: {
+        issue: b(receipts.issue), preview: b(receipts.preview), cancel: b(receipts.cancel), nextNo: b((c, book) => { requirePermission(c, 'masters.read'); return receipts.nextNo(c, book); }),
+        list: b(receipts.listReceipts), splits: b(receipts.splitsOf), monthlySummary: b(receipts.monthlySummary),
+      },
       ledger: { list: b(ledger.listLedger), balance: b(ledger.balance), taxSummary: b(ledger.taxSummary) },
       workflow: {
         submit: b(review.submitForReview), receive: b(review.receiveStage), pass: b(review.passStage), returnDoc: b(review.returnStage),
@@ -82,6 +89,7 @@ export function createApp({ repo, clock, extraTables = {}, extraFlows = {} }) {
     for (const t of MASTER_TABLES) {
       const s = masterService(t);
       api[t] = { create: b(s.create), update: b(s.update), list: b(s.list), get: b(s.get) };
+      if (t === 'subfunds') api[t].seedDefaults = b(receipts.seedDefaultSubfunds);
     }
     return api;
   }

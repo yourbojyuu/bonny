@@ -20,7 +20,12 @@ const cur = admin.bank_accounts.create({ account_no: '0000000002', bank: 'ธน
 admin.funds.create({ fund_code: 'บกศ. ง/1', name: 'ค่าจ้างครูสมมติ', fund_group: 'บกศ.', bank_account_id: cur.id });
 admin.users.create({ name: 'ผู้บริหาร สมมติ', email: `dir@${D}`, roles: ['director'], appointment_ref: 'คำสั่งสมมติ dir' });
 admin.settings.update('ktb_approver_user_ids', [app.store.find('users', (u) => u.email === `dir@${D}`)[0].id], 'ตั้งต้นทดลอง');
+admin.subfunds.seedDefaults();
+for (const c of ['ก/20', 'ข/3']) admin.subfunds.update(admin.subfunds.list().find((x) => x.code === c).id, { has_collectible: false }, 'ทดลอง: ชนิดนี้ไม่ตั้งยอด');
 const fin = app.asUser(`finance@${D}`);
+fin.packages.create({ total: 232500, label: 'แพ็กเกจ A', lines: ['ก/20=100000', 'ข/3=100000', 'ศูนย์กีฬา=32500'] });
+fin.packages.create({ total: 300000, label: 'SMS งวดหนึ่ง', lines: ['SMS=300000'] });
+fin.collectibles.set({ student_id: 'S001', subfund_code: 'SMS', academic_year: 2569, term: '1', amount_due: 960000 });
 fin.cheque_books.create({ bank_account_id: cur.id, first_no: '00000001', last_no: '00000050' });
 const p = fin.payees.create({ name: 'ร้านสมมติ ก', tax_form: 'ภ.ง.ด.53', pay_method: 'KTB' });
 fin.payees.requestAccountChange(p.id, { bank: 'ธนาคารสมมติ', account_no: '0000000099', reason: 'ร้านแจ้งเปลี่ยน (สมมติ)' });
