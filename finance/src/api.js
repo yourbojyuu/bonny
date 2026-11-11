@@ -17,6 +17,9 @@ export const TABLE_ACCESS = {
   cheques: { read: 'masters.read', write: null },
   ktb_batches: { read: 'masters.read', write: null },
   ledger: { read: 'masters.read', write: null },
+  daily_close: { read: 'masters.read', write: null },
+  executive: { read: 'masters.read', write: null },
+  year_end: { read: 'masters.read', write: null },
   bank_register: { read: 'masters.read', write: null },
   deposit_slips: { read: 'masters.read', write: null },
   bank_statement_lines: { read: 'masters.read', write: null },
@@ -51,6 +54,8 @@ const CALLS = {
   statements: ['import'],
   adjustments: ['create', 'approve'],
   bank: ['reconcile', 'register', 'signMonth'],
+  daily: ['open', 'receiveCount', 'recordCount', 'explainDiff', 'sign', 'sendToDirector', 'receiveBack', 'close', 'report'],
+  reports: ['executive', 'planSummary', 'yearEnd'],
   receipts: ['issue', 'preview', 'cancel', 'nextNo', 'splits', 'monthlySummary'],
   packages: ['create'],
   collectibles: ['set'],
@@ -62,7 +67,7 @@ const CALLS = {
   khj: ['generate'],
   workflow: ['submit', 'receive', 'pass', 'returnDoc', 'receiveSigned', 'directorReturn'],
 };
-const MONEY_KEYS = ['amount', 'base_amount', 'bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other', 'amount_due', 'total'];
+const MONEY_KEYS = ['amount', 'base_amount', 'bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other', 'amount_due', 'total', 'counted_cash'];
 // แพ็กเกจ: หน้าเว็บส่งบรรทัด "รหัส=บาท" → "รหัส=สตางค์"
 const pairsToSatang = (list) => (Array.isArray(list) ? list : []).map((x) => { const i = String(x).lastIndexOf('='); return `${String(x).slice(0, i).trim()}=${toSatang(String(x).slice(i + 1).trim())}`; });
 // หน้าเว็บส่งยอดเงินเป็นบาท (ข้อความ) → แปลงเป็นสตางค์ก่อนเข้าบริการ
@@ -157,6 +162,8 @@ export function handle(app, email, action, payload = {}, deps = {}) {
         if (table === 'ledger') return ok(u.ledger.list().slice().reverse());
         if (table === 'receipts') return ok(u.receipts.list().slice().reverse());
         if (table === 'bank_register') return ok(u.bank_accounts.list());
+        if (table === 'daily_close') return ok(u.daily.list());
+        if (table === 'executive' || table === 'year_end') return ok([]);
         if (table === 'deposit_slips') return ok(app.store.list('deposit_slips').slice().reverse());
         if (table === 'bank_statement_lines') return ok(app.store.list('bank_statement_lines').slice(-1000).reverse());
         if (table === 'adjustments') return ok(u.adjustments.list().slice().reverse());

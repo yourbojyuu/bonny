@@ -4,6 +4,7 @@ import { toSatang, formatSatang } from '../core/money.js';
 import { daysBetween, isValidDate } from '../core/thaidate.js';
 import { requirePermission } from '../core/roles.js';
 import { hasRole } from './handoffs.js';
+import { lockedThrough } from './daily.js';
 import { validateWith, getOrFail, requireReason, norm } from './common.js';
 
 const needFinance = (ctx) => { if (!hasRole(ctx.user, 'finance')) throw new PermissionError('เฉพาะการเงินทำรายการนี้'); };
@@ -52,6 +53,7 @@ export function createDeposit(ctx, input) {
       if (!acct || acct.type !== 'ออมทรัพย์') c.add('account_id', 'ใบนำฝากต้องฝากเข้าบัญชีออมทรัพย์ของกลุ่มเงิน');
       if (out.slip_no && ctx.store.find('deposit_slips', (s) => s.slip_no === out.slip_no).length) c.add('slip_no', 'เลขที่ใบนำฝากนี้มีแล้ว');
       if (Number.isInteger(out.amount) && out.amount <= 0) c.add('amount', 'ยอดฝากต้องมากกว่า 0');
+      { const lt = lockedThrough(ctx); if (out.date && lt && out.date <= lt) c.add('date', `วันที่ ${out.date} ถูกล็อกแล้ว (ปิดวันถึง ${lt})`); }
       const group = acct ? acct.fund_group : '';
       const pending = new Map(undeposited(ctx, group).receipts.map((x) => [x.id, x.cash]));
       let expected = 0;

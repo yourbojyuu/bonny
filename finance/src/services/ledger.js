@@ -60,3 +60,16 @@ export function opening(ctx, { account_id, amount, date } = {}) {
   if (amount === 0) return null;
   return ctx.store.insert(ctx.user, 'ledger', { date, fund_code: '', subfund_code: '', location: account_id, debit: amount > 0 ? amount : 0, credit: amount < 0 ? -amount : 0, source_type: 'opening', source_id: account_id, memo: 'ยอดยกมา' }, { reason: 'ยอดยกมาตั้งต้น' });
 }
+
+const INTERNAL = ['deposit_slip', 'otid_transfer'];
+/** กลุ่มเงินของรายการบัญชี: ประเภทเงิน → ชนิดเงินย่อย → ใบนำฝาก → บัญชีธนาคาร */
+export function groupOfEntry(ctx, e, cache = {}) {
+  const f = e.fund_code && ctx.store.find('funds', (x) => x.fund_code === e.fund_code)[0];
+  if (f) return f.fund_group;
+  const s = e.subfund_code && ctx.store.find('subfunds', (x) => x.code === e.subfund_code)[0];
+  if (s) return s.group;
+  if (e.source_type === 'deposit_slip') return (ctx.store.get('deposit_slips', e.source_id) || {}).fund_group || '';
+  const a = ctx.store.get('bank_accounts', e.location);
+  return a ? a.fund_group : '';
+}
+export const isInternalEntry = (e) => INTERNAL.includes(e.source_type);

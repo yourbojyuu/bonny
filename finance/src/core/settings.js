@@ -37,6 +37,7 @@ export const SETTING_SPECS = {
   statement_codes: { label: 'รหัสรายการใน statement (deposit · ktb · interest · cheque · overdraft)', default: { deposit: ['PBSDT'], ktb: ['BPSWT'], interest: ['IIPS'], cheque: ['CWTPC', 'CWTRC', 'CBCA'], overdraft: ['OTID'] }, pending: 'HANDOFF 12.16 [รอตัวอย่าง statement แต่ละบัญชี]', check: (v) => v && typeof v === 'object' && ['deposit', 'ktb', 'interest', 'cheque', 'overdraft'].every((k) => Array.isArray(v[k])) },
   adjustment_approver_roles: { label: 'บทบาทที่อนุมัติรายการปรับปรุง (≠ ผู้ทำ)', default: ['reviewer1', 'reviewer2', 'reviewer3'], pending: 'ขั้น 6 [รอยืนยัน]', check: isStrList },
   deposit_match_days: { label: 'ใบนำฝากกับ statement วันที่ห่างกันได้ (วัน)', default: 3, check: (v) => isInt(v) && v >= 0 },
+  cheque_stale_days: { label: 'เช็คค้างขึ้นเงิน เตือนที่/ธงแดงที่ (วัน)', default: [150, 180], check: (v) => Array.isArray(v) && v.length === 2 && v.every(isInt) && v[0] < v[1] },
   review_restart: { label: 'ส่งคืนแล้วแก้ ให้เริ่มตรวจที่ (first = ชั้น 1 ใหม่ · returned = ชั้นที่ส่งคืน)', default: 'first', pending: 'HANDOFF 12.5 [รอยืนยัน]', check: (v) => v === 'first' || v === 'returned' },
   require_scan: { label: 'ต้องแนบภาพหน้าที่ ผอ. ลงนามทุกครั้ง', default: true, pending: 'HANDOFF 12.8 [รอยืนยัน]', check: (v) => typeof v === 'boolean' },
   fund_allowed_expense_mode: { label: 'กฎค่าใช้จ่ายตามประเภทเงิน', default: 'flag', check: (v) => v === 'flag' || v === 'block' },

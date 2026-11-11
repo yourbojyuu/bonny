@@ -3,6 +3,7 @@ import { fail, PermissionError, collector } from '../core/errors.js';
 import { requirePermission } from '../core/roles.js';
 import { formatSatang } from '../core/money.js';
 import { hasRole } from './handoffs.js';
+import { assertOpenDay } from './daily.js';
 import { validateWith, requireReason, getOrFail, norm } from './common.js';
 
 const CH = ['bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'];
@@ -104,6 +105,7 @@ export function issue(ctx, input) {
       if (out.bks_transfer + out.inc_transfer > 0 && !out.kcorp_ref) cc.add('kcorp_ref', 'เงินโอนต้องจดเลขที่อ้างอิง Kcorp หลังตรวจยอดเข้าบัญชี');
       if (out.loan_id && !ctx.store.get('loans', out.loan_id)) cc.add('loan_id', 'ไม่พบสัญญาเงินยืม');
     });
+    assertOpenDay(ctx, base.date);
     const total = sum(CH.map((k) => base[k]));
     let replaces = '';
     if (input.replaces) {

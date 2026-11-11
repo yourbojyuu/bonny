@@ -310,6 +310,7 @@ function roleTag(r) { return '<span class="rtag" style="color:' + roleVar(r) + '
 var GROUPS = [
   { label: 'งานแผน', color: '--r-plan', tables: ['plan_projects'] },
   { label: 'ฝั่งจ่าย', color: '--r-finance', tables: ['approval_requests', 'payment_lines', 'khb', 'khj', 'loans', 'procurements'] },
+  { label: 'ปิดวันและรายงาน', color: '--r-committee', tables: ['daily_close', 'executive', 'year_end'] },
   { label: 'ธนาคาร', color: '--r-finance', tables: ['bank_register', 'deposit_slips', 'bank_statement_lines', 'adjustments'] },
   { label: 'ฝั่งรับ', color: '--r-finance', tables: ['receipts', 'packages', 'collectibles'] },
   { label: 'จ่ายเงิน', color: '--r-finance', tables: ['cheques', 'ktb_batches', 'ledger'] },
@@ -318,8 +319,11 @@ var GROUPS = [
   { label: 'ผู้ดูแลระบบและผู้ตรวจสอบ', color: '--r-admin', tables: ['users', 'settings', 'audit_log', 'login_log', 'handoffs', 'review_steps'] },
 ];
 var OWNER_COLOR = {}; GROUPS.forEach(function (g) { g.tables.forEach(function (t) { OWNER_COLOR[t] = g.color; }); });
-var SHORT = { bank_register: 'ทะเบียนเงินฝาก', deposit_slips: 'ใบนำฝาก', bank_statement_lines: 'รายการ statement', adjustments: 'รายการปรับปรุง', receipts: 'ใบเสร็จ', packages: 'แพ็กเกจ', collectibles: 'ยอดที่ต้องเก็บ', cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
+var SHORT = { daily_close: 'วันที่ปิด', executive: 'รายงานผู้บริหาร', year_end: 'สิ้นปีงบ', bank_register: 'ทะเบียนเงินฝาก', deposit_slips: 'ใบนำฝาก', bank_statement_lines: 'รายการ statement', adjustments: 'รายการปรับปรุง', receipts: 'ใบเสร็จ', packages: 'แพ็กเกจ', collectibles: 'ยอดที่ต้องเก็บ', cheques: 'เช็ค', ktb_batches: 'ชุดโอน', ledger: 'รายการบัญชี', approval_requests: 'ใบขออนุมัติ', payment_lines: 'แถวในหน้ารายการ', khb: 'ขบ.', khj: 'ขจ.', loans: 'สัญญาเงินยืม', procurements: 'รายการจัดซื้อ', plan_projects: 'โครงการ', payees: 'ผู้รับเงิน', payee_account_changes: 'คำขอเปลี่ยนบัญชี', bank_accounts: 'บัญชีธนาคาร', cheque_books: 'สมุดเช็ค', funds: 'ประเภทเงิน', subfunds: 'ชนิดเงินย่อย', fund_allowed_expense: 'ค่าใช้จ่ายที่อนุญาต' };
 var DESC = {
+  daily_close: 'เปิดวัน ส่งรายงานเงินคงเหลือให้กรรมการนับเงินสดและลงนาม แล้ว ผอ. ตรวจการจ่ายบนกระดาษ การเงินกดรับคืนพร้อมภาพจึงปิดวัน (ล็อก) วันที่มีการจ่ายต้องมีเอกสาร ผอ. ที่รับคืนแล้ว',
+  executive: 'ธงแดง งานค้างรับเกินกำหนด เช็คค้างขึ้นเงิน เงินยืมเลยกำหนด ค้างชำระ และโครงการที่ใช้เงินเกิน 90% ของวงเงิน ทั้งหมดคำนวณจากข้อมูลจริง',
+  year_end: 'สรุปผลการใช้เงินตามแผนสำหรับรายงานคณะกรรมการสถานศึกษา ยอดยกไปเท่ากับยอดยกมาของปีถัดไป และเช็คค้างจ่ายที่ยกข้ามปี',
   bank_register: 'ทะเบียนเงินฝากแยกตามบัญชี สร้างจาก Ledger แล้วกระทบยอดกับ statement สิ้นเดือน หัวหน้าหน่วยงานย่อยลงนามเมื่อยอดตรง',
   deposit_slips: 'นำเงินสดตามใบเสร็จฝากเข้าบัญชีออมทรัพย์ของกลุ่มเงิน ยอดไม่ตรงกับใบเสร็จขึ้นธงส่วนต่าง',
   bank_statement_lines: 'รายการจากไฟล์ statement ที่นำเข้า ระบบจับคู่กับใบนำฝาก ใบเสร็จโอน เช็ค KTB และหักกลบ OTID ที่คู่กับเช็ค',
@@ -352,6 +356,7 @@ var DESC = {
   login_log: 'การเข้าระบบทุกครั้ง ถ้าบัญชี Google ที่เปิดอยู่ไม่ตรงกับอีเมลที่ใช้เข้า ช่องนั้นจะเป็นสีเหลือง',
 };
 var EXTRA_COLS = {
+  daily_close: [{ key: 'status', label: 'สถานะ' }],
   collectibles: [{ key: 'paid', label: 'รับแล้ว', type: 'money' }, { key: 'outstanding', label: 'ค้างชำระ', type: 'money' }],
   cheques: [{ key: 'khj_no', label: 'ขจ.' }],
   ktb_batches: [{ key: 'status', label: 'สถานะ' }],
@@ -363,7 +368,7 @@ var EXTRA_COLS = {
   plan_projects: [{ key: 'remaining', label: 'คงเหลือ', type: 'money' }],
   payee_account_changes: [{ key: 'status', label: 'สถานะ' }],
 };
-var HIDE = { deposit_slips: ['id', 'receipt_ids', 'fund_group', 'expected'], bank_statement_lines: ['id', 'teller_id', 'branch', 'matched_source'], adjustments: ['id', 'approved_at'], receipts: ['id', 'replaces', 'cancel_reason', 'package_id', 'manual_reason', 'deposit_slip_id', 'loan_id', 'bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'], packages: ['id'], collectibles: ['id'], cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
+var HIDE = { daily_close: ['id', 'system_cash', 'count_received_by', 'counted_by', 'signed_at', 'director_sent_at', 'director_scan', 'received_back_at', 'closed_at', 'locked', 'snapshot'], deposit_slips: ['id', 'receipt_ids', 'fund_group', 'expected'], bank_statement_lines: ['id', 'teller_id', 'branch', 'matched_source'], adjustments: ['id', 'approved_at'], receipts: ['id', 'replaces', 'cancel_reason', 'package_id', 'manual_reason', 'deposit_slip_id', 'loan_id', 'bks_cash', 'inc_cash', 'bks_transfer', 'inc_transfer', 'other'], packages: ['id'], collectibles: ['id'], cheques: ['id', 'book_id', 'khj_id', 'amount_text', 'line_ids', 'void_photo', 'signed_at', 'received_at', 'cleared_at', 'payee_id'], ktb_batches: ['id', 'khj_id', 'maker', 'approver_id', 'uploaded_at', 'approved_at', 'paid_at'], ledger: ['id', 'source_id'], approval_requests: ['id', 'fiscal_year', 'scan_ref', 'plan_reviewer', 'decided_at', 'closed_at'], payment_lines: ['id', 'khb_id', 'khj_id', 'cheque_no', 'ktb_ref', 'reverses', 'locked', 'expense_category', 'fund_code', 'tax_form'], khb: ['id'], khj: ['id', 'khb_id'], loans: ['id', 'fund_code', 'status'], procurements: ['id', 'purchased_by', 'inspector', 'inspected_at', 'sent_at'], audit_log: ['before', 'after', 'id'], login_log: ['id'], users: ['id'], plan_projects: ['id', 'fiscal_year'], payee_account_changes: ['id', 'decision'] };
 
 /* ================= ผังภาพรวม (จากผังหน้า 1) =================
    live = ตารางที่ใช้งานได้แล้ว · uses = ข้อมูลหลักที่ขั้นนี้ต้องใช้ · step = ขั้นที่จะเปิดใช้ · hand = ส่งต่อ ผู้รับต้องกดรับ */
@@ -480,6 +485,9 @@ var ICON = {
   khj: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="m13 10 3 3-3 3"/>',
   loans: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
   procurements: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  daily_close: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  executive: '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
+  year_end: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>',
   bank_register: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
   deposit_slips: '<path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M5 21h14"/>',
   bank_statement_lines: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
@@ -611,6 +619,8 @@ async function show(key, flash) {
   if (key === 'home') return renderHome(flash);
   if (key === 'inbox') return renderInbox(flash);
   if (key === 'bank_register') return renderBankRegister(flash);
+  if (key === 'executive') return renderExecutive();
+  if (key === 'year_end') return renderYearEnd();
   var main = $('main');
   main.innerHTML = '<p class="note">กำลังโหลด</p>';
   var r = await call('list', { table: key });
@@ -761,7 +771,7 @@ function settingsTable(rows) {
 
 
 /* ================= ฝั่งจ่าย: ใบขออนุมัติ · หน้ารายการ · ขบ. · ขจ. · เงินยืม · พัสดุ ================= */
-var PAY_TABLES = { adjustments: 1, receipts: 1, packages: 0, collectibles: 0, cheques: 1, ktb_batches: 1, approval_requests: 1, payment_lines: 1, khb: 1, khj: 1, loans: 1, procurements: 1 };
+var PAY_TABLES = { daily_close: 1, adjustments: 1, receipts: 1, packages: 0, collectibles: 0, cheques: 1, ktb_batches: 1, approval_requests: 1, payment_lines: 1, khb: 1, khj: 1, loans: 1, procurements: 1 };
 var KIND_OPTS = ['เบิก', 'พัสดุ', 'เงินยืม', 'สำรองจ่าย', 'ค่าจ้าง', 'ภาษีนำส่ง', 'คืนเงิน', 'ส่งใช้เงินยืม'];
 function fld(key, label, inner, opts) { opts = opts || {}; return '<div class="field" data-key="' + key + '"><label for="f_' + key + '">' + esc(label) + (opts.req ? ' <span class="req">*</span>' : '') + '</label>' + inner + (opts.hint ? '<div class="hint">' + esc(opts.hint) + '</div>' : '') + '<div class="err"></div></div>'; }
 function fTxt(key, label, opts) { opts = opts || {}; return fld(key, label, '<input type="text" id="f_' + key + '"' + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + (opts.money ? ' inputmode="decimal"' : '') + (opts.val != null ? ' value="' + esc(opts.val) + '"' : '') + '>', opts); }
@@ -803,6 +813,21 @@ function rowButtons(key, r) {
     }
     if (r.status === 'ส่งแล้ว รอแผนรับ' || r.status === 'รอ ผอ. เซ็น') h += '<span class="handoff">ส่ง → รับ</span>';
   }
+  if (key === 'daily_close') {
+    h += btn('dc_report', r.date, 'ดูรายงาน');
+    if (!r.locked) {
+      if (hasRole(['cash_committee'])) {
+        if (!r.count_received_by) h += btn('dc_receive', r.date, 'กดรับ', 'ok');
+        else if (!r.signed_at) h += btn('dc_count', r.date, 'บันทึกผลนับเงิน') + (r.counted_by ? btn('dc_sign', r.date, 'ลงนามรายงาน', 'ok') : '');
+      }
+      if (hasRole(['finance'])) {
+        if (r.counted_by && r.diff !== 0 && !r.signed_at) h += btn('dc_explain', r.date, 'บันทึกส่วนต่าง', 'no');
+        if (r.signed_at && !r.director_sent_at) h += btn('dc_send', r.date, 'ส่ง ผอ. ตรวจการจ่าย', 'ok');
+        if (r.director_sent_at && !r.received_back_at) h += btn('dc_back', r.date, 'กดรับคืน (ผอ. ลงนามแล้ว)', 'ok');
+        if (r.signed_at) h += btn('dc_close', r.date, 'ปิดวัน', 'ok');
+      }
+    }
+  }
   if (key === 'adjustments' && !r.approved_at && r.maker !== me() && hasRole(ME.settings.adjustment_approver_roles || [])) h += btn('adj_approve', r.id, 'อนุมัติ', 'ok');
   if (key === 'adjustments' && !r.approved_at) h += '<span class="handoff">รออนุมัติ</span>';
   if (key === 'receipts' && hasRole(['finance']) && r.status !== 'ยกเลิก') h += btn('rc_cancel', r.id, 'ยกเลิกใบนี้', 'no') + (r.status === 'ปกติ' ? '' : '');
@@ -839,6 +864,7 @@ function rowButtons(key, r) {
 }
 
 var PAY_ADD = {
+  daily_close: { label: 'เปิดวัน', can: function () { return hasRole(['finance']); }, open: dayOpen },
   deposit_slips: { label: 'บันทึกใบนำฝาก', can: function () { return hasRole(['finance']); }, open: dsAdd },
   bank_statement_lines: { label: 'นำเข้า statement', can: function () { return hasRole(['finance']); }, open: stmtImport },
   adjustments: { label: 'เพิ่มรายการปรับปรุง', can: function () { return hasRole(['finance']); }, open: adjAdd },
@@ -980,6 +1006,14 @@ async function taxBox() {
 }
 
 var PAY_ACT = {
+  dc_report: async function (date) { var r = await svc('daily', 'report', [date]); if (!r.ok) return; var d = r.data; openDialog('รายงานเงินคงเหลือประจำวัน ' + thDate(date, true), 'ระบบ', '--r-system', '<div class="register"><table><thead><tr><th>ประเภทเงิน</th><th>ยกมา</th><th>รับ</th><th>จ่าย</th><th>คงเหลือ</th></tr></thead><tbody>' + d.groups.map(function (g) { return '<tr><td>' + esc(g.group) + '</td><td class="num">' + money(g.carried) + '</td><td class="num">' + money(g.in) + '</td><td class="num">' + money(g.out) + '</td><td class="num">' + money(g.balance) + '</td></tr>'; }).join('') + '<tr><td><b>รวม</b></td><td class="num"><b>' + money(d.total.carried) + '</b></td><td class="num"><b>' + money(d.total.in) + '</b></td><td class="num"><b>' + money(d.total.out) + '</b></td><td class="num"><b>' + money(d.total.balance) + '</b></td></tr></tbody></table></div><p class="note">เงินสดในระบบ ' + money(d.system_cash) + ' บาท · รับ ' + d.receipts_count + ' ใบเสร็จ · จ่าย ' + d.payments_count + ' แถว</p>', 'ปิด', function () { return Promise.resolve({ ok: true }); }); },
+  dc_receive: function (d) { return run('daily', 'receiveCount', [d], 'กรรมการกดรับรายงานแล้ว'); },
+  dc_count: function (d) { return openDialog('บันทึกผลตรวจนับเงินสด', 'กรรมการ', '--r-committee', fTxt('counted_cash', 'เงินสดที่นับได้ (บาท)', { req: true, money: true }) + '<p class="note">ระบบเทียบกับเงินสดในระบบให้ ไม่ตรงต้องให้การเงินบันทึกส่วนต่างพร้อมคำอธิบาย</p>', 'บันทึก', function () { return svc('daily', 'recordCount', [d, { counted_cash: val('counted_cash') }]); }); },
+  dc_sign: function (d) { return run('daily', 'sign', [d], 'กรรมการลงนามรายงานแล้ว'); },
+  dc_explain: function (d) { return openDialog('บันทึกส่วนต่างเงินสด', 'การเงิน', '--r-finance', '<p class="note">ขึ้นเป็นธงแดงในรายงานผู้บริหาร</p>' + fTxt('note', 'คำอธิบาย', { req: true }), 'บันทึก', function () { return svc('daily', 'explainDiff', [d, val('note')]); }); },
+  dc_send: function (d) { return run('daily', 'sendToDirector', [d], 'ส่ง ผอ. แล้ว รอ ผอ. ตรวจการจ่ายและลงนามบนกระดาษ'); },
+  dc_back: function (d) { return openDialog('กดรับคืนเอกสารที่ ผอ. ลงนาม', 'การเงิน', '--r-finance', fScan(ME.settings.require_scan !== false), 'กดรับคืน', async function () { var s = await scanRef(); if (!s.ok) return s.r; return svc('daily', 'receiveBack', [d, { scan_ref: s.ref }]); }); },
+  dc_close: function (d) { return openDialog('ปิดวัน ' + thDate(d, true), 'การเงิน', '--r-finance', '<p class="note">ปิดแล้วลงรายการย้อนหลังในวันที่นี้และก่อนหน้าไม่ได้</p>', 'ปิดวัน', function () { return svc('daily', 'close', [d]); }); },
   adj_approve: function (id) { return run('adjustments', 'approve', [id], 'อนุมัติรายการปรับปรุงแล้ว ลง Ledger แล้ว'); },
   rc_cancel: function (id) { var r = rec('receipts', id); return openDialog('ยกเลิกใบเสร็จ ' + r.book_no + '/' + r.receipt_no, 'การเงิน', '--r-finance', '<p class="note">ใบเดิมไม่ถูกลบ ระบบตีกลับรายการบัญชีและคืนยอดค้างของนักเรียน แล้วออกใบแทนได้</p>' + fTxt('reason', 'เหตุผล', { req: true }), 'ยกเลิกใบเสร็จ', function () { return svc('receipts', 'cancel', [id, val('reason')]); }); },
   ar_close: function (id) { return openDialog('ปิดรหัสอนุมัติ', 'การเงิน', '--r-finance', '<p class="note">ยอดที่เหลือ (อนุมัติ − จ่ายจริง) จะคืนเข้าแผน และใช้รหัสนี้บันทึกแถวใหม่ไม่ได้อีก</p>', 'ปิดรหัส', function () { return svc('approvals', 'closeCode', [id]); }); },
@@ -1095,6 +1129,36 @@ async function drawReg() {
   if ($('signBtn')) $('signBtn').onclick = async function () { var r = await svc('bank', 'signMonth', [{ account_id: regAcct, month: regMonth }]); if (r.ok) show(current, 'ลงนามทะเบียนแล้ว'); else out.insertAdjacentHTML('afterbegin', '<div class="msg bad">' + esc(r.error) + '</div>'); };
 }
 
+
+/* ================= รายงานผู้บริหาร / สิ้นปีงบ ================= */
+function dayOpen() {
+  openDialog('เปิดวัน', 'การเงิน', '--r-finance', fTxt('date', 'วันที่', { req: true, val: ME.today }) + '<p class="note"><span class="handoff">ส่ง → รับ</span> กรรมการเก็บรักษาเงินกดรับรายงานแล้วนับเงินสด</p>', 'เปิดวัน', function () { return svc('daily', 'open', [val('date')]); });
+}
+async function renderExecutive() {
+  var r = await svc('reports', 'executive', []);
+  var main = $('main');
+  if (!r.ok) { main.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+  var d = r.data, red = d.flags.filter(function (f) { return f.level === 'red'; }), warn = d.flags.filter(function (f) { return f.level !== 'red'; });
+  var node = function (title, arr, cls) { return '<div class="node ' + cls + '" style="--bar:' + (cls === 'decide' ? 'var(--bad)' : 'var(--decide-edge)') + '"><div class="who-does">' + esc(title) + ' ' + arr.length + ' รายการ</div>' + (arr.length ? arr.map(function (f) { return '<div class="d" style="color:var(--ink)">' + esc(f.text) + '</div>'; }).join('') : '<div class="d">ไม่มี</div>') + '</div>'; };
+  main.innerHTML = '<h1 class="page-title">รายงานผู้บริหาร</h1><p class="page-desc">' + esc(DESC.executive) + ' · ข้อมูล ณ ' + thDate(d.date, true) + '</p><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">' + node('ธงแดง', red, 'decide') + node('เฝ้าระวัง', warn, 'decide') + '</div>' +
+    '<h2 style="font-size:19px;margin:24px 0 8px">งานค้างรับ</h2>' + (d.pending.length ? '<div class="register"><table><thead><tr><th>ขั้น</th><th>เอกสาร</th><th>ค้างมา</th></tr></thead><tbody>' + d.pending.map(function (x) { return '<tr><td>' + esc(x.step_key) + '</td><td>' + esc(x.doc_type) + ' ' + esc(x.doc_id) + '</td><td class="num">' + x.days + ' วัน</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ไม่มีงานค้างรับ</p>') +
+    '<h2 style="font-size:19px;margin:24px 0 8px">ค้างชำระรายชนิดเงินย่อย</h2>' + (d.arrears.length ? '<div class="register"><table><thead><tr><th>ชนิด</th><th>ยอดที่ต้องเก็บ</th><th>รับแล้ว</th><th>ค้างชำระ</th></tr></thead><tbody>' + d.arrears.map(function (x) { return '<tr><td>' + esc(x.subfund_code) + '</td><td class="num">' + money(x.due) + '</td><td class="num">' + money(x.paid) + '</td><td class="num">' + money(x.outstanding) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ไม่มียอดค้างชำระ</p>');
+}
+function curFY() { var y = +ME.today.slice(0, 4), m = +ME.today.slice(5, 7); return (m >= (ME.settings.fiscal_year_start_month || 10) ? y + 1 : y) + 543; }
+var yeFY = 0;
+async function renderYearEnd() {
+  if (!yeFY) yeFY = curFY();
+  var r = await svc('reports', 'yearEnd', [yeFY]);
+  var main = $('main');
+  if (!r.ok) { main.innerHTML = '<div class="msg bad">' + esc(r.error) + '</div>'; return; }
+  var d = r.data, p = d.plan;
+  main.innerHTML = '<h1 class="page-title">สิ้นปีงบ สรุปผลตามแผน</h1><p class="page-desc">' + esc(DESC.year_end) + '</p><div class="toolbar"><input class="search" id="yeFy" style="width:120px" value="' + yeFY + '" aria-label="ปีงบ พ.ศ."><span class="note">ปีงบ พ.ศ. · ' + thDate(d.from) + ' ถึง ' + thDate(d.to) + '</span></div>' +
+    '<h2 style="font-size:19px;margin:12px 0 8px">สรุปผลการใช้เงินตามแผน</h2><div class="register"><table><thead><tr><th>โครงการ/กิจกรรม</th><th>รหัสเงิน</th><th>วงเงิน</th><th>ผูกพัน</th><th>จ่ายจริง</th><th>คงเหลือ</th><th>ใช้ไป (%)</th></tr></thead><tbody>' + (p.rows.length ? p.rows.map(function (x) { return '<tr><td class="wrap">' + esc(x.name) + '</td><td>' + esc(x.fund_code) + '</td><td class="num">' + money(x.budget) + '</td><td class="num">' + money(x.committed) + '</td><td class="num">' + money(x.spent) + '</td><td class="num">' + money(x.remaining) + '</td><td class="num">' + x.pct + '%</td></tr>'; }).join('') + '<tr><td colspan="2"><b>รวม</b></td><td class="num"><b>' + money(p.total.budget) + '</b></td><td class="num"><b>' + money(p.total.committed) + '</b></td><td class="num"><b>' + money(p.total.spent) + '</b></td><td class="num"><b>' + money(p.total.remaining) + '</b></td><td></td></tr>' : '<tr><td colspan="7" class="empty">ไม่มีโครงการในปีงบนี้</td></tr>') + '</tbody></table></div>' +
+    '<h2 style="font-size:19px;margin:24px 0 8px">ยอดยกไป (= ยอดยกมาของปีถัดไป)</h2>' + (d.closing.length ? '<div class="register"><table><thead><tr><th>ประเภทเงิน</th><th>ยอดยกไป</th></tr></thead><tbody>' + d.closing.map(function (x) { return '<tr><td>' + esc(x.group) + '</td><td class="num">' + money(x.balance) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ยังไม่มียอดคงเหลือ</p>') +
+    '<h2 style="font-size:19px;margin:24px 0 8px">เช็คค้างจ่ายยกข้ามปี</h2>' + (d.outstanding_cheques.length ? '<div class="register"><table><thead><tr><th>เลขเช็ค</th><th>วันที่</th><th>ผู้รับ</th><th>ยอด</th><th>สถานะ</th></tr></thead><tbody>' + d.outstanding_cheques.map(function (x) { return '<tr><td>' + esc(x.cheque_no) + '</td><td>' + thDate(x.date) + '</td><td>' + esc(x.print_name) + '</td><td class="num">' + money(x.amount) + '</td><td>' + esc(x.status) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="note">ไม่มีเช็คค้างจ่าย</p>');
+  $('yeFy').onchange = function () { yeFY = +this.value; renderYearEnd(); };
+}
+
 /* ================= ฟอร์ม ================= */
 async function refOptions(table, key) {
   var rows = await load(table);
@@ -1147,7 +1211,7 @@ async function openDialog(title, who, color, fieldsHtml, okLabel, onSubmit) {
     $('dlgOk').disabled = true;
     var r = await onSubmit();
     $('dlgOk').disabled = false;
-    if (r.ok) { dlg.close(); cache = {}; var AF = AFTER; AFTER = null; if (AF) { await show(current); AF(); return; } show(current, AFTERMSG ? (function () { var m = AFTERMSG; AFTERMSG = ''; return m; })() : { 'บันทึกใบนำฝาก': 'บันทึกใบนำฝากแล้ว ลง Ledger เงินสด → บัญชี', 'ส่งขออนุมัติ': 'ส่งรายการปรับปรุงแล้ว รอผู้อนุมัติ', 'ออกใบเสร็จ': 'ออกใบเสร็จแล้ว', 'ยกเลิกใบเสร็จ': 'ยกเลิกใบเสร็จแล้ว ออกใบแทนได้จากปุ่มออกใบเสร็จ', 'สร้าง ขบ.': 'สร้าง ขบ. แล้ว ตรวจรายการแล้วกดส่งตรวจ', 'ทำรายการกลับ': 'ทำรายการกลับแล้ว', 'จำแนก': 'จำแนกแล้ว', 'กดรับคืน': 'กดรับคืนแล้ว', 'บันทึก': 'บันทึกแล้ว', 'อนุมัติ': 'อนุมัติแล้ว บัญชีใหม่มีผลทันที', 'ไม่อนุมัติ': 'บันทึกผลไม่อนุมัติแล้ว', 'ส่งคำขอ': 'ส่งคำขอแล้ว รอผู้อนุมัติ' }[okLabel] || 'บันทึกแล้ว'); } else showErrors(form, r);
+    if (r.ok) { dlg.close(); cache = {}; var AF = AFTER; AFTER = null; if (AF) { await show(current); AF(); return; } show(current, AFTERMSG ? (function () { var m = AFTERMSG; AFTERMSG = ''; return m; })() : { 'เปิดวัน': 'เปิดวันแล้ว รอกรรมการกดรับ', 'ปิดวัน': 'ปิดวันแล้ว (ล็อก)', 'บันทึกใบนำฝาก': 'บันทึกใบนำฝากแล้ว ลง Ledger เงินสด → บัญชี', 'ส่งขออนุมัติ': 'ส่งรายการปรับปรุงแล้ว รอผู้อนุมัติ', 'ออกใบเสร็จ': 'ออกใบเสร็จแล้ว', 'ยกเลิกใบเสร็จ': 'ยกเลิกใบเสร็จแล้ว ออกใบแทนได้จากปุ่มออกใบเสร็จ', 'สร้าง ขบ.': 'สร้าง ขบ. แล้ว ตรวจรายการแล้วกดส่งตรวจ', 'ทำรายการกลับ': 'ทำรายการกลับแล้ว', 'จำแนก': 'จำแนกแล้ว', 'กดรับคืน': 'กดรับคืนแล้ว', 'บันทึก': 'บันทึกแล้ว', 'อนุมัติ': 'อนุมัติแล้ว บัญชีใหม่มีผลทันที', 'ไม่อนุมัติ': 'บันทึกผลไม่อนุมัติแล้ว', 'ส่งคำขอ': 'ส่งคำขอแล้ว รอผู้อนุมัติ' }[okLabel] || 'บันทึกแล้ว'); } else showErrors(form, r);
   };
   dlg.showModal();
   var first = form.querySelector('input,select,textarea'); if (first) first.focus();
